@@ -27,12 +27,66 @@ import {
   FlipHorizontal,
   FlipVertical,
 } from 'lucide-react-native';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function HomeScreen() {
+export default function HomeScreen({ onSearch }) {
   const [searchText, setSearchText] = useState('');
   const [imageUri, setImageUri] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+
+  // Speech Recognition Event Listeners
+  useSpeechRecognitionEvent('start', () => {
+    setIsListening(true);
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    setIsListening(false);
+  });
+
+  useSpeechRecognitionEvent('result', (event) => {
+    if (event.results && event.results.length > 0) {
+      const transcript = event.results.map((r) => r.transcript).join(' ');
+      setSearchText(transcript);
+    }
+  });
+
+  useSpeechRecognitionEvent('error', (event) => {
+    console.error('Speech recognition error:', event.error);
+    setIsListening(false);
+  });
+
+  const handleMicPress = async () => {
+    if (isListening) {
+      try {
+        await ExpoSpeechRecognitionModule.stop();
+      } catch (err) {
+        console.error('Failed to stop speech recognition:', err);
+      }
+    } else {
+      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Permission Denied',
+          'Microphone and speech recognition permissions are required for voice search.'
+        );
+        return;
+      }
+      
+      try {
+        setSearchText(''); // Clear search text for new voice input
+        await ExpoSpeechRecognitionModule.start({
+          lang: 'en-US',
+          interimResults: true,
+          continuous: false,
+        });
+      } catch (err) {
+        Alert.alert('Error', 'Failed to start speech recognition.');
+        console.error(err);
+      }
+    }
+  };
 
   // Editor States
   const [editorUri, setEditorUri] = useState(null);
@@ -237,14 +291,27 @@ export default function HomeScreen() {
       <View style={styles.searchRow}>
         <TextInput
           style={styles.input}
-          placeholder="Search text..."
+          placeholder={isListening ? "Listening..." : "Enter your text..."}
+          placeholderTextColor="#999"
           value={searchText}
           onChangeText={setSearchText}
         />
-        <TouchableOpacity style={styles.iconButton} onPress={() => { setSearchText('Voice Search Term'); Alert.alert('Voice Search', 'Voice input simulated.'); }}>
-          <Mic size={20} color="#554545" />
+        <TouchableOpacity
+          style={[styles.iconButton, isListening && styles.iconButtonActive]}
+          onPress={handleMicPress}
+        >
+          <Mic size={20} color={isListening ? '#EF4444' : '#554545'} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.searchButton} onPress={() => Alert.alert('Search', searchText.trim() ? `Searching for: "${searchText}"` : 'Please enter some text to search.')}>
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={() => {
+            if (searchText.trim()) {
+              onSearch(searchText, null);
+            } else {
+              Alert.alert('Please enter text', 'Please enter some text to search.');
+            }
+          }}
+        >
           <Search size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
@@ -254,7 +321,14 @@ export default function HomeScreen() {
         <View style={styles.previewContainer}>
           <Image source={{ uri: imageUri }} style={styles.previewImage} />
           <View style={styles.previewActions}>
-            <TouchableOpacity style={styles.imageSearchBtn} onPress={() => Alert.alert('Image Search', 'Searching using the selected image...')}>
+            <TouchableOpacity
+              style={styles.imageSearchBtn}
+              onPress={() => {
+                if (imageUri) {
+                  onSearch('', imageUri);
+                }
+              }}
+            >
               <Text style={styles.imageSearchBtnText}>Search Image</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.trashBtn} onPress={() => setImageUri(null)}>
@@ -285,6 +359,7 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#CCC', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#000' },
   iconButton: { width: 48, height: 48, borderRadius: 8, borderWidth: 1, borderColor: '#CCC', justifyContent: 'center', alignItems: 'center', marginLeft: 8, backgroundColor: '#F5F5F5' },
+  iconButtonActive: { backgroundColor: '#FFE5E5', borderColor: '#EF4444' },
   searchButton: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
   actionButton: { flexDirection: 'row', height: 52, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 15, backgroundColor: '#007AFF' },
   btnIcon: { marginRight: 10 },

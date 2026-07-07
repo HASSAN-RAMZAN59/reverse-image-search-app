@@ -2,9 +2,21 @@ import React, { useState } from 'react';
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import * as WebBrowser from 'expo-web-browser';
 
 export default function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
+
+  const handleSearch = async (query, imageUri) => {
+    if (query) {
+      try {
+        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        await WebBrowser.openBrowserAsync(url);
+      } catch (error) {
+        console.error("Error opening browser:", error);
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -13,7 +25,7 @@ export default function App() {
       {!isAuthorized ? (
         <PermissionScreen onPermissionsGranted={() => setIsAuthorized(true)} />
       ) : (
-        <HomeScreen />
+        <HomeScreen onSearch={handleSearch} />
       )}
     </SafeAreaView>
   );

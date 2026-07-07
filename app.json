@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Reverse Image Search",
+    "slug": "reverse-image-search-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.viberay.imagesearch"
+    },
+    "plugins": [
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow this app to access the microphone for voice search.",
+          "speechRecognitionPermission": "Allow this app to recognize speech for voice search."
+        }
+      ]
+    ]
+  }
+}
