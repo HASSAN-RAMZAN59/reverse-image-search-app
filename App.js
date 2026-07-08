@@ -10,7 +10,7 @@ export default function App() {
   const handleSearch = async (query, imageUri) => {
     if (query) {
       try {
-        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`;
         await WebBrowser.openBrowserAsync(url);
       } catch (error) {
         console.error("Error opening browser:", error);
