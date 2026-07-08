@@ -37,6 +37,7 @@ export default function HomeScreen({ onSearch }) {
   const [imageUri, setImageUri] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isListeningModalVisible, setIsListeningModalVisible] = useState(false);
+  const [isInputInvalid, setIsInputInvalid] = useState(false);
 
   // Speech Recognition Event Listeners
   useSpeechRecognitionEvent('start', () => {
@@ -302,11 +303,16 @@ export default function HomeScreen({ onSearch }) {
       {/* Search Row */}
       <View style={styles.searchRow}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, isInputInvalid && styles.inputInvalid]}
           placeholder={isListening ? "Listening..." : "Enter your text..."}
           placeholderTextColor="#999"
           value={searchText}
-          onChangeText={setSearchText}
+          onChangeText={(text) => {
+            setSearchText(text);
+            if (text.trim()) {
+              setIsInputInvalid(false);
+            }
+          }}
         />
         <TouchableOpacity
           style={[styles.iconButton, isListening && styles.iconButtonActive]}
@@ -320,7 +326,7 @@ export default function HomeScreen({ onSearch }) {
             if (searchText.trim()) {
               onSearch(searchText, null);
             } else {
-              Alert.alert('Please enter text', 'Please enter some text to search.');
+              setIsInputInvalid(true);
             }
           }}
         >
@@ -406,6 +412,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 30 },
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#CCC', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#000' },
+  inputInvalid: { borderColor: '#EF4444', borderWidth: 1.5, backgroundColor: '#FFF5F5' },
   iconButton: { width: 48, height: 48, borderRadius: 8, borderWidth: 1, borderColor: '#CCC', justifyContent: 'center', alignItems: 'center', marginLeft: 8, backgroundColor: '#F5F5F5' },
   iconButtonActive: { backgroundColor: '#FFE5E5', borderColor: '#EF4444' },
   searchButton: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
