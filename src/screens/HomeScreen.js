@@ -117,13 +117,11 @@ export default function HomeScreen({ onSearch }) {
     setCropBox({ left: (displayW - boxSize) / 2, top: (displayH - boxSize) / 2, width: boxSize, height: boxSize });
   };
 
-  const startEditing = (uri) => {
+  const startEditing = (uri, width, height) => {
     setEditorUri(uri);
     setCropMode(false);
-    Image.getSize(uri, (w, h) => {
-      setImageSize({ width: w, height: h });
-      updateContainerSize(w, h);
-    });
+    setImageSize({ width, height });
+    updateContainerSize(width, height);
   };
 
   const acquireImage = async (source) => {
@@ -141,7 +139,10 @@ export default function HomeScreen({ onSearch }) {
       ? await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 1 })
       : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions?.Images || 'Images', allowsEditing: false, quality: 1 });
 
-    if (!result.canceled && result.assets?.[0]?.uri) startEditing(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      const asset = result.assets[0];
+      startEditing(asset.uri, asset.width, asset.height);
+    }
   };
 
   const cropPanResponder = useRef(
@@ -176,7 +177,7 @@ export default function HomeScreen({ onSearch }) {
       setBusy(true);
       const result = await ImageManipulator.manipulateAsync(editorUri, actions, { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG });
       setEditorUri(result.uri);
-      return result.uri;
+      return result;
     } catch (err) {
       Alert.alert('Error', 'Failed to edit image.');
     } finally {
@@ -187,13 +188,20 @@ export default function HomeScreen({ onSearch }) {
   const applyCrop = async () => {
     const sX = imageSize.width / container.width, sY = imageSize.height / container.height;
     const w = Math.round(cropBox.width * sX), h = Math.round(cropBox.height * sY);
-    const uri = await manipulateImage([{ crop: { originX: Math.round(cropBox.left * sX), originY: Math.round(cropBox.top * sY), width: w, height: h } }]);
-    if (uri) { setImageSize({ width: w, height: h }); updateContainerSize(w, h); setCropMode(false); }
+    const result = await manipulateImage([{ crop: { originX: Math.round(cropBox.left * sX), originY: Math.round(cropBox.top * sY), width: w, height: h } }]);
+    if (result) {
+      setImageSize({ width: result.width, height: result.height });
+      updateContainerSize(result.width, result.height);
+      setCropMode(false);
+    }
   };
 
   const handleRotate = async () => {
-    const uri = await manipulateImage([{ rotate: 90 }]);
-    if (uri) { setImageSize({ width: imageSize.height, height: imageSize.width }); updateContainerSize(imageSize.height, imageSize.width); }
+    const result = await manipulateImage([{ rotate: 90 }]);
+    if (result) {
+      setImageSize({ width: result.width, height: result.height });
+      updateContainerSize(result.width, result.height);
+    }
   };
 
   // RENDER EDITOR VIEW OVERLAY
