@@ -20,7 +20,7 @@ export default function SplashScreen() {
       </View>
 
       {/* App Name */}
-      <Text style={styles.appName}>Search Image</Text>
+      <Text style={styles.appName}>Reverse Image Search</Text>
 
       {/* Spacer at bottom */}
       <View style={{ flex: 1 }} />

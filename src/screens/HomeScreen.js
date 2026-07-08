@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Dimensions,
   PanResponder,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -35,14 +36,17 @@ export default function HomeScreen({ onSearch }) {
   const [searchText, setSearchText] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [isListening, setIsListening] = useState(false);
+  const [isListeningModalVisible, setIsListeningModalVisible] = useState(false);
 
   // Speech Recognition Event Listeners
   useSpeechRecognitionEvent('start', () => {
     setIsListening(true);
+    setIsListeningModalVisible(true);
   });
 
   useSpeechRecognitionEvent('end', () => {
     setIsListening(false);
+    setIsListeningModalVisible(false);
   });
 
   useSpeechRecognitionEvent('result', (event) => {
@@ -55,35 +59,36 @@ export default function HomeScreen({ onSearch }) {
   useSpeechRecognitionEvent('error', (event) => {
     console.error('Speech recognition error:', event.error);
     setIsListening(false);
+    setIsListeningModalVisible(false);
   });
 
-  const handleMicPressIn = async () => {
-    const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(
-        'Permission Denied',
-        'Microphone and speech recognition permissions are required for voice search.'
-      );
-      return;
-    }
-    
-    try {
-      setSearchText(''); // Clear search text for new voice input
-      await ExpoSpeechRecognitionModule.start({
-        lang: 'en-US',
-        interimResults: true,
-        continuous: true,
-      });
-    } catch (err) {
-      console.error('Failed to start speech recognition:', err);
-    }
-  };
-
-  const handleMicPressOut = async () => {
-    try {
-      await ExpoSpeechRecognitionModule.stop();
-    } catch (err) {
-      console.error('Failed to stop speech recognition:', err);
+  const handleMicPress = async () => {
+    if (isListening) {
+      try {
+        await ExpoSpeechRecognitionModule.stop();
+      } catch (err) {
+        console.error('Failed to stop speech recognition:', err);
+      }
+    } else {
+      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Permission Denied',
+          'Microphone and speech recognition permissions are required for voice search.'
+        );
+        return;
+      }
+      
+      try {
+        setSearchText(''); // Clear search text for new voice input
+        await ExpoSpeechRecognitionModule.start({
+          lang: 'en-US',
+          interimResults: true,
+          continuous: false, // Set to false to automatically end on silence!
+        });
+      } catch (err) {
+        console.error('Failed to start speech recognition:', err);
+      }
     }
   };
 
@@ -297,8 +302,7 @@ export default function HomeScreen({ onSearch }) {
         />
         <TouchableOpacity
           style={[styles.iconButton, isListening && styles.iconButtonActive]}
-          onPressIn={handleMicPressIn}
-          onPressOut={handleMicPressOut}
+          onPress={handleMicPress}
         >
           <Mic size={20} color={isListening ? '#EF4444' : '#554545'} />
         </TouchableOpacity>
@@ -348,6 +352,42 @@ export default function HomeScreen({ onSearch }) {
         <Camera size={24} color="#FFF" style={styles.btnIcon} />
         <Text style={styles.actionButtonText}>Open Camera & Capture</Text>
       </TouchableOpacity>
+
+      {/* Voice Search Overlay Modal */}
+      <Modal
+        visible={isListeningModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleMicPress}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.modalCloseArea}
+            activeOpacity={1}
+            onPress={handleMicPress}
+          />
+          <View style={styles.modalContent}>
+            {/* Logo space placeholder / Microphone circles */}
+            <TouchableOpacity 
+              style={styles.micRippleOuter}
+              activeOpacity={0.8}
+              onPress={handleMicPress}
+            >
+              <View style={styles.micRippleInner}>
+                <Mic size={40} color="#2A303D" />
+              </View>
+            </TouchableOpacity>
+
+            {/* Speaking / Listening Text */}
+            <Text style={styles.listeningTitle}>
+              {searchText ? searchText : "Search By Text"}
+            </Text>
+
+            {/* Language Text at bottom */}
+            <Text style={styles.languageText}>English (Pakistan)</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -395,4 +435,56 @@ const styles = StyleSheet.create({
   toolBtnActive: { backgroundColor: '#222', borderRadius: 8 },
   toolText: { fontSize: 11, color: '#AAA', marginTop: 4 },
   toolTextActive: { color: '#007AFF', fontWeight: 'bold' },
+
+  // Voice Search Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20, 20, 22, 0.97)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseArea: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  modalContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    width: '100%',
+  },
+  micRippleOuter: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#303134',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  micRippleInner: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#8AB4F8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listeningTitle: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 100,
+    paddingHorizontal: 30,
+    lineHeight: 32,
+  },
+  languageText: {
+    fontSize: 14,
+    color: '#9AA0A6',
+    textAlign: 'center',
+  },
 });
