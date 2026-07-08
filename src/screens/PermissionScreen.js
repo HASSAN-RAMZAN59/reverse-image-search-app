@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Camera, Image as ImageIcon, ShieldCheck } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, ShieldCheck, Mic } from 'lucide-react-native';
 import { Camera as CameraAPI } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 export default function PermissionScreen({ onPermissionsGranted }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [permissions, setPermissions] = useState({ storage: false, camera: false });
+  const [permissions, setPermissions] = useState({ storage: false, camera: false, microphone: false });
   const [simulatedStorageGranted, setSimulatedStorageGranted] = useState(false);
 
-  const hasAllPermissions = permissions.storage && simulatedStorageGranted && permissions.camera;
+  const hasAllPermissions = permissions.storage && simulatedStorageGranted && permissions.camera && permissions.microphone;
 
   const readDevicePermissions = async () => {
     const storage = await ImagePicker.getMediaLibraryPermissionsAsync();
     const camera = await CameraAPI.getCameraPermissionsAsync();
+    const microphone = await ExpoSpeechRecognitionModule.getPermissionsAsync();
     const status = {
       storage: Boolean(storage?.granted || storage?.status === 'granted'),
       camera: Boolean(camera?.granted || camera?.status === 'granted'),
+      microphone: Boolean(microphone?.granted || microphone?.status === 'granted'),
     };
     setPermissions(status);
     return status;
@@ -27,7 +30,7 @@ export default function PermissionScreen({ onPermissionsGranted }) {
     try {
       setLoading(true);
       const current = await readDevicePermissions();
-      if (current.storage && current.camera) {
+      if (current.storage && current.camera && current.microphone) {
         setSimulatedStorageGranted(true);
         onPermissionsGranted();
       }
@@ -72,8 +75,14 @@ export default function PermissionScreen({ onPermissionsGranted }) {
         if (!res?.granted) return explainDenied('Camera');
       }
 
+      const third = await readDevicePermissions();
+      if (!third.microphone) {
+        const res = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+        if (!res?.granted) return explainDenied('Microphone');
+      }
+
       const final = await readDevicePermissions();
-      if (final.storage && final.camera) onPermissionsGranted();
+      if (final.storage && final.camera && final.microphone) onPermissionsGranted();
     } catch (error) {
       Alert.alert('Permission Error', error?.message || 'Permission request failed.');
     } finally {
@@ -118,6 +127,7 @@ export default function PermissionScreen({ onPermissionsGranted }) {
       <View style={styles.card}>
         <PermissionRow icon={ImageIcon} label="Storage permission" granted={permissions.storage && simulatedStorageGranted} />
         <PermissionRow icon={Camera} label="Camera permission" granted={permissions.camera} />
+        <PermissionRow icon={Mic} label="Microphone permission" granted={permissions.microphone} />
       </View>
 
       <Pressable

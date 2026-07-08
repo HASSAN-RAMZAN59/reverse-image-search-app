@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, StatusBar, LogBox, Platform, BackHandler } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera as CameraAPI } from 'expo-camera';
+import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ResultScreen from './src/screens/ResultScreen';
@@ -22,9 +23,11 @@ export default function App() {
       try {
         const storage = await ImagePicker.getMediaLibraryPermissionsAsync();
         const camera = await CameraAPI.getCameraPermissionsAsync();
+        const microphone = await ExpoSpeechRecognitionModule.getPermissionsAsync();
         const granted = Boolean(
           (storage?.granted || storage?.status === 'granted') &&
-          (camera?.granted || camera?.status === 'granted')
+          (camera?.granted || camera?.status === 'granted') &&
+          (microphone?.granted || microphone?.status === 'granted')
         );
         setIsAuthorized(granted);
       } catch (err) {
