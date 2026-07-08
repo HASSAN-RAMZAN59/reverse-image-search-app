@@ -318,7 +318,7 @@ export default function HomeScreen({ onSearch }) {
           style={[styles.iconButton, isListening && styles.iconButtonActive]}
           onPress={handleMicPress}
         >
-          <Mic size={20} color={isListening ? '#EF4444' : '#554545'} />
+          <Mic size={20} color={isListening ? '#EF4444' : '#FFF'} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.searchButton}
@@ -413,8 +413,8 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#CCC', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#000' },
   inputInvalid: { borderColor: '#EF4444', borderWidth: 1.5, backgroundColor: '#FFF5F5' },
-  iconButton: { width: 48, height: 48, borderRadius: 8, borderWidth: 1, borderColor: '#CCC', justifyContent: 'center', alignItems: 'center', marginLeft: 8, backgroundColor: '#F5F5F5' },
-  iconButtonActive: { backgroundColor: '#FFE5E5', borderColor: '#EF4444' },
+  iconButton: { width: 48, height: 48, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginLeft: 8, backgroundColor: '#007AFF' },
+  iconButtonActive: { backgroundColor: '#FFE5E5', borderWidth: 1, borderColor: '#EF4444' },
   searchButton: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
   actionButton: { flexDirection: 'row', height: 52, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 15, backgroundColor: '#007AFF' },
   btnIcon: { marginRight: 10 },
