@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { StyleSheet, SafeAreaView, StatusBar, LogBox } from 'react-native';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import * as WebBrowser from 'expo-web-browser';
+
+// Disable all warning popups/alerts on the mobile screen
+LogBox.ignoreAllLogs();
 
 export default function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);

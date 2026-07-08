@@ -57,34 +57,33 @@ export default function HomeScreen({ onSearch }) {
     setIsListening(false);
   });
 
-  const handleMicPress = async () => {
-    if (isListening) {
-      try {
-        await ExpoSpeechRecognitionModule.stop();
-      } catch (err) {
-        console.error('Failed to stop speech recognition:', err);
-      }
-    } else {
-      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          'Permission Denied',
-          'Microphone and speech recognition permissions are required for voice search.'
-        );
-        return;
-      }
-      
-      try {
-        setSearchText(''); // Clear search text for new voice input
-        await ExpoSpeechRecognitionModule.start({
-          lang: 'en-US',
-          interimResults: true,
-          continuous: false,
-        });
-      } catch (err) {
-        Alert.alert('Error', 'Failed to start speech recognition.');
-        console.error(err);
-      }
+  const handleMicPressIn = async () => {
+    const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        'Permission Denied',
+        'Microphone and speech recognition permissions are required for voice search.'
+      );
+      return;
+    }
+    
+    try {
+      setSearchText(''); // Clear search text for new voice input
+      await ExpoSpeechRecognitionModule.start({
+        lang: 'en-US',
+        interimResults: true,
+        continuous: true,
+      });
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+    }
+  };
+
+  const handleMicPressOut = async () => {
+    try {
+      await ExpoSpeechRecognitionModule.stop();
+    } catch (err) {
+      console.error('Failed to stop speech recognition:', err);
     }
   };
 
@@ -298,7 +297,8 @@ export default function HomeScreen({ onSearch }) {
         />
         <TouchableOpacity
           style={[styles.iconButton, isListening && styles.iconButtonActive]}
-          onPress={handleMicPress}
+          onPressIn={handleMicPressIn}
+          onPressOut={handleMicPressOut}
         >
           <Mic size={20} color={isListening ? '#EF4444' : '#554545'} />
         </TouchableOpacity>
