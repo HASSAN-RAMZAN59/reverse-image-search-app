@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   SafeAreaView,
   ScrollView,
+  Platform,
+  Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { ArrowLeft } from 'lucide-react-native';
@@ -86,11 +88,75 @@ const YandexIcon = () => (
   </View>
 );
 
-export default function ResultScreen({ searchQuery, onBack }) {
+export default function ResultScreen({ searchQuery, imageUri, onBack }) {
   const [activeBrowser, setActiveBrowser] = useState('google'); // 'google', 'bing', 'yandex'
   const [activeSubTab, setActiveSubTab] = useState('images'); // 'images' is active by default
+  const [uploading, setUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+
+  useEffect(() => {
+    if (imageUri) {
+      uploadImage(imageUri);
+    }
+  }, [imageUri]);
+
+  const uploadImage = async (uri) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      let filename = uri.split('/').pop();
+      let match = /\.(\w+)$/.exec(filename);
+      let type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      formData.append('reqtype', 'fileupload');
+      formData.append('time', '1h');
+      formData.append('fileToUpload', {
+        uri: uri,
+        name: filename || 'search_image.jpg',
+        type: type,
+      });
+
+      const response = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const directUrl = await response.text();
+      if (directUrl && directUrl.trim().startsWith('http')) {
+        setUploadedImageUrl(directUrl.trim());
+      } else {
+        throw new Error(directUrl || 'Failed to upload image.');
+      }
+    } catch (err) {
+      console.error('Image upload error:', err);
+      Alert.alert(
+        'Upload Failed',
+        'Could not upload the image for reverse search. Please try again.',
+        [{ text: 'OK', onPress: onBack }]
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const getSearchUrl = () => {
+    if (uploadedImageUrl) {
+      if (activeBrowser === 'google') {
+        return `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(uploadedImageUrl)}`;
+      } else if (activeBrowser === 'bing') {
+        return `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodeURIComponent(uploadedImageUrl)}`;
+      } else if (activeBrowser === 'yandex') {
+        return `https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(uploadedImageUrl)}`;
+      }
+    }
+
     const encodedQuery = encodeURIComponent(searchQuery);
     
     const isImage = activeSubTab === 'images';
@@ -181,41 +247,50 @@ export default function ResultScreen({ searchQuery, onBack }) {
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.subTabsContainer}>
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subTabsScroll}>
-          {subTabs.map((tab) => {
-            const isActive = activeSubTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[styles.subTabButton, isActive && styles.subTabButtonActive]}
-                onPress={() => setActiveSubTab(tab.id)}
-              >
-                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>
-                  {tab.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      {!imageUri && (
+        <View style={styles.subTabsContainer}>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subTabsScroll}>
+            {subTabs.map((tab) => {
+              const isActive = activeSubTab === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  style={[styles.subTabButton, isActive && styles.subTabButtonActive]}
+                  onPress={() => setActiveSubTab(tab.id)}
+                >
+                  <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>
+                    {tab.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.webViewContainer}>
-        <WebView
-          key={`${activeBrowser}-${activeSubTab}`}
-          source={{ uri: getSearchUrl() }}
-          style={styles.webView}
-          startInLoadingState={true}
-          injectedJavaScript={injectedJS}
-          domStorageEnabled={true}
-          javaScriptEnabled={true}
-          renderLoading={() => (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#1A73E8" />
-              <Text style={styles.loadingText}>Loading {activeBrowser.toUpperCase()} Results...</Text>
-            </View>
-          )}
-        />
+        {imageUri && !uploadedImageUrl ? (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#1A73E8" />
+            <Text style={styles.loadingText}>Uploading image for visual search...</Text>
+          </View>
+        ) : (
+          <WebView
+            key={`${activeBrowser}-${uploadedImageUrl ? 'image' : activeSubTab}`}
+            source={{ uri: getSearchUrl() }}
+            style={styles.webView}
+            startInLoadingState={true}
+            injectedJavaScript={injectedJS}
+            domStorageEnabled={true}
+            javaScriptEnabled={true}
+            renderLoading={() => (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#1A73E8" />
+                <Text style={styles.loadingText}>Loading {activeBrowser.toUpperCase()} Results...</Text>
+              </View>
+            )}
+          />
+        )}
       </View>
 
       <View style={styles.bottomTabBar}>

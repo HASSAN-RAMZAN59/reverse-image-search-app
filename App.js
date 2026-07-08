@@ -16,6 +16,7 @@ export default function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('home'); // 'home' or 'result'
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchImageUri, setSearchImageUri] = useState(null);
 
   // Handle splash loading and initial permission check
   useEffect(() => {
@@ -61,13 +62,14 @@ export default function App() {
   }, [currentScreen]);
 
   const handleSearch = (query, imageUri) => {
-    if (query) {
-      setSearchQuery(query);
-      setCurrentScreen('result');
-    }
+    setSearchQuery(query || '');
+    setSearchImageUri(imageUri || null);
+    setCurrentScreen('result');
   };
 
   const handleBack = () => {
+    setSearchQuery('');
+    setSearchImageUri(null);
     setCurrentScreen('home');
   };
 
@@ -90,7 +92,7 @@ export default function App() {
       ) : currentScreen === 'home' ? (
         <HomeScreen onSearch={handleSearch} />
       ) : (
-        <ResultScreen searchQuery={searchQuery} onBack={handleBack} />
+        <ResultScreen searchQuery={searchQuery} imageUri={searchImageUri} onBack={handleBack} />
       )}
     </SafeAreaView>
   );
