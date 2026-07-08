@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, SafeAreaView, StatusBar, LogBox } from 'react-native';
+import { StyleSheet, SafeAreaView, StatusBar, LogBox, Platform } from 'react-native';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ResultScreen from './src/screens/ResultScreen';
@@ -25,7 +25,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
       
       {!isAuthorized ? (
         <PermissionScreen onPermissionsGranted={() => setIsAuthorized(true)} />
@@ -42,5 +42,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 });
