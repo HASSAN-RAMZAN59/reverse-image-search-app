@@ -1,16 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, StatusBar, LogBox, Platform, BackHandler } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera as CameraAPI } from 'expo-camera';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ResultScreen from './src/screens/ResultScreen';
+import SplashScreen from './src/screens/SplashScreen';
 
 // Disable all warning popups/alerts on the mobile screen
 LogBox.ignoreAllLogs();
 
 export default function App() {
+  const [appLoading, setAppLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('home'); // 'home' or 'result'
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Handle splash loading and initial permission check
+  useEffect(() => {
+    const checkPermissionsAndLoad = async () => {
+      try {
+        const storage = await ImagePicker.getMediaLibraryPermissionsAsync();
+        const camera = await CameraAPI.getCameraPermissionsAsync();
+        const granted = Boolean(
+          (storage?.granted || storage?.status === 'granted') &&
+          (camera?.granted || camera?.status === 'granted')
+        );
+        setIsAuthorized(granted);
+      } catch (err) {
+        console.error('Error checking permissions on splash:', err);
+      } finally {
+        setTimeout(() => {
+          setAppLoading(false);
+        }, 2500); // Show splash for 2.5s
+      }
+    };
+
+    checkPermissionsAndLoad();
+  }, []);
 
   // Handle native Android hardware back button
   useEffect(() => {
@@ -40,6 +67,16 @@ export default function App() {
   const handleBack = () => {
     setCurrentScreen('home');
   };
+
+  // Render Splash Screen during initial load
+  if (appLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
+        <SplashScreen />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
