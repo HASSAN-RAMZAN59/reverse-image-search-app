@@ -2,23 +2,25 @@ import React, { useState } from 'react';
 import { StyleSheet, SafeAreaView, StatusBar, LogBox } from 'react-native';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
-import * as WebBrowser from 'expo-web-browser';
+import ResultScreen from './src/screens/ResultScreen';
 
 // Disable all warning popups/alerts on the mobile screen
 LogBox.ignoreAllLogs();
 
 export default function App() {
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState('home'); // 'home' or 'result'
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearch = async (query, imageUri) => {
+  const handleSearch = (query, imageUri) => {
     if (query) {
-      try {
-        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`;
-        await WebBrowser.openBrowserAsync(url);
-      } catch (error) {
-        console.error("Error opening browser:", error);
-      }
+      setSearchQuery(query);
+      setCurrentScreen('result');
     }
+  };
+
+  const handleBack = () => {
+    setCurrentScreen('home');
   };
 
   return (
@@ -27,8 +29,10 @@ export default function App() {
       
       {!isAuthorized ? (
         <PermissionScreen onPermissionsGranted={() => setIsAuthorized(true)} />
-      ) : (
+      ) : currentScreen === 'home' ? (
         <HomeScreen onSearch={handleSearch} />
+      ) : (
+        <ResultScreen searchQuery={searchQuery} onBack={handleBack} />
       )}
     </SafeAreaView>
   );
