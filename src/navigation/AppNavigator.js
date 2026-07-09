@@ -6,6 +6,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ResultScreen from '../screens/ResultScreen';
 import AIArtDashboardScreen from '../screens/AIArtDashboardScreen';
 import AIImageScreen from '../screens/AIImageScreen';
+import AIImageResultScreen from '../screens/AIImageResultScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Result" component={ResultScreen} />
         <Stack.Screen name="AIArtDashboard" component={AIArtDashboardScreen} />
         <Stack.Screen name="AIImageScreen" component={AIImageScreen} />
+        <Stack.Screen name="AIImageResult" component={AIImageResultScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

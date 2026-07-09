@@ -5,54 +5,66 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  Alert,
   SafeAreaView,
   StatusBar,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  FlatList,
 } from 'react-native';
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react-native';
-import { generateAIImage } from '../services/aiService';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus, Check } from 'lucide-react-native';
+
+const STYLES_LIST = [
+  { id: 'none', name: 'None' },
+  { id: 'photographic', name: 'Photographic' },
+  { id: 'cinematic', name: 'Cinematic' },
+  { id: 'anime', name: 'Anime' },
+  { id: 'digital-art', name: 'Digital Art' },
+  { id: 'fantasy-art', name: 'Fantasy Art' },
+  { id: 'comic-book', name: 'Comic Book' },
+  { id: 'line-art', name: 'Line Art' },
+  { id: 'neon-punk', name: 'Neon Punk' },
+  { id: 'origami', name: 'Origami' },
+  { id: 'low-poly', name: 'Low Poly' },
+];
 
 export default function AIImageScreen({ navigation }) {
   const [prompt, setPrompt] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState(null);
+  const [selectedStyle, setSelectedStyle] = useState('photographic');
+  const [selectedRatio, setSelectedRatio] = useState('1:1');
+  const [imageCount, setImageCount] = useState(1);
+  
+  const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false);
+  const [negativePrompt, setNegativePrompt] = useState('');
+  
+  const [isStyleModalVisible, setIsStyleModalVisible] = useState(false);
 
-  const handleGenerate = async () => {
+  const handleCreate = () => {
     if (!prompt.trim()) {
-      Alert.alert('Empty Prompt', 'Please enter a prompt describing the image you want to generate.');
+      alert('Please enter a prompt describing the image you want to generate.');
       return;
     }
 
-    setLoading(true);
-    try {
-      const base64Image = await generateAIImage(prompt.trim());
-      setGeneratedImage(base64Image);
-    } catch (error) {
-      console.error(error);
-      Alert.alert(
-        'Generation Failed',
-        error.message || 'An error occurred while generating the image. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-    }
+    navigation.navigate('AIImageResult', {
+      prompt: prompt.trim(),
+      style: selectedStyle,
+      aspectRatio: selectedRatio,
+      imageCount: imageCount,
+      negativePrompt: negativePrompt.trim(),
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#007AFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
-          <ArrowLeft size={24} color="#FFF" />
+          <ArrowLeft size={24} color="#005BFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Image Generator</Text>
+        <Text style={styles.headerTitle}>Al Art</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -61,51 +73,163 @@ export default function AIImageScreen({ navigation }) {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          {/* Preview Frame */}
-          <View style={styles.previewFrame}>
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.loadingText}>Generating your art...</Text>
-              </View>
-            ) : generatedImage ? (
-              <Image source={{ uri: generatedImage }} style={styles.previewImage} />
-            ) : (
-              <View style={styles.placeholderContainer}>
-                <ImageIcon size={48} color="#CCC" />
-                <Text style={styles.placeholderText}>Your generated image will appear here</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Input Box */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Enter Image Prompt</Text>
+          
+          {/* Enter Prompt Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Enter Prompt:</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="e.g., A futuristic city with flying cars, neon lights, highly detailed, photorealistic..."
-              placeholderTextColor="#999"
+              placeholder="Bear On the Mountains"
+              placeholderTextColor="#AAA"
               multiline={true}
               numberOfLines={4}
               value={prompt}
               onChangeText={setPrompt}
-              editable={!loading}
               textAlignVertical="top"
             />
           </View>
 
-          {/* Action Button */}
-          <TouchableOpacity
-            style={[styles.generateButton, (loading || !prompt.trim()) && styles.generateButtonDisabled]}
-            onPress={handleGenerate}
-            disabled={loading}
-          >
-            <Text style={styles.generateButtonText}>
-              {loading ? 'Generating...' : 'Generate Image'}
-            </Text>
+          {/* Model and Styles Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Model and Styles:</Text>
+            <TouchableOpacity
+              style={styles.styleSelectorBtn}
+              onPress={() => setIsStyleModalVisible(true)}
+            >
+              <View style={styles.styleSelectorTextContainer}>
+                <Text style={styles.styleSelectorLabel}>Styles</Text>
+                <Text style={styles.styleSelectorValue}>
+                  {STYLES_LIST.find((s) => s.id === selectedStyle)?.name || selectedStyle}
+                </Text>
+              </View>
+              <View style={styles.plusIconContainer}>
+                <Plus size={20} color="#333" />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Aspect Ratio Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Aspect Ratio:</Text>
+            <View style={styles.pillsRow}>
+              {['1:1', '4:3', '3:2', '2:3'].map((ratio) => {
+                const isSelected = selectedRatio === ratio;
+                return (
+                  <TouchableOpacity
+                    key={ratio}
+                    style={[styles.pillBtn, isSelected && styles.pillBtnSelected]}
+                    onPress={() => setSelectedRatio(ratio)}
+                  >
+                    <View style={[styles.ratioIconSquare, isSelected && styles.ratioIconSquareSelected]} />
+                    <Text style={[styles.pillBtnText, isSelected && styles.pillBtnTextSelected]}>
+                      {ratio}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Image Generate Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Image Generate:</Text>
+            <View style={styles.pillsRow}>
+              {[1, 2, 3, 4].map((count) => {
+                const isSelected = imageCount === count;
+                return (
+                  <TouchableOpacity
+                    key={count}
+                    style={[styles.pillBtn, isSelected && styles.pillBtnSelected, styles.countPillBtn]}
+                    onPress={() => setImageCount(count)}
+                  >
+                    <Text style={[styles.pillBtnText, isSelected && styles.pillBtnTextSelected]}>
+                      {count}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Advanced Setting Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Advanced Setting:</Text>
+            <TouchableOpacity
+              style={styles.advancedToggleBtn}
+              onPress={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
+            >
+              <Text style={styles.advancedToggleText}>Choose Settings</Text>
+              {isAdvancedExpanded ? (
+                <ChevronUp size={20} color="#333" />
+              ) : (
+                <ChevronDown size={20} color="#333" />
+              )}
+            </TouchableOpacity>
+
+            {isAdvancedExpanded && (
+              <View style={styles.advancedExpandContainer}>
+                <Text style={styles.negPromptLabel}>Negative Prompt:</Text>
+                <TextInput
+                  style={styles.negTextInput}
+                  placeholder="e.g. low quality, blurry, extra limbs, ugly..."
+                  placeholderTextColor="#AAA"
+                  multiline={true}
+                  numberOfLines={3}
+                  value={negativePrompt}
+                  onChangeText={setNegativePrompt}
+                  textAlignVertical="top"
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Create Button */}
+          <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
+            <Text style={styles.createButtonText}>Create</Text>
+            <ArrowRight size={20} color="#FFF" style={styles.createBtnIcon} />
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Styles Modal Selector */}
+      <Modal visible={isStyleModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalHeaderTitle}>Select Style</Text>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setIsStyleModalVisible(false)}
+              >
+                <Text style={styles.modalCloseText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={STYLES_LIST}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                const isSelected = selectedStyle === item.id;
+                return (
+                  <TouchableOpacity
+                    style={[styles.styleListItem, isSelected && styles.styleListItemSelected]}
+                    onPress={() => {
+                      setSelectedStyle(item.id);
+                      setIsStyleModalVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.styleListItemText, isSelected && styles.styleListItemTextSelected]}>
+                      {item.name}
+                    </Text>
+                    {isSelected && <Check size={18} color="#005BFF" />}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -113,119 +237,240 @@ export default function AIImageScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFF',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     height: 56,
-    backgroundColor: '#007AFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderColor: '#EAEAEA',
   },
   backBtn: {
     padding: 4,
   },
   headerTitle: {
-    color: '#FFF',
+    color: '#333',
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
   scrollContent: {
     padding: 20,
-    alignItems: 'center',
   },
-  previewFrame: {
-    width: 300,
-    height: 300,
-    borderRadius: 16,
-    backgroundColor: '#EAEAEA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#DDD',
-  },
-  previewImage: {
-    width: 300,
-    height: 300,
-    resizeMode: 'cover',
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#555',
-    fontWeight: '500',
-  },
-  placeholderContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  placeholderText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  inputContainer: {
+  sectionContainer: {
     width: '100%',
     marginBottom: 24,
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   textInput: {
     backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#CCC',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
+    borderWidth: 1.5,
+    borderColor: '#60A5FA',
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 16,
     color: '#333',
-    minHeight: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    minHeight: 120,
   },
-  generateButton: {
-    width: '100%',
-    height: 52,
-    backgroundColor: '#007AFF',
+  styleSelectorBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '55%',
+  },
+  styleSelectorTextContainer: {
+    flexDirection: 'column',
+  },
+  styleSelectorLabel: {
+    fontSize: 11,
+    color: '#888',
+  },
+  styleSelectorValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#111',
+    marginTop: 2,
+    textTransform: 'capitalize',
+  },
+  plusIconContainer: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
+    backgroundColor: '#DDD',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
   },
-  generateButtonDisabled: {
-    backgroundColor: '#B0D0FF',
-    shadowOpacity: 0,
-    elevation: 0,
+  pillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  generateButtonText: {
+  pillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  pillBtnSelected: {
+    backgroundColor: '#2D3748',
+    borderColor: '#2D3748',
+  },
+  pillBtnText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  pillBtnTextSelected: {
     color: '#FFF',
+  },
+  ratioIconSquare: {
+    width: 14,
+    height: 14,
+    backgroundColor: '#AAA',
+    borderRadius: 2,
+    marginRight: 8,
+  },
+  ratioIconSquareSelected: {
+    backgroundColor: '#FFF',
+  },
+  countPillBtn: {
+    minWidth: 56,
+    justifyContent: 'center',
+  },
+  advancedToggleBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  advancedToggleText: {
+    fontSize: 15,
+    color: '#555',
+    fontWeight: '500',
+  },
+  advancedExpandContainer: {
+    marginTop: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  negPromptLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#4B5563',
+    marginBottom: 8,
+  },
+  negTextInput: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    color: '#333',
+    minHeight: 80,
+  },
+  createButton: {
+    width: '100%',
+    height: 54,
+    backgroundColor: '#3B82F6',
+    borderRadius: 27,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 40,
+  },
+  createButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  createBtnIcon: {
+    marginLeft: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '60%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderColor: '#EAEAEA',
+  },
+  modalHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalCloseBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  modalCloseText: {
     fontSize: 16,
+    color: '#005BFF',
+    fontWeight: 'bold',
+  },
+  styleListItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  styleListItemSelected: {
+    backgroundColor: '#F3F8FF',
+  },
+  styleListItemText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  styleListItemTextSelected: {
+    color: '#005BFF',
     fontWeight: 'bold',
   },
 });
