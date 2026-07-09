@@ -7,6 +7,7 @@ import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import AppNavigator from './src/navigation/AppNavigator';
 
 // Disable all warning popups/alerts on the mobile screen
 LogBox.ignoreAllLogs();
@@ -89,10 +90,8 @@ export default function App() {
       
       {!isAuthorized ? (
         <PermissionScreen onPermissionsGranted={() => setIsAuthorized(true)} />
-      ) : currentScreen === 'home' ? (
-        <HomeScreen onSearch={handleSearch} />
       ) : (
-        <ResultScreen searchQuery={searchQuery} imageUri={searchImageUri} onBack={handleBack} />
+        <AppNavigator />
       )}
     </SafeAreaView>
   );

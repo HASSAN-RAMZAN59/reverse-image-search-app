@@ -41,12 +41,13 @@ import {
   FileText,
   ArrowLeft,
   Send,
+  Sparkles,
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function HomeScreen({ onSearch }) {
+export default function HomeScreen({ onSearch, navigation }) {
   const [searchText, setSearchText] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [isListening, setIsListening] = useState(false);
@@ -418,7 +419,11 @@ export default function HomeScreen({ onSearch }) {
             style={styles.searchButton}
             onPress={() => {
               if (searchText.trim()) {
-                onSearch(searchText, null);
+                if (navigation) {
+                  navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+                } else {
+                  onSearch?.(searchText, null);
+                }
               } else {
                 setIsInputInvalid(true);
               }
@@ -437,7 +442,11 @@ export default function HomeScreen({ onSearch }) {
                 style={styles.imageSearchBtn}
                 onPress={() => {
                   if (imageUri) {
-                    onSearch('', imageUri);
+                    if (navigation) {
+                      navigation.navigate('Result', { searchQuery: '', imageUri: imageUri });
+                    } else {
+                      onSearch?.('', imageUri);
+                    }
                   }
                 }}
               >
@@ -459,6 +468,11 @@ export default function HomeScreen({ onSearch }) {
         <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('camera')}>
           <Camera size={24} color="#FFF" style={styles.btnIcon} />
           <Text style={styles.actionButtonText}>Open Camera & Capture</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton} onPress={() => navigation?.navigate('AIArtDashboard')}>
+          <Sparkles size={24} color="#FFF" style={styles.btnIcon} />
+          <Text style={styles.actionButtonText}>AI Art</Text>
         </TouchableOpacity>
 
         {/* Voice Search Overlay Modal */}

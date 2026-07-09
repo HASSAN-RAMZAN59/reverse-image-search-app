@@ -88,7 +88,18 @@ const YandexIcon = () => (
   </View>
 );
 
-export default function ResultScreen({ searchQuery, imageUri, onBack }) {
+export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: propImageUri, onBack, route, navigation }) {
+  const searchQuery = route?.params?.searchQuery ?? propSearchQuery;
+  const imageUri = route?.params?.imageUri ?? propImageUri;
+
+  const handleBack = () => {
+    if (navigation) {
+      navigation.goBack();
+    } else if (onBack) {
+      onBack();
+    }
+  };
+
   const [activeBrowser, setActiveBrowser] = useState('google'); // 'google', 'bing', 'yandex'
   const [activeSubTab, setActiveSubTab] = useState('images'); // 'images' is active by default
   const [uploading, setUploading] = useState(false);
@@ -139,7 +150,7 @@ export default function ResultScreen({ searchQuery, imageUri, onBack }) {
       Alert.alert(
         'Upload Failed',
         'Could not upload the image for reverse search. Please try again.',
-        [{ text: 'OK', onPress: onBack }]
+        [{ text: 'OK', onPress: handleBack }]
       );
     } finally {
       setUploading(false);
@@ -239,7 +250,7 @@ export default function ResultScreen({ searchQuery, imageUri, onBack }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
+          <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
             <ArrowLeft size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Image Search</Text>
