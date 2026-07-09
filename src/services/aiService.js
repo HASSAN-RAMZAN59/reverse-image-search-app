@@ -37,12 +37,13 @@ export async function generateAIImage(promptText, options = {}) {
       formData.append('negative_prompt', negativePrompt.trim());
     }
 
+    const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
     const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/generate/core',
+      'https://api.stability.ai/v2beta/stable-image/generate/ultra',
       formData,
       {
         headers: {
-          'Authorization': 'sk-yvUC9JGlQ0HW9J3189xuX7jtIa0DxgPSagdt3WkvJB8iBJHB',
+          'Authorization': `Bearer ${apiKey}`,
           'Accept': 'image/*',
           'Content-Type': 'multipart/form-data',
         },
