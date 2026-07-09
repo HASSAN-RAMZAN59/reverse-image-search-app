@@ -186,7 +186,7 @@ export default function ResultScreen({ searchQuery, imageUri, onBack }) {
   };
 
   const browsers = [
-    { id: 'google', name: 'Google', activeColor: '#4285F4', activeBg: '#E8F0FE' },
+    { id: 'google', name: 'Google', activeColor: '#34A853', activeBg: '#E6F4EA' },
     { id: 'bing', name: 'Bing', activeColor: '#005BFF', activeBg: '#E6F0FF' },
     { id: 'yandex', name: 'Yandex', activeColor: '#FF3333', activeBg: '#FFE5E5' },
   ];
