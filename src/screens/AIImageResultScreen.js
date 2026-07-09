@@ -28,6 +28,25 @@ export default function AIImageResultScreen({ route, navigation }) {
     negativePrompt = '',
   } = route?.params || {};
 
+  const getAspectRatioNumber = (ratioStr) => {
+    if (!ratioStr || typeof ratioStr !== 'string' || !ratioStr.includes(':')) {
+      return 1;
+    }
+    let actualRatioStr = ratioStr;
+    if (ratioStr === '4:3') {
+      actualRatioStr = '4:5'; // Map 4:3 to 4:5 as per Stable Image Core API
+    }
+    const [widthStr, heightStr] = actualRatioStr.split(':');
+    const w = parseFloat(widthStr);
+    const h = parseFloat(heightStr);
+    if (!isNaN(w) && !isNaN(h) && h !== 0) {
+      return w / h;
+    }
+    return 1;
+  };
+
+  const ratioNumber = getAspectRatioNumber(aspectRatio);
+
   const [images, setImages] = useState(
     Array.from({ length: imageCount }, (_, idx) => ({
       id: idx,
@@ -108,7 +127,7 @@ export default function AIImageResultScreen({ route, navigation }) {
           }
 
           return (
-            <View key={item.id} style={[styles.gridItem, itemStyle]}>
+            <View key={item.id} style={[styles.gridItem, itemStyle, { aspectRatio: ratioNumber }]}>
               {item.loading ? (
                 <View style={styles.stateContainer}>
                   <ActivityIndicator size="large" color="#007AFF" />
@@ -163,26 +182,6 @@ export default function AIImageResultScreen({ route, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Prompt Card */}
-        <View style={styles.promptCard}>
-          <Text style={styles.promptLabel}>Prompt</Text>
-          <Text style={styles.promptText}>"{prompt}"</Text>
-          {negativePrompt ? (
-            <View style={styles.negativeContainer}>
-              <Text style={styles.negLabel}>Negative: </Text>
-              <Text style={styles.negText}>{negativePrompt}</Text>
-            </View>
-          ) : null}
-          <View style={styles.tagRow}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Style: {style}</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Ratio: {aspectRatio}</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Image Grid */}
         {renderGrid()}
 
@@ -200,7 +199,7 @@ export default function AIImageResultScreen({ route, navigation }) {
             <X size={30} color="#FFF" />
           </TouchableOpacity>
           {previewImage && (
-            <Image source={{ uri: previewImage }} style={styles.modalPreviewImage} />
+            <Image source={{ uri: previewImage }} style={[styles.modalPreviewImage, { aspectRatio: ratioNumber }]} />
           )}
         </View>
       </Modal>
@@ -315,15 +314,12 @@ const styles = StyleSheet.create({
   },
   gridItemSingle: {
     width: '100%',
-    aspectRatio: 1,
   },
   gridItemDouble: {
     width: '48%',
-    aspectRatio: 1,
   },
   gridItemQuarter: {
     width: '48%',
-    aspectRatio: 1,
   },
   stateContainer: {
     flex: 1,
@@ -419,7 +415,6 @@ const styles = StyleSheet.create({
   },
   modalPreviewImage: {
     width: SCREEN_WIDTH - 20,
-    height: SCREEN_WIDTH - 20,
     resizeMode: 'contain',
   },
 });

@@ -12,21 +12,91 @@ import {
   Platform,
   Modal,
   FlatList,
+  Image,
 } from 'react-native';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus, Check } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus, X } from 'lucide-react-native';
 
 const STYLES_LIST = [
-  { id: 'none', name: 'None' },
-  { id: 'photographic', name: 'Photographic' },
-  { id: 'cinematic', name: 'Cinematic' },
-  { id: 'anime', name: 'Anime' },
-  { id: 'digital-art', name: 'Digital Art' },
-  { id: 'fantasy-art', name: 'Fantasy Art' },
-  { id: 'comic-book', name: 'Comic Book' },
-  { id: 'line-art', name: 'Line Art' },
-  { id: 'neon-punk', name: 'Neon Punk' },
-  { id: 'origami', name: 'Origami' },
-  { id: 'low-poly', name: 'Low Poly' },
+  {
+    id: 'cinematic',
+    name: 'cinematic',
+    image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'anime',
+    name: 'anime',
+    image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'comic-book',
+    name: 'comic-book',
+    image: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: '3d-model',
+    name: '3d-model',
+    image: 'https://images.unsplash.com/photo-1581822261290-991b38693d1b?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'analog-film',
+    name: 'analog-film',
+    image: 'https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'line-art',
+    name: 'line-art',
+    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'digital-art',
+    name: 'digital-art',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'isometric',
+    name: 'isometric',
+    image: 'https://images.unsplash.com/photo-1616440347437-b1c73416efc2?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'fantasy-art',
+    name: 'fantasy-art',
+    image: 'https://images.unsplash.com/photo-1519074002996-a69e7ac46a42?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'enhance',
+    name: 'enhance',
+    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'neon-punk',
+    name: 'neon-punk',
+    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'modeling-compound',
+    name: 'modeling-compound',
+    image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'origami',
+    name: 'origami',
+    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: 'low-poly',
+    name: 'low-poly',
+    image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'photographic',
+    name: 'photographic',
+    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&auto=format&fit=crop&q=60'
+  },
+  {
+    id: 'pixel-art',
+    name: 'pixel-art',
+    image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&auto=format&fit=crop&q=60'
+  }
 ];
 
 export default function AIImageScreen({ navigation }) {
@@ -34,10 +104,10 @@ export default function AIImageScreen({ navigation }) {
   const [selectedStyle, setSelectedStyle] = useState('photographic');
   const [selectedRatio, setSelectedRatio] = useState('1:1');
   const [imageCount, setImageCount] = useState(1);
-  
+
   const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false);
   const [negativePrompt, setNegativePrompt] = useState('');
-  
+
   const [isStyleModalVisible, setIsStyleModalVisible] = useState(false);
 
   const handleCreate = () => {
@@ -58,7 +128,7 @@ export default function AIImageScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
@@ -73,7 +143,7 @@ export default function AIImageScreen({ navigation }) {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
+
           {/* Enter Prompt Section */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Enter Prompt:</Text>
@@ -99,7 +169,7 @@ export default function AIImageScreen({ navigation }) {
               <View style={styles.styleSelectorTextContainer}>
                 <Text style={styles.styleSelectorLabel}>Styles</Text>
                 <Text style={styles.styleSelectorValue}>
-                  {STYLES_LIST.find((s) => s.id === selectedStyle)?.name || selectedStyle}
+                  {selectedStyle}
                 </Text>
               </View>
               <View style={styles.plusIconContainer}>
@@ -193,41 +263,46 @@ export default function AIImageScreen({ navigation }) {
       </KeyboardAvoidingView>
 
       {/* Styles Modal Selector */}
-      <Modal visible={isStyleModalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalHeaderTitle}>Select Style</Text>
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                onPress={() => setIsStyleModalVisible(false)}
-              >
-                <Text style={styles.modalCloseText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={STYLES_LIST}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => {
-                const isSelected = selectedStyle === item.id;
-                return (
-                  <TouchableOpacity
-                    style={[styles.styleListItem, isSelected && styles.styleListItemSelected]}
-                    onPress={() => {
-                      setSelectedStyle(item.id);
-                      setIsStyleModalVisible(false);
-                    }}
-                  >
-                    <Text style={[styles.styleListItemText, isSelected && styles.styleListItemTextSelected]}>
-                      {item.name}
-                    </Text>
-                    {isSelected && <Check size={18} color="#005BFF" />}
-                  </TouchableOpacity>
-                );
-              }}
-            />
+      <Modal visible={isStyleModalVisible} transparent={false} animationType="slide">
+        <SafeAreaView style={styles.modalOverlay}>
+          <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
+
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setIsStyleModalVisible(false)}
+            >
+              <X size={18} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.modalHeaderTitle}>AI Styles</Text>
+            <View style={{ width: 32 }} />
           </View>
-        </View>
+
+          <FlatList
+            data={STYLES_LIST}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            contentContainerStyle={styles.stylesGrid}
+            columnWrapperStyle={{ justifyContent: 'space-between' }}
+            renderItem={({ item }) => {
+              const isSelected = selectedStyle === item.id;
+              return (
+                <TouchableOpacity
+                  style={[styles.styleCard, isSelected && styles.styleCardSelected]}
+                  onPress={() => {
+                    setSelectedStyle(item.id);
+                    setIsStyleModalVisible(false);
+                  }}
+                >
+                  <Image source={{ uri: item.image }} style={styles.styleCardImage} />
+                  <View style={styles.styleCardOverlay}>
+                    <Text style={styles.styleCardText}>{item.name}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </SafeAreaView>
       </Modal>
 
     </SafeAreaView>
@@ -305,7 +380,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111',
     marginTop: 2,
-    textTransform: 'capitalize',
+    textTransform: 'lowercase',
   },
   plusIconContainer: {
     width: 24,
@@ -421,56 +496,67 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
     backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '60%',
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   modalHeader: {
+    height: 56,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
     borderBottomWidth: 1,
     borderColor: '#EAEAEA',
-  },
-  modalHeaderTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    position: 'relative',
   },
   modalCloseBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  modalCloseText: {
-    fontSize: 16,
-    color: '#005BFF',
-    fontWeight: 'bold',
-  },
-  styleListItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    position: 'absolute',
+    left: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#005BFF',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
   },
-  styleListItemSelected: {
-    backgroundColor: '#F3F8FF',
-  },
-  styleListItemText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  styleListItemTextSelected: {
-    color: '#005BFF',
+  modalHeaderTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#111',
+  },
+  stylesGrid: {
+    padding: 12,
+  },
+  styleCard: {
+    width: '48%',
+    height: 160,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
+    position: 'relative',
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  styleCardSelected: {
+    borderColor: '#005BFF',
+  },
+  styleCardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  styleCardOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 36,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  styleCardText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textTransform: 'lowercase',
   },
 });
