@@ -12,6 +12,8 @@ import {
   Dimensions,
   PanResponder,
   Modal,
+  Animated,
+  ScrollView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -27,6 +29,12 @@ import {
   RotateCw,
   FlipHorizontal,
   FlipVertical,
+  Menu,
+  Headphones,
+  Star,
+  Share2,
+  Shield,
+  FileText,
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
@@ -38,6 +46,25 @@ export default function HomeScreen({ onSearch }) {
   const [isListening, setIsListening] = useState(false);
   const [isListeningModalVisible, setIsListeningModalVisible] = useState(false);
   const [isInputInvalid, setIsInputInvalid] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.75)).current;
+
+  const openDrawer = () => {
+    setIsDrawerOpen(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeDrawer = () => {
+    Animated.timing(slideAnim, {
+      toValue: -SCREEN_WIDTH * 0.75,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setIsDrawerOpen(false));
+  };
 
   // Speech Recognition Event Listeners
   useSpeechRecognitionEvent('start', () => {
@@ -79,7 +106,7 @@ export default function HomeScreen({ onSearch }) {
         );
         return;
       }
-      
+
       try {
         setSearchText(''); // Clear search text for new voice input
         await ExpoSpeechRecognitionModule.start({
@@ -297,118 +324,188 @@ export default function HomeScreen({ onSearch }) {
 
   // RENDER HOME VIEW
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Image Search</Text>
-
-      {/* Search Row */}
-      <View style={styles.searchRow}>
-        <TextInput
-          style={[styles.input, isInputInvalid && styles.inputInvalid]}
-          placeholder={isListening ? "Listening..." : "Enter your text..."}
-          placeholderTextColor="#999"
-          value={searchText}
-          onChangeText={(text) => {
-            setSearchText(text);
-            if (text.trim()) {
-              setIsInputInvalid(false);
-            }
-          }}
-        />
-        <TouchableOpacity
-          style={[styles.iconButton, isListening && styles.iconButtonActive]}
-          onPress={handleMicPress}
-        >
-          <Mic size={20} color={isListening ? '#EF4444' : '#FFF'} />
+    <SafeAreaView style={styles.container}>
+      {/* Top Header Bar */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
+          <Menu size={24} color="#FFF" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.searchButton}
-          onPress={() => {
-            if (searchText.trim()) {
-              onSearch(searchText, null);
-            } else {
-              setIsInputInvalid(true);
-            }
-          }}
-        >
-          <Search size={20} color="#FFF" />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Image Search</Text>
       </View>
 
-      {/* Selected Image Preview */}
-      {imageUri && (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: imageUri }} style={styles.previewImage} />
-          <View style={styles.previewActions}>
-            <TouchableOpacity
-              style={styles.imageSearchBtn}
-              onPress={() => {
-                if (imageUri) {
-                  onSearch('', imageUri);
-                }
-              }}
-            >
-              <Text style={styles.imageSearchBtnText}>Search Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.trashBtn} onPress={() => setImageUri(null)}>
-              <Trash2 size={20} color="#EF4444" />
-            </TouchableOpacity>
+      {/* Main Content Area */}
+      <View style={styles.content}>
+
+        {/* Search Row */}
+        <View style={styles.searchRow}>
+          <TextInput
+            style={[styles.input, isInputInvalid && styles.inputInvalid]}
+            placeholder={isListening ? "Listening..." : "Enter your text..."}
+            placeholderTextColor="#999"
+            value={searchText}
+            onChangeText={(text) => {
+              setSearchText(text);
+              if (text.trim()) {
+                setIsInputInvalid(false);
+              }
+            }}
+          />
+          <TouchableOpacity
+            style={[styles.iconButton, isListening && styles.iconButtonActive]}
+            onPress={handleMicPress}
+          >
+            <Mic size={20} color={isListening ? '#EF4444' : '#FFF'} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={() => {
+              if (searchText.trim()) {
+                onSearch(searchText, null);
+              } else {
+                setIsInputInvalid(true);
+              }
+            }}
+          >
+            <Search size={20} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Selected Image Preview */}
+        {imageUri && (
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: imageUri }} style={styles.previewImage} />
+            <View style={styles.previewActions}>
+              <TouchableOpacity
+                style={styles.imageSearchBtn}
+                onPress={() => {
+                  if (imageUri) {
+                    onSearch('', imageUri);
+                  }
+                }}
+              >
+                <Text style={styles.imageSearchBtnText}>Search Image</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.trashBtn} onPress={() => setImageUri(null)}>
+                <Trash2 size={20} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
           </View>
+        )}
+
+        {/* Action Buttons */}
+        <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('gallery')}>
+          <ImageIcon size={24} color="#FFF" style={styles.btnIcon} />
+          <Text style={styles.actionButtonText}>Upload Image from Gallery</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('camera')}>
+          <Camera size={24} color="#FFF" style={styles.btnIcon} />
+          <Text style={styles.actionButtonText}>Open Camera & Capture</Text>
+        </TouchableOpacity>
+
+        {/* Voice Search Overlay Modal */}
+        <Modal
+          visible={isListeningModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={handleMicPress}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={styles.modalCloseArea}
+              activeOpacity={1}
+              onPress={handleMicPress}
+            />
+            <View style={styles.modalContent}>
+              {/* Logo space placeholder / Microphone circles */}
+              <TouchableOpacity
+                style={styles.micRippleOuter}
+                activeOpacity={0.8}
+                onPress={handleMicPress}
+              >
+                <View style={styles.micRippleInner}>
+                  <Mic size={40} color="#2A303D" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Speaking / Listening Text */}
+              <Text style={styles.listeningTitle}>
+                {searchText ? searchText : "Search By Text"}
+              </Text>
+
+              {/* Language Text at bottom */}
+              <Text style={styles.languageText}>English (Pakistan)</Text>
+            </View>
+          </View>
+        </Modal>
+
+      {/* Drawer Overlay */}
+      {isDrawerOpen && (
+        <View style={styles.drawerOverlay}>
+          <TouchableOpacity
+            style={styles.drawerBackdrop}
+            activeOpacity={1}
+            onPress={closeDrawer}
+          />
+          <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
+            {/* Drawer Header with Logo Placeholder */}
+            <View style={styles.drawerHeader}>
+              <View style={styles.drawerLogoPlaceholder}>
+                <Text style={styles.drawerLogoText}>Logo Placeholder</Text>
+              </View>
+            </View>
+
+            {/* Drawer Menu Items */}
+            <ScrollView style={styles.drawerMenuScroll}>
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => {}}>
+                <Headphones size={22} color="#555" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Customer Support</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => {}}>
+                <Star size={22} color="#555" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Rate Us</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => {}}>
+                <Share2 size={22} color="#555" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Share</Text>
+              </TouchableOpacity>
+
+              {/* Horizontal Divider Line */}
+              <View style={styles.drawerMenuDivider} />
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => {}}>
+                <Shield size={22} color="#555" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Privacy Policy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => {}}>
+                <FileText size={22} color="#555" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Terms of Service</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Drawer Footer */}
+            <View style={styles.drawerMenuFooter}>
+              <Text style={styles.drawerMenuFooterText}>Reverse Image Search App</Text>
+              <Text style={styles.drawerMenuVersion}>v1.0.0</Text>
+            </View>
+          </Animated.View>
         </View>
       )}
-
-      {/* Action Buttons */}
-      <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('gallery')}>
-        <ImageIcon size={24} color="#FFF" style={styles.btnIcon} />
-        <Text style={styles.actionButtonText}>Upload Image from Gallery</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('camera')}>
-        <Camera size={24} color="#FFF" style={styles.btnIcon} />
-        <Text style={styles.actionButtonText}>Open Camera & Capture</Text>
-      </TouchableOpacity>
-
-      {/* Voice Search Overlay Modal */}
-      <Modal
-        visible={isListeningModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={handleMicPress}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalCloseArea}
-            activeOpacity={1}
-            onPress={handleMicPress}
-          />
-          <View style={styles.modalContent}>
-            {/* Logo space placeholder / Microphone circles */}
-            <TouchableOpacity 
-              style={styles.micRippleOuter}
-              activeOpacity={0.8}
-              onPress={handleMicPress}
-            >
-              <View style={styles.micRippleInner}>
-                <Mic size={40} color="#2A303D" />
-              </View>
-            </TouchableOpacity>
-
-            {/* Speaking / Listening Text */}
-            <Text style={styles.listeningTitle}>
-              {searchText ? searchText : "Search By Text"}
-            </Text>
-
-            {/* Language Text at bottom */}
-            <Text style={styles.languageText}>English (Pakistan)</Text>
-          </View>
-        </View>
-      </Modal>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   // Home Styles
-  container: { flex: 1, padding: 20, backgroundColor: '#FFF', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#007AFF' },
+  header: { height: 56, backgroundColor: '#007AFF', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
+  menuButton: { marginRight: 16, padding: 4 },
+  headerTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold', letterSpacing: 0.5 },
+  content: { flex: 1, backgroundColor: '#FFF', padding: 20, justifyContent: 'center' },
   title: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 30 },
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#CCC', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#000' },
@@ -501,5 +598,94 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9AA0A6',
     textAlign: 'center',
+  },
+
+  // Drawer Overlay Styles
+  drawerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+    flexDirection: 'row',
+  },
+  drawerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  drawerContainer: {
+    width: SCREEN_WIDTH * 0.75,
+    height: '100%',
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 16,
+  },
+  drawerHeader: {
+    padding: 24,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#0066D6',
+  },
+  drawerLogoPlaceholder: {
+    width: '100%',
+    height: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  drawerLogoText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  drawerMenuScroll: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  drawerMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  drawerMenuIcon: {
+    marginRight: 16,
+  },
+  drawerMenuText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  drawerMenuDivider: {
+    height: 1,
+    backgroundColor: '#EEE',
+    marginVertical: 16,
+    marginHorizontal: 20,
+  },
+  drawerMenuFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+  },
+  drawerMenuFooterText: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '500',
+  },
+  drawerMenuVersion: {
+    fontSize: 10,
+    color: '#CCC',
+    marginTop: 4,
   },
 });
