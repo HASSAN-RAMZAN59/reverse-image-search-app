@@ -57,6 +57,8 @@ export default function HomeScreen({ onSearch }) {
   const [isPrivacyVisible, setIsPrivacyVisible] = useState(false);
   const [isSupportVisible, setIsSupportVisible] = useState(false);
   const [supportText, setSupportText] = useState('');
+  const [isRateModalVisible, setIsRateModalVisible] = useState(false);
+  const [selectedRating, setSelectedRating] = useState(0);
   const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.75)).current;
 
   const handleSendEmail = () => {
@@ -75,6 +77,17 @@ export default function HomeScreen({ onSearch }) {
           'Could not open your mail client automatically. Please email your issue directly to reverseimagesearch64@gmail.com'
         );
       });
+  };
+
+  const handleRateApp = () => {
+    setIsRateModalVisible(false);
+    const storeUrl = Platform.OS === 'ios'
+      ? 'https://apps.apple.com/app/id64a14811'
+      : 'https://play.google.com/store/apps/details?id=com.reverseimagesearch.app';
+
+    Linking.openURL(storeUrl).catch(() => {
+      Alert.alert('Error', 'Could not open Google Play Store automatically.');
+    });
   };
 
   const getFormattedDate = () => {
@@ -508,7 +521,7 @@ export default function HomeScreen({ onSearch }) {
                 <Text style={styles.drawerMenuText}>Customer Support</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => {}}>
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { closeDrawer(); setSelectedRating(0); setIsRateModalVisible(true); }}>
                 <Star size={22} color="#555" style={styles.drawerMenuIcon} />
                 <Text style={styles.drawerMenuText}>Rate Us</Text>
               </TouchableOpacity>
@@ -704,6 +717,66 @@ export default function HomeScreen({ onSearch }) {
             )}
           </View>
         </SafeAreaView>
+      </Modal>
+
+      {/* Rate Us Modal */}
+      <Modal
+        visible={isRateModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsRateModalVisible(false)}
+      >
+        <View style={styles.rateModalOverlay}>
+          <View style={styles.rateDialog}>
+            {/* Close Button */}
+            <TouchableOpacity style={styles.rateCloseBtn} onPress={() => setIsRateModalVisible(false)}>
+              <X size={24} color="#333" />
+            </TouchableOpacity>
+
+            {/* Title */}
+            <Text style={styles.rateTitle}>Do you like{"\n"}Search Image ?</Text>
+
+            {/* Subtitle */}
+            <Text style={styles.rateSubtitle}>
+              We are working hard for a better user experience.{"\n"}We'd greatly appreciate if you can rate us
+            </Text>
+
+            {/* Stars Row */}
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((starValue) => (
+                <TouchableOpacity
+                  key={starValue}
+                  onPress={() => setSelectedRating(starValue)}
+                  style={styles.starTouch}
+                  activeOpacity={0.7}
+                >
+                  <Star
+                    size={38}
+                    color={starValue <= selectedRating ? "#FFC107" : "#CCC"}
+                    fill={starValue <= selectedRating ? "#FFC107" : "transparent"}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Dynamic Rating Label / "The best we can get" */}
+            <Text style={styles.rateLabel}>
+              {selectedRating === 5 ? "The best we can get" : " "}
+            </Text>
+
+            {/* Rate Button */}
+            <TouchableOpacity
+              disabled={selectedRating === 0}
+              onPress={handleRateApp}
+              style={[
+                styles.rateSubmitBtn,
+                selectedRating === 0 ? styles.rateSubmitBtnDisabled : styles.rateSubmitBtnEnabled
+              ]}
+            >
+              <Text style={styles.rateSubmitText}>Rate</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -1003,5 +1076,83 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'right',
     marginTop: 8,
+  },
+
+  // Rate Us Styles
+  rateModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  rateDialog: {
+    width: '100%',
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  rateCloseBtn: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    padding: 4,
+  },
+  rateTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#111',
+    textAlign: 'center',
+    marginTop: 20,
+    lineHeight: 28,
+  },
+  rateSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 18,
+    lineHeight: 20,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  starTouch: {
+    paddingHorizontal: 6,
+  },
+  rateLabel: {
+    fontSize: 13,
+    color: '#555',
+    marginTop: 8,
+    marginBottom: 20,
+    height: 18,
+    fontWeight: '500',
+  },
+  rateSubmitBtn: {
+    width: '100%',
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rateSubmitBtnDisabled: {
+    backgroundColor: '#B0B0B0',
+  },
+  rateSubmitBtnEnabled: {
+    backgroundColor: '#007AFF',
+  },
+  rateSubmitText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
