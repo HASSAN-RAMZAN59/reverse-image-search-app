@@ -13,7 +13,7 @@ export async function generateAIImage(promptText, options = {}) {
 
   try {
     const formData = new FormData();
-    
+
     // Append style to the prompt if provided
     let finalPrompt = promptText;
     if (style && style.toLowerCase() !== 'none' && style.toLowerCase() !== 'photographic') {
@@ -21,10 +21,10 @@ export async function generateAIImage(promptText, options = {}) {
     } else if (style.toLowerCase() === 'photographic') {
       finalPrompt = `${promptText}, photorealistic, highly detailed, 8k resolution`;
     }
-    
+
     formData.append('prompt', finalPrompt);
     formData.append('output_format', 'jpeg');
-    
+
     // Ensure aspect ratio is valid in Stability Core API
     // Supported: "1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21"
     let apiAspectRatio = aspectRatio;
@@ -38,8 +38,11 @@ export async function generateAIImage(promptText, options = {}) {
     }
 
     const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
+    if (!apiKey) {
+      console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
+    }
     const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/generate/ultra',
+      'https://api.stability.ai/v2beta/stable-image/generate/core',
       formData,
       {
         headers: {
