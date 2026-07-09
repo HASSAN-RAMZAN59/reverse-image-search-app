@@ -32,7 +32,6 @@ export default function AIImageScreen({ navigation }) {
     try {
       const base64Image = await generateAIImage(prompt.trim());
       setGeneratedImage(base64Image);
-      Alert.alert('Success', 'Your AI image has been generated successfully!');
     } catch (error) {
       console.error(error);
       Alert.alert(
