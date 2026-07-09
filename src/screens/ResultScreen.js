@@ -158,7 +158,7 @@ export default function ResultScreen({ searchQuery, imageUri, onBack }) {
     }
 
     const encodedQuery = encodeURIComponent(searchQuery);
-    
+
     const isImage = activeSubTab === 'images';
     const isVideo = activeSubTab === 'videos';
     const isNews = activeSubTab === 'news';
@@ -181,7 +181,7 @@ export default function ResultScreen({ searchQuery, imageUri, onBack }) {
       else if (isVideo) path = 'video/search';
       return `https://yandex.com/${path}?text=${encodedQuery}`;
     }
-    
+
     return `https://www.google.com/search?q=${encodedQuery}&tbm=isch`;
   };
 
