@@ -42,6 +42,7 @@ import {
   ArrowLeft,
   Send,
   Sparkles,
+  QrCode,
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
@@ -473,6 +474,11 @@ export default function HomeScreen({ onSearch, navigation }) {
         <TouchableOpacity style={styles.actionButton} onPress={() => navigation?.navigate('AIArtDashboard')}>
           <Sparkles size={24} color="#FFF" style={styles.btnIcon} />
           <Text style={styles.actionButtonText}>AI Art</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton} onPress={() => navigation?.navigate('QRScanner')}>
+          <QrCode size={24} color="#FFF" style={styles.btnIcon} />
+          <Text style={styles.actionButtonText}>Scan QR Code</Text>
         </TouchableOpacity>
 
         {/* Voice Search Overlay Modal */}
