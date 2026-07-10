@@ -68,20 +68,23 @@ export async function generateAIImage(promptText, options = {}) {
       cleanedNegativePrompt = cleanText;
     }
 
+    let endpoint = 'ultra';
     if (cleanedNegativePrompt) {
       formData.append('negative_prompt', cleanedNegativePrompt);
-      formData.append('guidance', '6'); // Increase guidance to ensure strict adherence to negative prompt
-      console.log(`[AI Image] Original negative prompt: "${negativePrompt}", Cleaned: "${cleanedNegativePrompt}" (Applied guidance: 6)`);
+      formData.append('model', 'sd3.5-large');
+      formData.append('cfg_scale', '7'); // Control strict adherence to negation
+      endpoint = 'sd3';
+      console.log(`[AI Image] Negative prompt present: "${cleanedNegativePrompt}". Using SD3.5 Large model on SD3 endpoint with cfg_scale: 7`);
     }
 
-    console.log(`[AI Image] Prompt: "${finalPrompt}", Aspect Ratio: "${apiAspectRatio}"`);
+    console.log(`[AI Image] Prompt: "${finalPrompt}", Aspect Ratio: "${apiAspectRatio}", Endpoint: "${endpoint}"`);
 
     const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
     if (!apiKey) {
       console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
     }
     const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/generate/ultra',
+      `https://api.stability.ai/v2beta/stable-image/generate/${endpoint}`,
       formData,
       {
         headers: {
