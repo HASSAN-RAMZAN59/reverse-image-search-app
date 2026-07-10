@@ -70,7 +70,8 @@ export async function generateAIImage(promptText, options = {}) {
 
     if (cleanedNegativePrompt) {
       formData.append('negative_prompt', cleanedNegativePrompt);
-      console.log(`[AI Image] Original negative prompt: "${negativePrompt}", Cleaned: "${cleanedNegativePrompt}"`);
+      formData.append('guidance', '6'); // Increase guidance to ensure strict adherence to negative prompt
+      console.log(`[AI Image] Original negative prompt: "${negativePrompt}", Cleaned: "${cleanedNegativePrompt}" (Applied guidance: 6)`);
     }
 
     console.log(`[AI Image] Prompt: "${finalPrompt}", Aspect Ratio: "${apiAspectRatio}"`);
