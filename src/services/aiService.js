@@ -33,16 +33,54 @@ export async function generateAIImage(promptText, options = {}) {
     }
     formData.append('aspect_ratio', apiAspectRatio);
 
+    let cleanedNegativePrompt = '';
     if (negativePrompt && negativePrompt.trim()) {
-      formData.append('negative_prompt', negativePrompt.trim());
+      let cleanText = negativePrompt.toLowerCase();
+      const negationPatterns = [
+        /don't\s+include/gi,
+        /do\s+not\s+include/gi,
+        /don't\s+show/gi,
+        /do\s+not\s+show/gi,
+        /don't\s+add/gi,
+        /do\s+not\s+add/gi,
+        /exclude/gi,
+        /without/gi,
+        /remove/gi,
+        /\bno\b/gi,
+        /\bnot\b/gi,
+        /shamil\s+na\s+kro/gi,
+        /na\s+include\s+kro/gi,
+        /nahi\s+hona\s+chahiye/gi,
+        /na\s+ho/gi,
+        /nahi\s+chahiye/gi,
+        /mat\s+dikhana/gi
+      ];
+
+      negationPatterns.forEach(pattern => {
+        cleanText = cleanText.replace(pattern, '');
+      });
+
+      // Keep alphanumeric characters, spaces, and commas
+      cleanText = cleanText.replace(/[^a-zA-Z0-9,\s]/g, '');
+      cleanText = cleanText.replace(/\s+/g, ' ');
+      cleanText = cleanText.replace(/\s*,\s*/g, ', ');
+      cleanText = cleanText.trim().replace(/^,|,$/g, '').trim();
+      cleanedNegativePrompt = cleanText;
     }
+
+    if (cleanedNegativePrompt) {
+      formData.append('negative_prompt', cleanedNegativePrompt);
+      console.log(`[AI Image] Original negative prompt: "${negativePrompt}", Cleaned: "${cleanedNegativePrompt}"`);
+    }
+
+    console.log(`[AI Image] Prompt: "${finalPrompt}", Aspect Ratio: "${apiAspectRatio}"`);
 
     const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
     if (!apiKey) {
       console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
     }
     const response = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/generate/core',
+      'https://api.stability.ai/v2beta/stable-image/generate/ultra',
       formData,
       {
         headers: {

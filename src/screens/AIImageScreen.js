@@ -241,7 +241,7 @@ export default function AIImageScreen({ navigation }) {
                 <Text style={styles.negPromptLabel}>Negative Prompt:</Text>
                 <TextInput
                   style={styles.negTextInput}
-                  placeholder="e.g. low quality, blurry, extra limbs, ugly..."
+                  placeholder="e.g. blurry, low quality, watermark, text"
                   placeholderTextColor="#AAA"
                   multiline={true}
                   numberOfLines={3}
@@ -249,6 +249,9 @@ export default function AIImageScreen({ navigation }) {
                   onChangeText={setNegativePrompt}
                   textAlignVertical="top"
                 />
+                <Text style={styles.negPromptHint}>
+                  Write the exact keywords you want to avoid.
+                </Text>
               </View>
             )}
           </View>
@@ -469,6 +472,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     minHeight: 80,
+  },
+  negPromptHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 8,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   createButton: {
     width: '100%',
