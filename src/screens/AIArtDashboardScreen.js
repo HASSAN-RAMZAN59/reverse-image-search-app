@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { ArrowLeft, Sparkles } from 'lucide-react-native';
 
 export default function AIArtDashboardScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#007AFF" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -45,7 +46,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    height: 56,
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     backgroundColor: '#007AFF',
     flexDirection: 'row',
     alignItems: 'center',
