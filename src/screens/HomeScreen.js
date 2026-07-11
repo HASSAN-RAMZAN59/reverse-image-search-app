@@ -43,6 +43,7 @@ import {
   Send,
   Sparkles,
   QrCode,
+  Download,
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
@@ -62,6 +63,12 @@ export default function HomeScreen({ onSearch, navigation }) {
   const [isRateModalVisible, setIsRateModalVisible] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
   const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.75)).current;
+
+  const handleOpenSavedDownloads = () => {
+    if (navigation) {
+      navigation.navigate('Downloads');
+    }
+  };
 
   const handleSendEmail = () => {
     const email = 'reverseimagesearch64@gmail.com';
@@ -296,13 +303,27 @@ export default function HomeScreen({ onSearch, navigation }) {
   if (editorUri) {
     return (
       <SafeAreaView style={styles.editorContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
         {/* Header */}
         <View style={styles.editorHeader}>
           <TouchableOpacity style={styles.headerBtn} onPress={() => setEditorUri(null)} disabled={busy}>
             <X size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.editorHeaderTitle}>Edit Image</Text>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => { setImageUri(editorUri); setEditorUri(null); }} disabled={busy}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => {
+              const finalUri = editorUri;
+              setEditorUri(null);
+              setImageUri(null);
+              if (navigation) {
+                navigation.navigate('Result', { searchQuery: '', imageUri: finalUri });
+              } else {
+                onSearch?.('', finalUri);
+              }
+            }}
+            disabled={busy}
+          >
             <Check size={24} color="#34C759" />
           </TouchableOpacity>
         </View>
@@ -385,12 +406,16 @@ export default function HomeScreen({ onSearch, navigation }) {
   // RENDER HOME VIEW
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       {/* Top Header Bar */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
           <Menu size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Image Search</Text>
+        <TouchableOpacity style={styles.savedDownloadsBtn} onPress={handleOpenSavedDownloads}>
+          <Download size={24} color="#FFF" />
+        </TouchableOpacity>
       </View>
 
       {/* Main Content Area */}
@@ -434,31 +459,7 @@ export default function HomeScreen({ onSearch, navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Selected Image Preview */}
-        {imageUri && (
-          <View style={styles.previewContainer}>
-            <Image source={{ uri: imageUri }} style={styles.previewImage} />
-            <View style={styles.previewActions}>
-              <TouchableOpacity
-                style={styles.imageSearchBtn}
-                onPress={() => {
-                  if (imageUri) {
-                    if (navigation) {
-                      navigation.navigate('Result', { searchQuery: '', imageUri: imageUri });
-                    } else {
-                      onSearch?.('', imageUri);
-                    }
-                  }
-                }}
-              >
-                <Text style={styles.imageSearchBtnText}>Search Image</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.trashBtn} onPress={() => setImageUri(null)}>
-                <Trash2 size={20} color="#EF4444" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+
 
         {/* Action Buttons */}
         <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('gallery')}>
@@ -805,9 +806,17 @@ export default function HomeScreen({ onSearch, navigation }) {
 const styles = StyleSheet.create({
   // Home Styles
   container: { flex: 1, backgroundColor: '#007AFF' },
-  header: { height: 56, backgroundColor: '#007AFF', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
+  header: {
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16
+  },
   menuButton: { marginRight: 16, padding: 4 },
-  headerTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold', letterSpacing: 0.5 },
+  headerTitle: { flex: 1, color: '#FFF', fontSize: 20, fontWeight: 'bold', letterSpacing: 0.5 },
+  savedDownloadsBtn: { padding: 4 },
   content: { flex: 1, backgroundColor: '#FFF', padding: 20, justifyContent: 'center' },
   title: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 30 },
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
@@ -828,7 +837,16 @@ const styles = StyleSheet.create({
 
   // Editor Styles
   editorContainer: { flex: 1, backgroundColor: '#000' },
-  editorHeader: { flexDirection: 'row', height: 56, alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, borderBottomWidth: 1, borderColor: '#222' },
+  editorHeader: {
+    flexDirection: 'row',
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderColor: '#222'
+  },
   headerBtn: { padding: 8 },
   editorHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
   editorWorkspace: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },

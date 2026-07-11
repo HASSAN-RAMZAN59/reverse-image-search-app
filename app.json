@@ -9,7 +9,15 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.viberay.imagesearch"
+      "package": "com.yourname.reverseimagesearchapp",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "MEDIA_CONTENT_CONTROL",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO"
+      ]
     },
     "plugins": [
       [
@@ -17,6 +25,19 @@
         {
           "microphonePermission": "Allow this app to access the microphone for voice search.",
           "speechRecognitionPermission": "Allow this app to recognize speech for voice search."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow this app to access your camera to scan QR codes and capture images for search."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow this app to access your photos to select images for visual search.",
+          "savePhotosPermission": "Allow this app to save downloaded images to your photo gallery."
         }
       ]
     ]

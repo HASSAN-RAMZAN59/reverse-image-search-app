@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,14 @@ import {
   Share,
   Alert,
   Modal,
+  Animated,
+  Platform,
 } from 'react-native';
-import { ArrowLeft, RefreshCw, Share2, ZoomIn, X } from 'lucide-react-native';
+import { ArrowLeft, RefreshCw, Share2, ZoomIn, X, Download } from 'lucide-react-native';
 import { generateAIImage } from '../services/aiService';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
+import { addSavedDownload } from '../utils/downloadManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -57,6 +62,101 @@ export default function AIImageResultScreen({ route, navigation }) {
   );
 
   const [previewImage, setPreviewImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setToastVisible(false);
+    });
+  };
+
+  const handleDownloadImage = async (uri) => {
+    if (!uri) {
+      Alert.alert("Error", "No image source found to download.");
+      return;
+    }
+
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        "Permission Denied",
+        "Media Library permission is required to save the AI art to your gallery."
+      );
+      return;
+    }
+
+    try {
+      let localUri = uri;
+
+      if (uri.startsWith('data:image') || uri.includes(';base64,')) {
+        const parts = uri.split(';base64,');
+        const base64Data = parts[1];
+        let extension = 'png';
+        const match = uri.match(/data:image\/(\w+);base64/);
+        if (match && match[1]) {
+          extension = match[1];
+        }
+        
+        const filename = `ai_art_${Date.now()}.${extension}`;
+        localUri = `${FileSystem.documentDirectory}${filename}`;
+        await FileSystem.writeAsStringAsync(localUri, base64Data, {
+          encoding: 'base64',
+        });
+      } else if (uri.startsWith('http://') || uri.startsWith('https://')) {
+        const filename = uri.split('/').pop().split('?')[0] || `ai_art_${Date.now()}.jpg`;
+        const tempUri = `${FileSystem.documentDirectory}${filename}`;
+        const result = await FileSystem.downloadAsync(uri, tempUri);
+        localUri = result.uri;
+      }
+
+      let assetCreated = false;
+      let galleryAssetId = null;
+      try {
+        const asset = await MediaLibrary.createAssetAsync(localUri);
+        assetCreated = true;
+        galleryAssetId = asset.id;
+        const albumName = 'Reverse Image Search';
+        const album = await MediaLibrary.getAlbumAsync(albumName);
+        if (album === null) {
+          await MediaLibrary.createAlbumAsync(albumName, asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+      } catch (saveErr) {
+        console.warn("Album saving failed:", saveErr);
+        if (!assetCreated) {
+          await MediaLibrary.saveToLibraryAsync(localUri);
+        }
+      }
+
+      await addSavedDownload(localUri, galleryAssetId);
+      showToast("Image saved successfully!");
+    } catch (error) {
+      console.error("Save image error:", error);
+      Alert.alert(
+        "Download Failed",
+        "Network drop or error saving AI art. Please try again."
+      );
+    }
+  };
 
   const runGenerations = () => {
     // Reset states
@@ -126,8 +226,24 @@ export default function AIImageResultScreen({ route, navigation }) {
             itemStyle = styles.gridItemDouble;
           }
 
+          const isSelected = selectedImageIndex === item.id;
+
           return (
-            <View key={item.id} style={[styles.gridItem, itemStyle, { aspectRatio: ratioNumber }]}>
+            <TouchableOpacity
+              key={item.id}
+              activeOpacity={0.9}
+              onPress={() => {
+                if (item.uri) {
+                  setSelectedImageIndex(item.id);
+                }
+              }}
+              style={[
+                styles.gridItem,
+                itemStyle,
+                { aspectRatio: ratioNumber },
+                isSelected && styles.gridItemActive,
+              ]}
+            >
               {item.loading ? (
                 <View style={styles.stateContainer}>
                   <ActivityIndicator size="large" color="#007AFF" />
@@ -154,6 +270,12 @@ export default function AIImageResultScreen({ route, navigation }) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionIconBtn}
+                      onPress={() => handleDownloadImage(item.uri)}
+                    >
+                      <Download size={18} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionIconBtn}
                       onPress={() => handleShare(item.uri)}
                     >
                       <Share2 size={18} color="#FFF" />
@@ -161,7 +283,7 @@ export default function AIImageResultScreen({ route, navigation }) {
                   </View>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -170,7 +292,7 @@ export default function AIImageResultScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#007AFF" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -203,6 +325,12 @@ export default function AIImageResultScreen({ route, navigation }) {
           )}
         </View>
       </Modal>
+
+      {toastVisible && (
+        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -213,7 +341,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    height: 56,
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     backgroundColor: '#007AFF',
     flexDirection: 'row',
     alignItems: 'center',
@@ -311,6 +440,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
+  },
+  gridItemActive: {
+    borderColor: '#007AFF',
+    borderWidth: 3,
   },
   gridItemSingle: {
     width: '100%',
@@ -416,5 +549,28 @@ const styles = StyleSheet.create({
   modalPreviewImage: {
     width: SCREEN_WIDTH - 20,
     resizeMode: 'contain',
+  },
+  toastContainer: {
+    position: 'absolute',
+    bottom: 90,
+    left: '10%',
+    right: '10%',
+    backgroundColor: '#323232',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  toastText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

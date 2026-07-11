@@ -1,176 +1,341 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Camera, Image as ImageIcon, ShieldCheck, Mic } from 'lucide-react-native';
-import { Camera as CameraAPI } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
-import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import React, { useEffect, useState, useRef } from 'react';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View, AppState, StatusBar, Platform } from 'react-native';
+import { CheckCircle2 } from 'lucide-react-native';
+import { Camera } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
+import * as Notifications from 'expo-notifications';
+import { SvgXml } from 'react-native-svg';
+
+const logoXml = `
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+  <!-- Red (Top-Left to Bottom-Left) -->
+  <path d="M 50 10 A 40 40 0 0 0 10 50" stroke="#EA4335" stroke-width="8" stroke-linecap="round" />
+  <!-- Green (Bottom-Left to Bottom-Right) -->
+  <path d="M 10 50 A 40 40 0 0 0 50 90" stroke="#34A853" stroke-width="8" stroke-linecap="round" />
+  <!-- Yellow (Top-Right to Bottom-Right) -->
+  <path d="M 50 10 A 40 40 0 0 1 90 50" stroke="#FBBC05" stroke-width="8" stroke-linecap="round" />
+  <!-- Blue (Bottom-Right to Top-Right) -->
+  <path d="M 90 50 A 40 40 0 0 1 50 90" stroke="#4285F4" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Handle -->
+  <path d="M 78 78 L 95 95" stroke="#4285F4" stroke-width="9" stroke-linecap="round" />
+
+  <!-- Landscape inside -->
+  <path d="M 28 65 L 45 42 L 58 57 L 66 48 L 74 65 Z" fill="#1A73E8" />
+  <circle cx="60" cy="36" r="6" fill="#1A73E8" />
+</svg>
+`;
 
 export default function PermissionScreen({ onPermissionsGranted }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [permissions, setPermissions] = useState({ storage: false, camera: false, microphone: false });
-  const [simulatedStorageGranted, setSimulatedStorageGranted] = useState(false);
+  const [permissions, setPermissions] = useState({
+    media: 'undetermined',
+    camera: 'undetermined',
+    notifications: 'undetermined',
+  });
 
-  const hasAllPermissions = permissions.storage && simulatedStorageGranted && permissions.camera && permissions.microphone;
+  const appState = useRef(AppState.currentState);
 
-  const readDevicePermissions = async () => {
-    const storage = await ImagePicker.getMediaLibraryPermissionsAsync();
-    const camera = await CameraAPI.getCameraPermissionsAsync();
-    const microphone = await ExpoSpeechRecognitionModule.getPermissionsAsync();
-    const status = {
-      storage: Boolean(storage?.granted || storage?.status === 'granted'),
-      camera: Boolean(camera?.granted || camera?.status === 'granted'),
-      microphone: Boolean(microphone?.granted || microphone?.status === 'granted'),
-    };
-    setPermissions(status);
-    return status;
+  const checkPermissionStatus = async () => {
+    try {
+      const cameraStatus = await Camera.getCameraPermissionsAsync();
+      const mediaStatus = await MediaLibrary.getPermissionsAsync();
+      const notificationsStatus = await Notifications.getPermissionsAsync();
+
+      return {
+        camera: cameraStatus.status,
+        media: mediaStatus.status,
+        notifications: notificationsStatus.status,
+      };
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      return { media: 'undetermined', camera: 'undetermined', notifications: 'undetermined' };
+    }
   };
 
-  const syncPermissions = async () => {
-    try {
-      setLoading(true);
-      const current = await readDevicePermissions();
-      if (current.storage && current.camera && current.microphone) {
-        setSimulatedStorageGranted(true);
+  const syncAndCheck = async (shouldNavigate = true) => {
+    const status = await checkPermissionStatus();
+    setPermissions(status);
+    setLoading(false);
+
+    if (status.camera === 'granted' && status.media === 'granted' && status.notifications === 'granted') {
+      if (shouldNavigate) {
         onPermissionsGranted();
       }
-    } catch (err) {
-      console.log('Sync failed', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    syncPermissions();
+    syncAndCheck(true);
+
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        syncAndCheck(true);
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
-  const explainDenied = (label) => {
-    Alert.alert(
-      `${label} Permission Required`,
-      `This app cannot continue without ${label.toLowerCase()} permission. Please allow it to proceed.`,
-      [
-        { text: 'Open Settings', onPress: () => Linking.openSettings().catch(console.log) },
-        { text: 'OK', style: 'cancel' }
-      ]
-    );
-  };
-
-  const requestSequentialPermissions = async () => {
+  const handleRequestPermission = async () => {
     if (busy) return;
+    setBusy(true);
+
     try {
-      setBusy(true);
-      setLoading(true);
-
-      const before = await readDevicePermissions();
-      if (!before.storage) {
-        const res = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!res?.granted) return explainDenied('Storage');
-      }
-      setSimulatedStorageGranted(true);
-
-      const after = await readDevicePermissions();
-      if (!after.camera) {
-        const res = await CameraAPI.requestCameraPermissionsAsync();
-        if (!res?.granted) return explainDenied('Camera');
+      // Request Storage Permission
+      if (permissions.media !== 'granted') {
+        const res = await MediaLibrary.requestPermissionsAsync();
+        setPermissions(prev => {
+          const next = { ...prev, media: res.status };
+          checkFinalTransition(next);
+          return next;
+        });
+        setBusy(false);
+        return;
       }
 
-      const third = await readDevicePermissions();
-      if (!third.microphone) {
-        const res = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-        if (!res?.granted) return explainDenied('Microphone');
+      // Request Camera Permission
+      if (permissions.camera !== 'granted') {
+        const res = await Camera.requestCameraPermissionsAsync();
+        setPermissions(prev => {
+          const next = { ...prev, camera: res.status };
+          checkFinalTransition(next);
+          return next;
+        });
+        setBusy(false);
+        return;
       }
 
-      const final = await readDevicePermissions();
-      if (final.storage && final.camera && final.microphone) onPermissionsGranted();
+      // Request Notification Permission
+      if (permissions.notifications !== 'granted') {
+        const res = await Notifications.requestPermissionsAsync();
+        setPermissions(prev => {
+          const next = { ...prev, notifications: res.status };
+          checkFinalTransition(next);
+          return next;
+        });
+        setBusy(false);
+        return;
+      }
     } catch (error) {
-      Alert.alert('Permission Error', error?.message || 'Permission request failed.');
+      console.error('Permission request failed:', error);
+      Alert.alert('Permission Error', 'Failed to request permission.');
     } finally {
       setBusy(false);
-      setLoading(false);
     }
   };
 
-  const PermissionRow = ({ icon: Icon, label, granted }) => (
-    <View style={styles.row}>
-      <View style={styles.rowIcon}><Icon size={22} color="#1F2937" /></View>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <View style={[styles.statusBadge, granted ? styles.statusGranted : styles.statusDenied]}>
-        <Text style={[styles.statusText, granted ? styles.statusGrantedText : styles.statusDeniedText]}>
-          {granted ? '✓' : '✕'}
-        </Text>
-      </View>
-    </View>
-  );
+  const checkFinalTransition = (updatedPermissions) => {
+    if (
+      updatedPermissions.media === 'granted' &&
+      updatedPermissions.camera === 'granted' &&
+      updatedPermissions.notifications === 'granted'
+    ) {
+      setTimeout(() => {
+        onPermissionsGranted();
+      }, 150);
+    }
+  };
+
+  const handleOpenSettings = async () => {
+    try {
+      await Linking.openSettings();
+    } catch (error) {
+      Alert.alert('Error', 'Unable to open settings.');
+    }
+  };
+
+  const getButtonTextAndAction = () => {
+    if (permissions.media !== 'granted') {
+      return { text: 'ALLOW STORAGE PERMISSION', action: handleRequestPermission };
+    }
+    if (permissions.camera !== 'granted') {
+      return { text: 'ALLOW CAMERA PERMISSION', action: handleRequestPermission };
+    }
+    if (permissions.notifications !== 'granted') {
+      return { text: 'ALLOW NOTIFICATION PERMISSION', action: handleRequestPermission };
+    }
+    return { text: 'PROCEED TO HOMESCREEN', action: onPermissionsGranted };
+  };
+
+  const isAnyDenied =
+    permissions.media === 'denied' ||
+    permissions.camera === 'denied' ||
+    permissions.notifications === 'denied';
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
-        <Text style={styles.loadingText}>Checking permissions...</Text>
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
 
+  const btnConfig = getButtonTextAndAction();
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerIconWrap}>
-          <ShieldCheck size={42} color="#2563EB" strokeWidth={1.8} />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
+      {/* Logo in the center top */}
+      <View style={styles.logoContainer}>
+        <SvgXml xml={logoXml} width={120} height={120} />
+      </View>
+
+      {/* Permission Rows */}
+      <View style={styles.listContainer}>
+        <View style={styles.row}>
+          <CheckCircle2
+            size={26}
+            color={permissions.media === 'granted' ? '#4CAF50' : '#FF4B42'}
+            style={styles.icon}
+          />
+          <Text style={styles.rowLabel}>Storage permission</Text>
         </View>
-        <Text style={styles.title}>Permission Check</Text>
-        <Text style={styles.subtitle}>
-          Grant the permissions below in sequence so the app can work correctly.
-        </Text>
+
+        <View style={styles.row}>
+          <CheckCircle2
+            size={26}
+            color={permissions.camera === 'granted' ? '#4CAF50' : '#FF4B42'}
+            style={styles.icon}
+          />
+          <Text style={styles.rowLabel}>Camera permission</Text>
+        </View>
+
+        <View style={styles.row}>
+          <CheckCircle2
+            size={26}
+            color={permissions.notifications === 'granted' ? '#4CAF50' : '#FF4B42'}
+            style={styles.icon}
+          />
+          <Text style={styles.rowLabel}>Notification permission</Text>
+        </View>
       </View>
 
-      <View style={styles.card}>
-        <PermissionRow icon={ImageIcon} label="Storage permission" granted={permissions.storage && simulatedStorageGranted} />
-        <PermissionRow icon={Camera} label="Camera permission" granted={permissions.camera} />
-        <PermissionRow icon={Mic} label="Microphone permission" granted={permissions.microphone} />
-      </View>
-
-      <Pressable
-        onPress={hasAllPermissions ? onPermissionsGranted : requestSequentialPermissions}
-        disabled={busy}
-        style={({ pressed }) => [
-          styles.button,
-          busy && styles.buttonDisabled,
-          pressed && !busy && styles.buttonPressed,
-        ]}
-      >
-        {busy ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.buttonText}>
-            {hasAllPermissions ? 'PROCEED TO HOME SCREEN' : 'GRANT ALL PERMISSIONS'}
+      {/* Bottom Action Button */}
+      <View style={styles.bottomContainer}>
+        {isAnyDenied && (
+          <Text style={styles.fallbackHint}>
+            Please enable any denied permissions in settings to use the app features.
           </Text>
         )}
-      </Pressable>
+        
+        <Pressable
+          onPress={btnConfig.action}
+          style={({ pressed }) => [
+            styles.blueButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.buttonText}>{btnConfig.text}</Text>
+        </Pressable>
+
+        {isAnyDenied && (
+          <Pressable
+            onPress={handleOpenSettings}
+            style={({ pressed }) => [
+              styles.settingsButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.settingsButtonText}>OPEN DEVICE SETTINGS</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F9FC', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 28, justifyContent: 'space-between' },
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F9FC' },
-  loadingText: { marginTop: 14, fontSize: 16, color: '#4B5563' },
-  header: { alignItems: 'center', paddingHorizontal: 12 },
-  headerIconWrap: { width: 72, height: 72, borderRadius: 20, backgroundColor: '#EAF2FF', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  title: { fontSize: 26, lineHeight: 32, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  subtitle: { marginTop: 10, fontSize: 14, lineHeight: 21, color: '#6B7280', textAlign: 'center', maxWidth: 320 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 18, paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18 },
-  rowIcon: { width: 34, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  rowLabel: { flex: 1, fontSize: 17, color: '#111827', fontWeight: '500' },
-  statusBadge: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
-  statusGranted: { borderColor: '#22C55E', backgroundColor: '#ECFDF5' },
-  statusDenied: { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
-  statusText: { fontSize: 16, fontWeight: '800' },
-  statusGrantedText: { color: '#16A34A' },
-  statusDeniedText: { color: '#DC2626' },
-  button: { height: 62, borderRadius: 16, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
-  buttonPressed: { transform: [{ scale: 0.99 }], opacity: 0.96 },
-  buttonDisabled: { backgroundColor: '#93C5FD', shadowOpacity: 0, elevation: 0 },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.4 },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 80 + StatusBar.currentHeight : 80,
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  listContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginVertical: 40,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  icon: {
+    marginRight: 16,
+  },
+  rowLabel: {
+    fontSize: 19,
+    color: '#212121',
+    fontWeight: '400',
+  },
+  bottomContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  fallbackHint: {
+    fontSize: 13,
+    color: '#FF4B42',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  blueButton: {
+    width: '100%',
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: '#006BFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  settingsButton: {
+    width: '100%',
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  settingsButtonText: {
+    color: '#4B5563',
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
 });

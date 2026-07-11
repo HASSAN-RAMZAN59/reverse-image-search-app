@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,15 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Animated,
+  StatusBar,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Download, X } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
+import { addSavedDownload } from '../utils/downloadManager';
 
 const googleXml = `
   <svg width="24" height="24" viewBox="0 0 24 24">
@@ -97,6 +102,150 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
       navigation.goBack();
     } else if (onBack) {
       onBack();
+    }
+  };
+
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setToastVisible(false);
+    });
+  };
+
+  const saveImageToGallery = async (targetUrl) => {
+    if (!targetUrl) {
+      Alert.alert("Error", "No image available to download.");
+      return;
+    }
+
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        "Permission Denied",
+        "Media Library permission is required to save images to your gallery."
+      );
+      return;
+    }
+
+    try {
+      let targetUrlClean = targetUrl.trim();
+      
+      // Handle protocol-relative URL (e.g. //domain.com/image.jpg)
+      if (targetUrlClean.startsWith('//')) {
+        targetUrlClean = 'https:' + targetUrlClean;
+      }
+      
+      // Handle relative paths (e.g. /images/logo.png)
+      if (targetUrlClean.startsWith('/') && !targetUrlClean.startsWith('//')) {
+        let base = 'https://www.google.com';
+        if (activeBrowser === 'bing') base = 'https://www.bing.com';
+        else if (activeBrowser === 'yandex') base = 'https://yandex.com';
+        targetUrlClean = base + targetUrlClean;
+      }
+
+      let localUri = targetUrlClean;
+      
+      if (targetUrlClean.startsWith('http://') || targetUrlClean.startsWith('https://')) {
+        let filename = targetUrlClean.split('/').pop().split('?')[0];
+        // Ensure filename has a valid extension
+        if (!filename || !/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filename)) {
+          filename = `search_image_${Date.now()}.jpg`;
+        }
+        const tempUri = `${FileSystem.documentDirectory}${filename}`;
+        const result = await FileSystem.downloadAsync(targetUrlClean, tempUri);
+        localUri = result.uri;
+      } else if (targetUrlClean.startsWith('data:')) {
+        // Extract base64 payload and extension
+        const parts = targetUrlClean.split(';base64,');
+        if (parts.length === 2) {
+          const mimePart = parts[0];
+          const base64Data = parts[1];
+          let ext = 'jpg';
+          const match = mimePart.match(/data:image\/(\w+)/);
+          if (match && match[1]) {
+            ext = match[1];
+          }
+          const filename = `search_img_${Date.now()}.${ext}`;
+          const tempUri = `${FileSystem.documentDirectory}${filename}`;
+          await FileSystem.writeAsStringAsync(tempUri, base64Data, {
+            encoding: 'base64',
+          });
+          localUri = tempUri;
+        } else {
+          throw new Error('Unsupported data URL base64 format');
+        }
+      } else {
+        throw new Error('Unsupported URL protocol');
+      }
+      
+      let assetCreated = false;
+      let galleryAssetId = null;
+      try {
+        const asset = await MediaLibrary.createAssetAsync(localUri);
+        assetCreated = true;
+        galleryAssetId = asset.id;
+        const albumName = 'Reverse Image Search';
+        const album = await MediaLibrary.getAlbumAsync(albumName);
+        if (album === null) {
+          await MediaLibrary.createAlbumAsync(albumName, asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+      } catch (saveErr) {
+        console.warn("Album saving failed:", saveErr);
+        if (!assetCreated) {
+          await MediaLibrary.saveToLibraryAsync(localUri);
+        }
+      }
+
+      // Save to custom downloads metadata to display on saved downloads screen
+      await addSavedDownload(localUri, galleryAssetId);
+
+      showToast("Image saved successfully!");
+    } catch (err) {
+      console.error("Image download error:", err);
+      Alert.alert(
+        "Download Failed",
+        `An error occurred while saving the image: ${err.message || err}`
+      );
+    }
+  };
+
+  const handleDownload = () => {
+    saveImageToGallery(uploadedImageUrl || imageUri);
+  };
+
+  const [detectedImageUrl, setDetectedImageUrl] = useState(null);
+
+  const handleImageSaveOption = (url) => {
+    setDetectedImageUrl(url);
+  };
+
+  const handleMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'imageLongPress' && data.url) {
+        handleImageSaveOption(data.url);
+      }
+    } catch (e) {
+      console.log('Error parsing WebView message:', e);
     }
   };
 
@@ -225,7 +374,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
     }
   };
 
-  // JavaScript injected to hide extra content, logos, search forms, and navigation panels
+  // JavaScript injected to hide extra content, logos, search forms, and navigation panels, and detect image long presses
   const injectedJS = `
     (function() {
       const css = \`
@@ -242,12 +391,69 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
       style.type = 'text/css';
       style.appendChild(document.createTextNode(css));
       document.head.appendChild(style);
+
+      // Long press / hold image handler to save image
+      var lastTriggeredTime = 0;
+      function triggerImageLongPress(url) {
+        var now = Date.now();
+        if (now - lastTriggeredTime < 1000) return;
+        lastTriggeredTime = now;
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'imageLongPress',
+          url: url
+        }));
+      }
+
+      window.addEventListener('contextmenu', function(e) {
+        var target = e.target;
+        while (target && target.tagName !== 'IMG') {
+          target = target.parentNode;
+        }
+        if (target && target.tagName === 'IMG') {
+          var imageUrl = target.src || target.getAttribute('data-src') || target.getAttribute('data-actualsrc');
+          if (imageUrl) {
+            e.preventDefault();
+            triggerImageLongPress(imageUrl);
+          }
+        }
+      });
+
+      var touchTimer = null;
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length !== 1) return;
+        var target = e.target;
+        while (target && target.tagName !== 'IMG') {
+          target = target.parentNode;
+        }
+        if (target && target.tagName === 'IMG') {
+          clearTimeout(touchTimer);
+          touchTimer = setTimeout(function() {
+            var imageUrl = target.src || target.getAttribute('data-src') || target.getAttribute('data-actualsrc');
+            if (imageUrl) {
+              triggerImageLongPress(imageUrl);
+            }
+          }, 800); // 800ms hold time
+        }
+      }, { passive: true });
+
+      document.addEventListener('touchmove', function() {
+        clearTimeout(touchTimer);
+      }, { passive: true });
+
+      document.addEventListener('touchend', function() {
+        clearTimeout(touchTimer);
+      }, { passive: true });
+
+      document.addEventListener('touchcancel', function() {
+        clearTimeout(touchTimer);
+      }, { passive: true });
     })();
     true;
   `;
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
@@ -294,6 +500,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
             injectedJavaScript={injectedJS}
             domStorageEnabled={true}
             javaScriptEnabled={true}
+            onMessage={handleMessage}
             renderLoading={() => (
               <View style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color="#1A73E8" />
@@ -301,6 +508,30 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
               </View>
             )}
           />
+        )}
+
+        {detectedImageUrl && (
+          <View style={styles.saveOverlayContainer}>
+            <Text style={styles.saveOverlayTitle} numberOfLines={1}>Image detected</Text>
+            <View style={styles.saveOverlayActions}>
+              <TouchableOpacity
+                style={styles.saveOverlayButton}
+                onPress={() => {
+                  saveImageToGallery(detectedImageUrl);
+                  setDetectedImageUrl(null);
+                }}
+              >
+                <Download size={18} color="#FFF" style={{ marginRight: 6 }} />
+                <Text style={styles.saveOverlayText}>Save Image</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveOverlayClose}
+                onPress={() => setDetectedImageUrl(null)}
+              >
+                <X size={18} color="#666" />
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       </View>
 
@@ -336,6 +567,12 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
           );
         })}
       </View>
+
+      {toastVisible && (
+        <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -348,7 +585,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    height: 56,
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     backgroundColor: '#1A73E8',
   },
   headerLeft: {
@@ -426,5 +664,77 @@ const styles = StyleSheet.create({
     marginRight: 6,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  saveOverlayContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#DADCE0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  saveOverlayTitle: {
+    fontSize: 14,
+    color: '#3C4043',
+    fontWeight: '500',
+    maxWidth: '45%',
+  },
+  saveOverlayActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  saveOverlayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A73E8',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  saveOverlayText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  saveOverlayClose: {
+    padding: 8,
+    backgroundColor: '#F1F3F4',
+    borderRadius: 20,
+  },
+  toastContainer: {
+    position: 'absolute',
+    bottom: 90,
+    left: '10%',
+    right: '10%',
+    backgroundColor: '#323232',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  toastText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

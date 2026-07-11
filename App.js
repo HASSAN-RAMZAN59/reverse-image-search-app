@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, SafeAreaView, StatusBar, LogBox, Platform, BackHandler } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { StyleSheet, View, LogBox, Platform, BackHandler } from 'react-native';
 import { Camera as CameraAPI } from 'expo-camera';
-import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import * as MediaLibrary from 'expo-media-library';
+import * as Notifications from 'expo-notifications';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ResultScreen from './src/screens/ResultScreen';
@@ -23,13 +23,13 @@ export default function App() {
   useEffect(() => {
     const checkPermissionsAndLoad = async () => {
       try {
-        const storage = await ImagePicker.getMediaLibraryPermissionsAsync();
         const camera = await CameraAPI.getCameraPermissionsAsync();
-        const microphone = await ExpoSpeechRecognitionModule.getPermissionsAsync();
+        const media = await MediaLibrary.getPermissionsAsync();
+        const notifications = await Notifications.getPermissionsAsync();
         const granted = Boolean(
-          (storage?.granted || storage?.status === 'granted') &&
           (camera?.granted || camera?.status === 'granted') &&
-          (microphone?.granted || microphone?.status === 'granted')
+          (media?.granted || media?.status === 'granted') &&
+          (notifications?.granted || notifications?.status === 'granted')
         );
         setIsAuthorized(granted);
       } catch (err) {
@@ -48,6 +48,8 @@ export default function App() {
   useEffect(() => {
     const backAction = () => {
       if (currentScreen === 'result') {
+        setSearchQuery('');
+        setSearchImageUri(null);
         setCurrentScreen('home');
         return true; // Prevents the app from exiting
       }
@@ -77,23 +79,20 @@ export default function App() {
   // Render Splash Screen during initial load
   if (appLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
+      <View style={styles.container}>
         <SplashScreen />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
-      
+    <View style={styles.container}>
       {!isAuthorized ? (
         <PermissionScreen onPermissionsGranted={() => setIsAuthorized(true)} />
       ) : (
         <AppNavigator />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -101,6 +100,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 });
