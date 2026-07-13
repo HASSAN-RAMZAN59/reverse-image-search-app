@@ -103,3 +103,55 @@ export async function generateAIImage(promptText, options = {}) {
     throw error;
   }
 }
+
+/**
+ * Transforms an input image using Stability AI's V2 Image-to-Image API (SD3) based on a style prompt and strength.
+ * 
+ * @param {string} imageUri - The local URI of the source image.
+ * @param {string} stylePrompt - The stylized prompt suffix configured from the grid selection.
+ * @param {number} strength - Conditioning strength (0.0 to 1.0, default 0.55).
+ * @returns {Promise<string>} A promise that resolves to a Base64-encoded JPEG image string.
+ */
+export async function generateImageToImage(imageUri, stylePrompt, strength = 0.55) {
+  try {
+    const formData = new FormData();
+    const filename = imageUri.split('/').pop() || 'image.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+    formData.append('image', {
+      uri: imageUri,
+      name: filename,
+      type: type,
+    });
+    formData.append('prompt', stylePrompt);
+    formData.append('strength', strength.toString());
+    formData.append('mode', 'image-to-image');
+    formData.append('output_format', 'jpeg');
+
+    const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
+    if (!apiKey) {
+      console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
+    }
+
+    const response = await axios.post(
+      'https://api.stability.ai/v2beta/stable-image/generate/sd3',
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'image/*',
+          'Content-Type': 'multipart/form-data',
+        },
+        responseType: 'arraybuffer',
+      }
+    );
+
+    const base64String = Buffer.from(response.data).toString('base64');
+    return `data:image/jpeg;base64,${base64String}`;
+  } catch (error) {
+    console.error('Error in generateImageToImage with Stability API:', error);
+    throw error;
+  }
+}
+

@@ -8,7 +8,7 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import { ArrowLeft, Sparkles, Download } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, Download, RefreshCw } from 'lucide-react-native';
 
 export default function AIArtDashboardScreen({ navigation }) {
   return (
@@ -23,7 +23,7 @@ export default function AIArtDashboardScreen({ navigation }) {
         <Text style={styles.headerTitle}>AI Art Dashboard</Text>
         <View style={{ width: 24 }} />
       </View>
-
+ 
       {/* Content */}
       <View style={styles.content}>
         <Text style={styles.subtitle}>Explore AI Capabilities</Text>
@@ -37,6 +37,14 @@ export default function AIArtDashboardScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.actionButton, styles.remixButton]}
+          onPress={() => navigation?.navigate('AIRemix')}
+        >
+          <RefreshCw size={24} color="#FFF" style={styles.btnIcon} />
+          <Text style={styles.actionButtonText}>🔄 AI Image to Image (Remix)</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.actionButton, styles.downloadButton]}
           onPress={() => navigation?.navigate('Downloads', { isAIOnly: true })}
         >
@@ -47,6 +55,7 @@ export default function AIArtDashboardScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -104,6 +113,10 @@ const styles = StyleSheet.create({
   },
   downloadButton: {
     backgroundColor: '#5856D6', // Indigo/violet premium accent color
+    marginTop: 10,
+  },
+  remixButton: {
+    backgroundColor: '#FF9500', // Vibrant Amber/Orange color for remix
     marginTop: 10,
   },
 });
