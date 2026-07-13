@@ -221,7 +221,7 @@ export default function AIRemixScreen({ route, navigation }) {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions?.Images || 'Images',
-        allowsEditing: true,
+        allowsEditing: false,
         quality: 0.9,
       });
 
@@ -409,71 +409,69 @@ export default function AIRemixScreen({ route, navigation }) {
 
       {/* SCREEN 3: Multi-Parameter Tuning Configuration (Limit & Strength) */}
       {currentPhase === 3 && selectedModel && sourceImageUri && (
-        <View style={styles.flexOne}>
-          <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-            <View style={styles.configContainer}>
-              
-              {/* Chosen local image preview */}
-              <View style={styles.previewImageContainer}>
-                <Image source={{ uri: sourceImageUri }} style={styles.configPreviewImage} />
-                <View style={styles.previewBadge}>
-                  <Text style={styles.previewBadgeText}>📸 Selected Photo</Text>
-                </View>
-              </View>
-
-              {/* Image Generation Limit Row */}
-              <View style={styles.limitSection}>
-                <Text style={styles.limitTitle}>Image Generation Limit</Text>
-                <Text style={styles.limitSubtitle}>Select target output variants to process</Text>
-                <View style={styles.limitRow}>
-                  {[1, 2, 3, 4].map((num) => {
-                    const isActive = generationLimit === num;
-                    return (
-                      <TouchableOpacity
-                        key={num}
-                        style={[styles.limitNumBtn, isActive && styles.limitNumBtnActive]}
-                        onPress={() => setGenerationLimit(num)}
-                      >
-                        <Text style={[styles.limitNumText, isActive && styles.limitNumTextActive]}>
-                          {num}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Algorithmic Processing Strength Row */}
-              <View style={styles.limitSection}>
-                <View style={styles.sliderLabelRow}>
-                  <Text style={styles.limitTitle}>Algorithmic Processing Strength</Text>
-                  <Text style={styles.sliderValueText}>{remixStrength.toFixed(2)}</Text>
-                </View>
-                <Text style={styles.limitSubtitle}>Adjust style transfer variance (0.0 to 1.0)</Text>
-                
-                <View 
-                  style={styles.sliderTrackWrapper} 
-                  {...panResponder.panHandlers}
-                  collapsable={false}
-                >
-                  <View style={styles.sliderTrackBackground} />
-                  <View style={[styles.sliderTrackActive, { width: remixStrength * sliderWidth }]} />
-                  <View style={[styles.sliderThumb, { left: remixStrength * sliderWidth - 12 }]} />
-                </View>
-                <View style={styles.sliderMinMaxRow}>
-                  <Text style={styles.sliderMinMaxText}>0.00 (Original)</Text>
-                  <Text style={styles.sliderMinMaxText}>1.00 (Max Variance)</Text>
-                </View>
-              </View>
-
+        <View style={styles.phase3Container}>
+          {/* Top View Section: Exactly 50% height */}
+          <View style={styles.phase3TopSection}>
+            <Image source={{ uri: sourceImageUri }} style={styles.phase3Image} />
+            <View style={styles.previewBadge}>
+              <Text style={styles.previewBadgeText}>📸 Selected Photo</Text>
             </View>
-          </ScrollView>
+          </View>
 
-          {/* Absolute bottom execute button */}
+          {/* Bottom View Section */}
+          <View style={styles.phase3BottomSection}>
+            
+            {/* ROW 1: Image Limit Selection */}
+            <View style={styles.controlRowSection}>
+              <View style={styles.controlRowHeader}>
+                <Text style={styles.controlRowTitle}>Image Limit Selection</Text>
+                <Text style={styles.controlRowValue}>Count: {generationLimit}</Text>
+              </View>
+              <View style={styles.limitRow}>
+                {[1, 2, 3, 4].map((num) => {
+                  const isActive = generationLimit === num;
+                  return (
+                    <TouchableOpacity
+                      key={num}
+                      style={[styles.limitNumBtn, isActive && styles.limitNumBtnActive]}
+                      onPress={() => setGenerationLimit(num)}
+                    >
+                      <Text style={[styles.limitNumText, isActive && styles.limitNumTextActive]}>
+                        {num}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* ROW 2: Algorithmic Strength Tuning */}
+            <View style={styles.controlRowSection}>
+              <View style={styles.sliderLabelRow}>
+                <Text style={styles.controlRowTitle}>Algorithmic Strength Tuning</Text>
+                <Text style={styles.sliderValueText}>{remixStrength.toFixed(2)}</Text>
+              </View>
+              <View 
+                style={styles.sliderTrackWrapper} 
+                {...panResponder.panHandlers}
+                collapsable={false}
+              >
+                <View style={styles.sliderTrackBackground} />
+                <View style={[styles.sliderTrackActive, { width: remixStrength * sliderWidth }]} />
+                <View style={[styles.sliderThumb, { left: remixStrength * sliderWidth - 12 }]} />
+              </View>
+              <View style={styles.sliderMinMaxRow}>
+                <Text style={styles.sliderMinMaxText}>0.00 (Mild)</Text>
+                <Text style={styles.sliderMinMaxText}>1.00 (Strong)</Text>
+              </View>
+            </View>
+
+          </View>
+
+          {/* Absolute bottom-aligned execute button */}
           <SafeAreaView style={styles.executeFooter}>
             <TouchableOpacity style={styles.executeBtn} onPress={handleCreateRemix}>
-              <Sparkles size={20} color="#FFF" style={styles.btnIconSpacing} />
-              <Text style={styles.executeBtnText}>⚡ Create AI Remix</Text>
+              <Text style={styles.executeBtnText}>Create AI Remix</Text>
             </TouchableOpacity>
           </SafeAreaView>
         </View>
@@ -851,6 +849,45 @@ const styles = StyleSheet.create({
   sliderMinMaxText: {
     fontSize: 11,
     color: '#757575',
+  },
+  phase3Container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  phase3TopSection: {
+    height: SCREEN_HEIGHT * 0.5,
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#ECEFF1',
+  },
+  phase3Image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  phase3BottomSection: {
+    padding: 16,
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  controlRowSection: {
+    marginBottom: 20,
+  },
+  controlRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  controlRowTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#212121',
+  },
+  controlRowValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
   executeFooter: {
     position: 'absolute',
