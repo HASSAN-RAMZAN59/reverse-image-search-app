@@ -102,31 +102,18 @@ export default function QRScannerScreen({ navigation }) {
     setScanned(true);
 
     const trimmedData = data.trim();
-    const isUrl = /^https?:\/\//i.test(trimmedData) || 
-                  /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}(\/.*)?$/i.test(trimmedData);
+    
+    // Navigate to Result screen with the scanned content and a fromQR flag
+    navigation.navigate('Result', { 
+      searchQuery: trimmedData, 
+      imageUri: null, 
+      fromQR: true 
+    });
 
-    if (isUrl) {
-      let formattedUrl = data.trim();
-      if (!/^https?:\/\//i.test(formattedUrl)) {
-        formattedUrl = `https://${formattedUrl}`;
-      }
-      
-      // Auto open URL
-      Linking.openURL(formattedUrl)
-        .then(() => {
-          // Reset scanner state after successful navigation
-          setTimeout(() => {
-            setScanned(false);
-          }, 1500);
-        })
-        .catch((err) => {
-          // If browser fails, fallback to displaying text
-          setScanResult(data);
-        });
-    } else {
-      // Normal plain text or data
-      setScanResult(data);
-    }
+    // Reset scanner state after a short delay so if they return they can scan again
+    setTimeout(() => {
+      setScanned(false);
+    }, 1500);
   };
 
   const handleCopyToClipboard = () => {
