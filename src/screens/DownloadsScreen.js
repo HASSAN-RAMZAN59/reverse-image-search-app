@@ -14,8 +14,9 @@ import {
   Alert,
   Share,
   Platform,
+  BackHandler,
 } from 'react-native';
-import { ArrowLeft, Trash2, Share2, X, Download } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Share2, X, Download, Check } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { getSavedDownloads, deleteSavedDownload } from '../utils/downloadManager';
 
@@ -28,6 +29,10 @@ export default function DownloadsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
+
+  // Multiple selection states
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const fetchDownloads = async () => {
     try {
@@ -47,6 +52,25 @@ export default function DownloadsScreen({ route, navigation }) {
   useEffect(() => {
     fetchDownloads();
   }, []);
+
+  // Back handler for Android to exit selection mode first
+  useEffect(() => {
+    const backAction = () => {
+      if (isSelectionMode) {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [isSelectionMode]);
 
   const handleShare = async (asset) => {
     try {
@@ -84,30 +108,117 @@ export default function DownloadsScreen({ route, navigation }) {
     );
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.gridItem}
-      activeOpacity={0.8}
-      onPress={() => {
-        setPreviewImage(item.uri);
-        setSelectedAsset(item);
-      }}
-    >
-      <Image source={{ uri: item.uri }} style={styles.gridImage} />
-    </TouchableOpacity>
-  );
+  // Bulk Delete implementation
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    Alert.alert(
+      'Delete Selected Images',
+      `Are you sure you want to permanently delete the ${selectedIds.length} selected images from your downloads?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const assetsToDelete = images.filter((img) => selectedIds.includes(img.id));
+              // Delete sequentially to avoid writing to metadata.json in parallel races
+              for (const asset of assetsToDelete) {
+                await deleteSavedDownload(asset.id, asset.uri, asset.galleryAssetId);
+              }
+              setImages((prev) => prev.filter((img) => !selectedIds.includes(img.id)));
+              setSelectedIds([]);
+              setIsSelectionMode(false);
+            } catch (err) {
+              console.error('Error in bulk delete:', err);
+              Alert.alert('Delete Failed', 'An error occurred while deleting the selected images.');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePress = (item) => {
+    if (isSelectionMode) {
+      toggleSelect(item.id);
+    } else {
+      setPreviewImage(item.uri);
+      setSelectedAsset(item);
+    }
+  };
+
+  const handleLongPress = (item) => {
+    if (!isSelectionMode) {
+      setIsSelectionMode(true);
+      setSelectedIds([item.id]);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) {
+        const next = prev.filter((x) => x !== id);
+        if (next.length === 0) {
+          setIsSelectionMode(false);
+        }
+        return next;
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const renderItem = ({ item }) => {
+    const isSelected = selectedIds.includes(item.id);
+    return (
+      <TouchableOpacity
+        style={[styles.gridItem, isSelected && styles.gridItemSelected]}
+        activeOpacity={0.8}
+        onPress={() => handlePress(item)}
+        onLongPress={() => handleLongPress(item)}
+      >
+        <Image source={{ uri: item.uri }} style={[styles.gridImage, isSelected && styles.gridImageSelected]} />
+        {isSelected && (
+          <View style={styles.selectedOverlay}>
+            <View style={styles.checkboxContainer}>
+              <Check size={14} color="#FFF" strokeWidth={3} />
+            </View>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isAIOnly ? 'AI Art Gallery' : 'Saved Downloads'}</Text>
-        <View style={{ width: 24 }} />
+      <View style={[styles.header, isSelectionMode && styles.headerSelection]}>
+        {isSelectionMode ? (
+          <>
+            <TouchableOpacity style={styles.backBtn} onPress={() => { setSelectedIds([]); setIsSelectionMode(false); }}>
+              <X size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{selectedIds.length} Selected</Text>
+            <TouchableOpacity style={styles.backBtn} onPress={handleBulkDelete}>
+              <Trash2 size={24} color="#FFF" />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+              <ArrowLeft size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{isAIOnly ? 'AI Art Gallery' : 'Saved Downloads'}</Text>
+            <View style={{ width: 24 }} />
+          </>
+        )}
       </View>
 
       {loading ? (
@@ -238,6 +349,9 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 12,
   },
+  headerSelection: {
+    backgroundColor: '#1C1C1E',
+  },
   gridItem: {
     width: COLUMN_WIDTH,
     height: COLUMN_WIDTH,
@@ -248,10 +362,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DADCE0',
   },
+  gridItemSelected: {
+    borderColor: '#1A73E8',
+    borderWidth: 2,
+  },
   gridImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  gridImageSelected: {
+    opacity: 0.8,
+  },
+  selectedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(26, 115, 232, 0.15)',
+  },
+  checkboxContainer: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#1A73E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
   },
   modalOverlay: {
     flex: 1,
