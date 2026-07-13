@@ -159,18 +159,18 @@ export default function AIImageResultScreen({ route, navigation }) {
   };
 
   const runGenerations = () => {
-    // Reset states
-    setImages(
-      Array.from({ length: imageCount }, (_, idx) => ({
-        id: idx,
-        loading: true,
-        uri: null,
-        error: null,
-      }))
-    );
+    const freshImages = Array.from({ length: imageCount }, (_, idx) => ({
+      id: idx,
+      loading: true,
+      uri: null,
+      error: null,
+    }));
 
-    // Run parallel calls
-    images.forEach(async (img) => {
+    // Reset states
+    setImages(freshImages);
+
+    // Run parallel calls on the fresh array instead of stale state
+    freshImages.forEach(async (img) => {
       try {
         const base64Uri = await generateAIImage(prompt, {
           aspectRatio,

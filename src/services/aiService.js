@@ -112,7 +112,7 @@ export async function generateAIImage(promptText, options = {}) {
  * @param {number} strength - Conditioning strength (0.0 to 1.0, default 0.55).
  * @returns {Promise<string>} A promise that resolves to a Base64-encoded JPEG image string.
  */
-export async function generateImageToImage(imageUri, stylePrompt, strength = 0.55) {
+export async function generateImageToImage(imageUri, stylePrompt, strength = 0.5) {
   try {
     const filename = imageUri.split('/').pop() || 'input_image.jpg';
     const match = /\.(\w+)$/.exec(filename);
@@ -156,17 +156,8 @@ export async function generateImageToImage(imageUri, stylePrompt, strength = 0.5
       throw new Error(`Stability API Error (${response.status}): ${errorText}`);
     }
 
-    const responseBlob = await response.blob();
-    const base64String = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(responseBlob);
-    });
-
+    const arrayBuffer = await response.arrayBuffer();
+    const base64String = Buffer.from(arrayBuffer).toString('base64');
     return `data:image/jpeg;base64,${base64String}`;
   } catch (error) {
     console.error('Error in generateImageToImage with Stability API:', error);

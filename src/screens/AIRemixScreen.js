@@ -143,7 +143,7 @@ export default function AIRemixScreen({ route, navigation }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [sourceImageUri, setSourceImageUri] = useState(null);
   const [generationLimit, setGenerationLimit] = useState(1);
-  const [remixStrength, setRemixStrength] = useState(0.55);
+  const [remixStrength, setRemixStrength] = useState(0.5);
   const [selectedModelPrompt, setSelectedModelPrompt] = useState('');
   const [remixedResult, setRemixedResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -321,7 +321,7 @@ export default function AIRemixScreen({ route, navigation }) {
     setSourceImageUri(null);
     setRemixedResult(null);
     setGenerationLimit(1);
-    setRemixStrength(0.55);
+    setRemixStrength(0.5);
     setCurrentPhase(1);
   };
 
