@@ -201,6 +201,15 @@ export default function PermissionScreen({ onPermissionsGranted }) {
     },
   ];
 
+  const handlePermissionRequest = async (item) => {
+    if (busy) return;
+    
+    // Always attempt to trigger the OS dialog directly
+    await item.request();
+    
+    await syncAndCheck(true);
+  };
+
   // Get the next permission in sequence that needs action
   const nextRequired = permissionFlow.find((item) => !isGranted(item.status));
 
@@ -209,15 +218,11 @@ export default function PermissionScreen({ onPermissionsGranted }) {
       onPermissionsGranted();
       return;
     }
-
+    
     if (isPermanentlyDenied(nextRequired.status)) {
-      handleOpenSettings();
+      Linking.openSettings();
     } else {
-      const res = await nextRequired.request();
-      // If result is denied and permanently denied, sync state
-      if (res && (res.status === 'denied' || res.granted === false) && res.canAskAgain === false) {
-        await syncAndCheck(false);
-      }
+      await handlePermissionRequest(nextRequired);
     }
   };
 
@@ -253,9 +258,9 @@ export default function PermissionScreen({ onPermissionsGranted }) {
               onPress={async () => {
                 if (!granted) {
                   if (isPermanentlyDenied(item.status)) {
-                    handleOpenSettings();
+                    Linking.openSettings();
                   } else {
-                    await item.request();
+                    await handlePermissionRequest(item);
                   }
                 }
               }}
