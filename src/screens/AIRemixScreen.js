@@ -26,128 +26,117 @@ import { addSavedDownload } from '../utils/downloadManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const AI_MODELS = [
+const AI_REMIX_MODELS = [
   {
-    index: 1,
-    name: 'Anime V2',
-    prompt: 'anime style, vibrant cel-shading, colorful cartoon aesthetic',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400' },
+    id: 1,
+    name: "Anime V2",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1590796583326-afd3bb20d22d?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Masterpiece digital illustration, high-fidelity anime cell-shading aesthetic, clean defined fine line-art profiles, vibrant neo-pop lighting tones, modern studio animation keyframe styling, flawless uniform color fill vectors."
   },
   {
-    index: 2,
-    name: 'Watercolor',
-    prompt: 'watercolor painting style, bleeding ink textures, artistic wash textures',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400' },
+    id: 2,
+    name: "Watercolor",
+    imageSource: { uri: 'https://plus.unsplash.com/premium_vector-1724811760472-63b7fecc61e9?q=80&w=404&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Elegant fluid watercolor wash aesthetic, artistic loose pigment brushstrokes, soft translucent bleeding canvas textures, delicate splash art gradients, fine-grain textured paper background."
   },
   {
-    index: 3,
-    name: 'Sketch',
-    prompt: 'graphite pencil sketch style, cross-hatching textures, monochrome hand-drawn details',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400' },
+    id: 3,
+    name: "Sketch",
+    imageSource: { uri: 'https://plus.unsplash.com/premium_photo-1673514503535-0ef307e0c588?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Classic black and white hand-drawn graphite pencil sketch style, fine cross-hatching details, monochrome tonal rendering, timeless textured paper fine art look."
   },
   {
-    index: 4,
-    name: 'Cyberpunk',
-    prompt: 'cyberpunk style, futuristic neon glow lights, glowing synthwave colors',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400' },
+    id: 4,
+    name: "Cyberpunk",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Vibrant retro-futuristic synthwave style, dramatic neon cyan and ultraviolet color blocks, high-contrast atmospheric edge-lighting, detailed industrial sci-fi grid overlay."
   },
   {
-    index: 5,
-    name: 'Oil Painting',
-    prompt: 'oil painting style, thick impasto brushstrokes, rich oil canvas texture',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?w=400' },
+    id: 5,
+    name: "Oil Painting",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?q=80&w=390&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Heavy textured impasto oil painting art, thick dramatic artistic brushstrokes, classical fine art canvas finish, rich deep layered color palette aesthetics."
   },
   {
-    index: 6,
-    name: 'Steampunk',
-    prompt: 'steampunk theme style, Victorian brass and copper metallic textures, industrial gear accents',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400' },
+    id: 6,
+    name: "Steampunk",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1605143185597-9fe1a8065fbb?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Ornate steampunk machinery aesthetic, industrial brass and copper gear accents, vintage clockwork textures, retro-futuristic mechanical overlays, weathered metallic finishes."
   },
   {
-    index: 7,
-    name: '3D Render',
-    prompt: '3d octane render style, smooth volumetric rendering, digital 3d lighting',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400' },
+    id: 7,
+    name: "3D Render",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1622737133809-d95047b9e673?q=80&w=1032&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "High-fidelity 3D clay render aesthetic, smooth octane lighting shaders, professional digital model optimization, ray-traced ambient occlusion reflections."
   },
   {
-    index: 8,
-    name: 'Origami',
-    prompt: 'folded paper origami style, papercraft design, geometric paper shadows',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1614036417651-efe5912149d8?w=400' },
+    id: 8,
+    name: "Origami",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1581872553286-2746c6a8b295?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG9yaWdhbWl8ZW58MHx8MHx8fDA%3D' },
+    prompt: "Intricate folded origami paper craft art style, sharp geometric creases, clean paper texture lighting, minimalist dimensional layered paper design."
   },
   {
-    index: 9,
-    name: 'Cinematic',
-    prompt: 'cinematic look style, movie lighting, warm rim light, anamorphic lens colors',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400' },
+    id: 9,
+    name: "Cinematic",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop' },
+    prompt: "Hollywood cinematic anamorphic lighting, professional 35mm film grain, moody atmospheric shadows, dramatic depth-of-field focus, premium cinematic color grading."
   },
   {
-    index: 10,
-    name: 'Vintage Pencil',
-    prompt: 'vintage pencil drawing style, aged sepia paper texture, vintage sketch details',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=400' },
+    id: 10,
+    name: "Vintage Pencil",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1593435221502-c5d7bfc26cab?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8dmludGFnZSUyMHBlbmNpbHxlbnwwfHwwfHx8MA%3D%3D' },
+    prompt: "Retro sepia tone vintage photograph aesthetic, faded distressed textures, classic antique analog film degradation, historical old print style."
   },
   {
-    index: 11,
-    name: 'Comic Book',
-    prompt: 'retro comic book style, pop art ink outlines, half-tone dot shader pattern',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400' },
+    id: 11,
+    name: "Comic Book",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1768142206870-9a7fedcf646c?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y29zbWljJTIwYm9va3xlbnwwfHwwfHx8MA%3D%3D' },
+    prompt: "Vintage pop-art comic book illustration style, bold black ink outlines, classic retro halftone dot patterns, dramatic graphic shading, stylized graphic novel aesthetic."
   },
   {
-    index: 12,
-    name: 'Pixel Art',
-    prompt: '8-bit retro arcade pixel art style, blocky pixel grids, limited retro color palette',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1566241477600-ac026ad43874?w=400' },
+    id: 12,
+    name: "Pixel Art",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1633421878925-ac220d8f6e4f?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHBpeGVsJTIwYXJ0fGVufDB8fDB8fHww' },
+    prompt: "Authentic 8-bit retro pixel art aesthetic, crisp micro-pixel grids, limited saturated color palette blocks, classic arcade game asset design, clean sharp edges."
   },
   {
-    index: 13,
-    name: 'Neon Glow',
-    prompt: 'neon glow style, glowing luminescent outlines, vibrant neon light highlights',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400' },
+    id: 13,
+    name: "Neon Glow",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1532134358497-43fa3c6a02b0?q=80&w=435&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Vibrant electric luminescent wireframe lines, intense ultraviolet fluorescent glow accents, high-contrast dark ambient background formatting, radiant glowing edge illumination."
   },
   {
-    index: 14,
-    name: 'Gothic',
-    prompt: 'dark gothic style, spooky shadows, moody architecture textures',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=400' },
+    id: 14,
+    name: "Gothic",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1516410529446-2c777cb7366d?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    prompt: "Dark ornate gothic art style, moody romantic macabre aesthetics, intricate charcoal filigree textures, high-contrast dark Victorian ambient lighting."
   },
   {
-    index: 15,
-    name: 'Pop Art',
-    prompt: 'pop art style, high-contrast saturated colors, retro screenprint texture',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400' },
+    id: 15,
+    name: "Pop Art",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1506792006437-256b665541e2?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D=crop' },
+    prompt: "Bold retro pop art style, vibrant flat saturated color blocks, high-contrast graphic overlays, stylized silk-screen print aesthetic, clean uniform poster outlines."
   },
   {
-    index: 16,
-    name: 'Vaporwave',
-    prompt: 'vaporwave style, pastel pink and purple gradients, retro 80s glitch aesthetics',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400' },
+    id: 16,
+    name: "Vaporwave",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1706466615917-e44750d177d7?w=300&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dmFwb3J3YXZlfGVufDB8fDB8fHww=crop' },
+    prompt: "Glitchy 1980s vaporwave aesthetic, pastel pink and teal neon hues, surreal digital artifact lines, retro VHS tracking scanlines."
   },
   {
-    index: 17,
-    name: 'Abstract',
-    prompt: 'fluid abstract expressionism style, artistic splatters, modern gallery texture',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400' },
+    id: 17,
+    name: "Charcoal",
+    imageSource: { uri: 'https://plus.unsplash.com/premium_photo-1675186945628-b28212b76e3f?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D=crop' },
+    prompt: "Raw smudge charcoal sketch art, heavy dark carbon powder strokes, high-contrast rough textured paper background, expressive monochrome shading."
   },
   {
-    index: 18,
-    name: 'Renaissance',
-    prompt: 'renaissance fresco style, dramatic chiaroscuro lighting, classical painting texture',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=400' },
-  },
-  {
-    index: 19,
-    name: 'Charcoal',
-    prompt: 'charcoal drawing style, smudged black carbon textures, raw paper gradients',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1576016770956-debb63d900fe?w=400' },
-  },
-  {
-    index: 20,
-    name: 'Ink Wash',
-    prompt: 'ink wash painting style, traditional zen brush calligraphy textures, flowing monochrome tones',
-    imageSource: { uri: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=400' },
-  },
+    id: 18,
+    name: "Ink Wash",
+    imageSource: { uri: 'https://images.unsplash.com/photo-1642285230633-cf8012546f14?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D=format&fit=crop' },
+    prompt: "Traditional East Asian sumi-e ink wash painting, elegant monochrome calligraphic brush strokes, ethereal atmospheric minimal layout canvas, soft carbon ink bleeding gradients."
+  }
 ];
+
 
 export default function AIRemixScreen({ route, navigation }) {
   const [currentPhase, setCurrentPhase] = useState(1); // 1: Select Style, 2: Model Preview & Gallery, 3: Tune Parameters, 4: Result View
@@ -366,22 +355,14 @@ export default function AIRemixScreen({ route, navigation }) {
           </View>
 
           <View style={styles.gridContainer}>
-            {AI_MODELS.map((style, idx) => (
+            {AI_REMIX_MODELS.map((style, idx) => (
               <TouchableOpacity
-                key={style.index}
+                key={style.id}
                 style={styles.styleCard}
                 activeOpacity={0.85}
                 onPress={() => handleSelectModel(style)}
               >
                 <Image source={style.imageSource} style={styles.cardImage} />
-
-                <View style={styles.cardIndexBadge}>
-                  <Text style={styles.cardIndexText}>#{String(style.index).padStart(2, '0')}</Text>
-                </View>
-
-                <View style={styles.textOverlayBar}>
-                  <Text style={styles.styleNameText} numberOfLines={1}>{style.name}</Text>
-                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -401,7 +382,7 @@ export default function AIRemixScreen({ route, navigation }) {
           <View style={styles.phase2Footer}>
             <TouchableOpacity style={styles.gallerySelectLargeBtn} onPress={selectImageFromLibrary}>
               <ImageIcon size={20} color="#FFF" style={styles.btnIconSpacing} />
-              <Text style={styles.gallerySelectLargeBtnText}>📸 Select from Gallery</Text>
+              <Text style={styles.gallerySelectLargeBtnText}>Select from Gallery</Text>
             </TouchableOpacity>
           </View>
         </View>

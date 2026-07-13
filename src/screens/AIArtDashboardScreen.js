@@ -14,7 +14,7 @@ export default function AIArtDashboardScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
@@ -23,11 +23,11 @@ export default function AIArtDashboardScreen({ navigation }) {
         <Text style={styles.headerTitle}>AI Art Dashboard</Text>
         <View style={{ width: 24 }} />
       </View>
- 
+
       {/* Content */}
       <View style={styles.content}>
         <Text style={styles.subtitle}>Explore AI Capabilities</Text>
-        
+
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() => navigation?.navigate('AIImageScreen')}
@@ -41,7 +41,7 @@ export default function AIArtDashboardScreen({ navigation }) {
           onPress={() => navigation?.navigate('AIRemix')}
         >
           <RefreshCw size={24} color="#FFF" style={styles.btnIcon} />
-          <Text style={styles.actionButtonText}>🔄 AI Image to Image (Remix)</Text>
+          <Text style={styles.actionButtonText}> AI Image to Image</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
