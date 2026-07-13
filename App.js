@@ -3,6 +3,8 @@ import { StyleSheet, View, LogBox, Platform, BackHandler } from 'react-native';
 import { Camera as CameraAPI } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import * as Notifications from 'expo-notifications';
+import * as ImagePicker from 'expo-image-picker';
+import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import PermissionScreen from './src/screens/PermissionScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ResultScreen from './src/screens/ResultScreen';
@@ -24,12 +26,14 @@ export default function App() {
     const checkPermissionsAndLoad = async () => {
       try {
         const camera = await CameraAPI.getCameraPermissionsAsync();
-        const media = await MediaLibrary.getPermissionsAsync();
+        const media = await ImagePicker.getMediaLibraryPermissionsAsync();
         const notifications = await Notifications.getPermissionsAsync();
+        const mic = await ExpoSpeechRecognitionModule.getPermissionsAsync();
         const granted = Boolean(
           (camera?.granted || camera?.status === 'granted') &&
           (media?.granted || media?.status === 'granted') &&
-          (notifications?.granted || notifications?.status === 'granted')
+          (notifications?.granted || notifications?.status === 'granted') &&
+          (mic?.granted || mic?.status === 'granted')
         );
         setIsAuthorized(granted);
       } catch (err) {
