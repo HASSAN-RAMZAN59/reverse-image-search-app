@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { ArrowLeft, Trash2, Share2, X, Download, Check } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
-import { getSavedDownloads, deleteSavedDownload } from '../utils/downloadManager';
+import { getSavedDownloads, deleteSavedDownload, deleteMultipleSavedDownloads } from '../utils/downloadManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_WIDTH = (SCREEN_WIDTH - 48) / 3;
@@ -84,63 +84,32 @@ export default function DownloadsScreen({ route, navigation }) {
   };
 
   const handleDelete = async (asset) => {
-    Alert.alert(
-      'Delete Image',
-      'Are you sure you want to permanently delete this image from your downloads?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteSavedDownload(asset.id, asset.uri, asset.galleryAssetId);
-              setImages((prev) => prev.filter((img) => img.id !== asset.id));
-              setPreviewImage(null);
-              setSelectedAsset(null);
-            } catch (err) {
-              console.error('Error deleting image asset:', err);
-              Alert.alert('Delete Failed', 'An error occurred while deleting the image.');
-            }
-          },
-        },
-      ]
-    );
+    try {
+      await deleteSavedDownload(asset.id, asset.uri, asset.galleryAssetId);
+      setImages((prev) => prev.filter((img) => img.id !== asset.id));
+      setPreviewImage(null);
+      setSelectedAsset(null);
+    } catch (err) {
+      console.log('Delete canceled or failed:', err);
+    }
   };
 
   // Bulk Delete implementation
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
 
-    Alert.alert(
-      'Delete Selected Images',
-      `Are you sure you want to permanently delete the ${selectedIds.length} selected images from your downloads?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const assetsToDelete = images.filter((img) => selectedIds.includes(img.id));
-              // Delete sequentially to avoid writing to metadata.json in parallel races
-              for (const asset of assetsToDelete) {
-                await deleteSavedDownload(asset.id, asset.uri, asset.galleryAssetId);
-              }
-              setImages((prev) => prev.filter((img) => !selectedIds.includes(img.id)));
-              setSelectedIds([]);
-              setIsSelectionMode(false);
-            } catch (err) {
-              console.error('Error in bulk delete:', err);
-              Alert.alert('Delete Failed', 'An error occurred while deleting the selected images.');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    setLoading(true);
+    try {
+      const assetsToDelete = images.filter((img) => selectedIds.includes(img.id));
+      await deleteMultipleSavedDownloads(assetsToDelete);
+      setImages((prev) => prev.filter((img) => !selectedIds.includes(img.id)));
+      setSelectedIds([]);
+      setIsSelectionMode(false);
+    } catch (err) {
+      console.log('Bulk delete canceled or failed:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePress = (item) => {

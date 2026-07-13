@@ -62,23 +62,38 @@ export async function deleteSavedDownload(id, localUri, galleryAssetId = null) {
     // 1. Delete local file from app document directory
     await FileSystem.deleteAsync(localUri, { idempotent: true });
     
-    // 2. Delete from device photo library if asset ID is present
-    if (galleryAssetId) {
-      try {
-        const { status } = await MediaLibrary.getPermissionsAsync();
-        if (status === 'granted') {
-          await MediaLibrary.deleteAssetsAsync([galleryAssetId]);
-        }
-      } catch (err) {
-        console.warn("Could not delete asset from device gallery:", err);
-      }
-    }
-    
-    // 3. Remove from metadata list
+    // 2. Remove from metadata list
     const list = await getSavedDownloads();
     const updatedList = list.filter(item => item.id !== id);
     await FileSystem.writeAsStringAsync(METADATA_PATH, JSON.stringify(updatedList));
+    
+    return true;
   } catch (err) {
     console.error("Error deleting download record:", err);
+    throw err; // Propagate error so calling screen knows deletion was aborted
+  }
+}
+
+export async function deleteMultipleSavedDownloads(assets) {
+  try {
+    // 1. Delete local files from app document directory
+    for (const asset of assets) {
+      try {
+        await FileSystem.deleteAsync(asset.uri, { idempotent: true });
+      } catch (fileErr) {
+        console.warn("Could not delete local file:", asset.uri, fileErr);
+      }
+    }
+    
+    // 2. Remove from metadata list
+    const list = await getSavedDownloads();
+    const idsToRemove = assets.map(a => a.id);
+    const updatedList = list.filter(item => !idsToRemove.includes(item.id));
+    await FileSystem.writeAsStringAsync(METADATA_PATH, JSON.stringify(updatedList));
+    
+    return true;
+  } catch (err) {
+    console.error("Error in bulk delete manager:", err);
+    throw err; // Propagate error so calling screen knows deletion was aborted
   }
 }

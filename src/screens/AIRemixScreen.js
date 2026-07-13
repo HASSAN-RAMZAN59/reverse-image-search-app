@@ -202,7 +202,6 @@ export default function AIRemixScreen({ route, navigation }) {
 
       if (!result.canceled && result.assets?.[0]?.uri) {
         setSourceImageUri(result.assets[0].uri);
-        showToast('Local image selected successfully!');
         // Transition straight to step 3
         setCurrentPhase(3);
       }
