@@ -203,10 +203,10 @@ export default function PermissionScreen({ onPermissionsGranted }) {
 
   const handlePermissionRequest = async (item) => {
     if (busy) return;
-    
+
     // Always attempt to trigger the OS dialog directly
     await item.request();
-    
+
     await syncAndCheck(true);
   };
 
@@ -218,7 +218,7 @@ export default function PermissionScreen({ onPermissionsGranted }) {
       onPermissionsGranted();
       return;
     }
-    
+
     if (isPermanentlyDenied(nextRequired.status)) {
       Linking.openSettings();
     } else {
