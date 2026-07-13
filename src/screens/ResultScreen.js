@@ -254,20 +254,6 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
   const [uploading, setUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
 
-  // QR Scanner & URL direct browse handling
-  const fromQR = route?.params?.fromQR ?? false;
-  const trimmedQuery = searchQuery ? searchQuery.trim() : '';
-  const isUrl = /^https?:\/\//i.test(trimmedQuery) || 
-                /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}(\/.*)?$/i.test(trimmedQuery);
-  
-  let formattedUrl = trimmedQuery;
-  if (isUrl && !/^https?:\/\//i.test(formattedUrl)) {
-    formattedUrl = `https://${formattedUrl}`;
-  }
-
-  // If navigated from QR scanner with a URL, open it directly by default.
-  const [directBrowse, setDirectBrowse] = useState(fromQR && isUrl);
-
   useEffect(() => {
     if (imageUri) {
       uploadImage(imageUri);
@@ -321,10 +307,6 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
   };
 
   const getSearchUrl = () => {
-    if (directBrowse && isUrl) {
-      return formattedUrl;
-    }
-
     if (uploadedImageUrl) {
       if (activeBrowser === 'google') {
         return `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(uploadedImageUrl)}`;
@@ -366,14 +348,6 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
   const getHeaderTitle = () => {
     if (imageUri) {
       return "Image Search";
-    }
-    if (directBrowse && isUrl) {
-      try {
-        const domain = formattedUrl.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
-        return domain || "Website";
-      } catch (e) {
-        return "Website";
-      }
     }
     return searchQuery ? searchQuery : "Search Results";
   };
@@ -497,7 +471,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
         <View style={{ width: 24 }} />
       </View>
 
-      {!imageUri && !directBrowse && (
+      {!imageUri && (
         <View style={styles.subTabsContainer}>
           <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subTabsScroll}>
             {subTabs.map((tab) => {
@@ -519,25 +493,6 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
       )}
 
       <View style={styles.webViewContainer}>
-        {isUrl && (
-          <View style={styles.urlBanner}>
-            <Text style={styles.urlBannerText} numberOfLines={1}>
-              {directBrowse ? `Direct Link: ${formattedUrl}` : `Search Query: ${formattedUrl}`}
-            </Text>
-            <TouchableOpacity 
-              style={[
-                styles.urlBannerButton, 
-                directBrowse && { backgroundColor: '#FF3B30' }
-              ]}
-              onPress={() => setDirectBrowse(!directBrowse)}
-            >
-              <Text style={styles.urlBannerButtonText}>
-                {directBrowse ? "Back to Search" : "Open Website"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {imageUri && !uploadedImageUrl ? (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#1A73E8" />
@@ -545,7 +500,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
           </View>
         ) : (
           <WebView
-            key={`${activeBrowser}-${uploadedImageUrl ? 'image' : (directBrowse ? 'direct' : activeSubTab)}`}
+            key={`${activeBrowser}-${uploadedImageUrl ? 'image' : activeSubTab}`}
             source={{ uri: getSearchUrl() }}
             style={styles.webView}
             startInLoadingState={true}
@@ -556,9 +511,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
             renderLoading={() => (
               <View style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color="#1A73E8" />
-                <Text style={styles.loadingText}>
-                  {directBrowse ? "Loading Website..." : `Loading ${activeBrowser.toUpperCase()} Results...`}
-                </Text>
+                <Text style={styles.loadingText}>Loading {activeBrowser.toUpperCase()} Results...</Text>
               </View>
             )}
           />
@@ -591,7 +544,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
 
       <View style={styles.bottomTabBar}>
         {browsers.map((browser) => {
-          const isActive = activeBrowser === browser.id && !directBrowse;
+          const isActive = activeBrowser === browser.id;
           return (
             <TouchableOpacity
               key={browser.id}
@@ -602,10 +555,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
                   borderColor: browser.activeColor,
                 },
               ]}
-              onPress={() => {
-                setDirectBrowse(false);
-                setActiveBrowser(browser.id);
-              }}
+              onPress={() => setActiveBrowser(browser.id)}
             >
               <View style={styles.tabContent}>
                 {getBrowserLogo(browser.id)}
@@ -654,36 +604,6 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 4, marginRight: 16 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', flex: 1 },
-
-  // URL Banner
-  urlBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8F9FA',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  urlBannerText: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-    flex: 1,
-    marginRight: 12,
-  },
-  urlBannerButton: {
-    backgroundColor: '#1A73E8',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  urlBannerButtonText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
 
   // Scrollable tabs
   subTabsContainer: {
