@@ -349,10 +349,7 @@ export default function AIRemixScreen({ route, navigation }) {
       {/* SCREEN 1: Pure Model Selection Grid */}
       {currentPhase === 1 && (
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.sectionHeaderContainer}>
-            <Text style={styles.mainTitle}>Choose a Base Style</Text>
-            <Text style={styles.mainSubtitle}>Select one of the 20 stylized AI models to begin.</Text>
-          </View>
+
 
           <View style={styles.gridContainer}>
             {AI_REMIX_MODELS.map((style, idx) => (
@@ -613,7 +610,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   phase2ImageContainer: {
-    flex: 0.8,
+    height: SCREEN_HEIGHT * 0.5,
     width: '100%',
     position: 'relative',
     backgroundColor: '#1C1C1E',
@@ -640,7 +637,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   phase2Footer: {
-    flex: 0.2,
+    flex: 1,
     backgroundColor: '#1C1C1E',
     alignItems: 'center',
     justifyContent: 'center',
