@@ -28,112 +28,84 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const AI_REMIX_MODELS = [
   {
-    id: 1,
-    name: "Anime V2",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1590796583326-afd3bb20d22d?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Masterpiece digital illustration, high-fidelity anime cell-shading aesthetic, clean defined fine line-art profiles, vibrant neo-pop lighting tones, modern studio animation keyframe styling, flawless uniform color fill vectors."
+    id: "astronaut",
+    name: "Astronaut",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Highly detailed realistic cinematic white NASA astronaut spacesuit with tactical gear and patches cleanly wrapped around the shoulders and neck, high-contrast atmospheric professional space lighting, cinematic dramatic outer space backdrop with glowing stellar nebulae and stars, ultra-detailed 8k resolution portrait."
   },
   {
-    id: 2,
-    name: "Watercolor",
-    imageSource: { uri: 'https://plus.unsplash.com/premium_vector-1724811760472-63b7fecc61e9?q=80&w=404&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Elegant fluid watercolor wash aesthetic, artistic loose pigment brushstrokes, soft translucent bleeding canvas textures, delicate splash art gradients, fine-grain textured paper background."
+    id: "spiderman",
+    name: "Spider-Man",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Iconic red and blue spider-hero suit with advanced carbon-fiber armor textures, detailed sleek webbing patterns on torso and shoulders, sharp atmospheric rim-lighting, dramatic high-rise urban city skyline background, flawless cinematic 8k resolution premium render."
   },
   {
-    id: 3,
-    name: "Sketch",
-    imageSource: { uri: 'https://plus.unsplash.com/premium_photo-1673514503535-0ef307e0c588?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Classic black and white hand-drawn graphite pencil sketch style, fine cross-hatching details, monochrome tonal rendering, timeless textured paper fine art look."
+    id: "cyber_warrior",
+    name: "Cyber Warrior",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Futuristic matte-black heavy cybernetic nano-armor plating, intricate neon cyan glowing power conduits along the shoulders and chest, tactical sci-fi military combat exoskeleton, gritty rainy cyberpunk neon alleyway background, hyper-detailed 8k resolution tech-portrait."
   },
   {
-    id: 4,
-    name: "Cyberpunk",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Vibrant retro-futuristic synthwave style, dramatic neon cyan and ultraviolet color blocks, high-contrast atmospheric edge-lighting, detailed industrial sci-fi grid overlay."
+    id: "royal_knight",
+    name: "Royal Knight",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Polished mirrors silver medieval steel plate knight armor, magnificent hand-engraved royal gold metal filigree details on chestplate, deep crimson velvet ceremonial cape draped gracefully, epic cinematic stone castle throne room lighting, immaculate 8k mastery texture."
   },
   {
-    id: 5,
-    name: "Oil Painting",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?q=80&w=390&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Heavy textured impasto oil painting art, thick dramatic artistic brushstrokes, classical fine art canvas finish, rich deep layered color palette aesthetics."
+    id: "pharaoh",
+    name: "Pharaoh",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1600577916048-804c9191e36c?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1600577916048-804c9191e36c?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Ancient Egyptian imperial golden pharaoh regalia, majestic deep blue lapis lazuli jewel encrusted pectorals, grand traditional striped gold nemes headdress structures, glowing atmospheric ancient pyramid treasure chamber interior, stunning 8k golden ambient lighting."
   },
   {
-    id: 6,
-    name: "Steampunk",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1605143185597-9fe1a8065fbb?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Ornate steampunk machinery aesthetic, industrial brass and copper gear accents, vintage clockwork textures, retro-futuristic mechanical overlays, weathered metallic finishes."
+    id: "vikings",
+    name: "Viking Warrior",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Rugged norse viking chieftain leather and layered fur combat armor, heavy historical steel chainmail overlays on chest, weathered bone and runic metal accents, dramatic dark moody misty scandinavian mountain peak backdrop with cinematic 8k volumetric lighting."
   },
   {
-    id: 7,
-    name: "3D Render",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1622737133809-d95047b9e673?q=80&w=1032&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "High-fidelity 3D clay render aesthetic, smooth octane lighting shaders, professional digital model optimization, ray-traced ambient occlusion reflections."
+    id: "cyborg",
+    name: "Cyborg",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1589254065878-42c9da997008?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1589254065878-42c9da997008?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Sleek streamlined futuristic silver chrome and polished titanium robotic bionic plating, exposed hyper-intricate glowing cybernetic micro-circuitry lines on neck, clinical high-tech corporation data laboratory hub background, crystal-clear 8k studio product visibility."
   },
   {
-    id: 8,
-    name: "Origami",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1581872553286-2746c6a8b295?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG9yaWdhbWl8ZW58MHx8MHx8fDA%3D' },
-    prompt: "Intricate folded origami paper craft art style, sharp geometric creases, clean paper texture lighting, minimalist dimensional layered paper design."
+    id: "wizard",
+    name: "Wizard",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1519074069444-1ba4e56b544c?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1519074069444-1ba4e56b544c?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Mystical elder sorcerer heavy deep royal purple velvet robes, intricate glowing woven golden arcane defensive runes embroidered on collar and sleeves, ancient cosmic library canvas setting with levitating floating magical spellbooks, beautiful ethereal 8k wizard aesthetic."
   },
   {
-    id: 9,
-    name: "Cinematic",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop' },
-    prompt: "Hollywood cinematic anamorphic lighting, professional 35mm film grain, moody atmospheric shadows, dramatic depth-of-field focus, premium cinematic color grading."
+    id: "samurai",
+    name: "Samurai",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Traditional authentic lacquered obsidian black and crimson samurai armor plating, highly detailed silken cord bindings on chest plate, magnificent decorative metallic shoulder guards, serene sunlit Kyoto zen garden canvas with pink cherry blossom petals falling, perfect 8k resolution art."
   },
   {
-    id: 10,
-    name: "Vintage Pencil",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1593435221502-c5d7bfc26cab?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8dmludGFnZSUyMHBlbmNpbHxlbnwwfHwwfHx8MA%3D%3D' },
-    prompt: "Retro sepia tone vintage photograph aesthetic, faded distressed textures, classic antique analog film degradation, historical old print style."
-  },
-  {
-    id: 11,
-    name: "Comic Book",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1768142206870-9a7fedcf646c?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y29zbWljJTIwYm9va3xlbnwwfHwwfHx8MA%3D%3D' },
-    prompt: "Vintage pop-art comic book illustration style, bold black ink outlines, classic retro halftone dot patterns, dramatic graphic shading, stylized graphic novel aesthetic."
-  },
-  {
-    id: 12,
-    name: "Pixel Art",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1633421878925-ac220d8f6e4f?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHBpeGVsJTIwYXJ0fGVufDB8fDB8fHww' },
-    prompt: "Authentic 8-bit retro pixel art aesthetic, crisp micro-pixel grids, limited saturated color palette blocks, classic arcade game asset design, clean sharp edges."
-  },
-  {
-    id: 13,
-    name: "Neon Glow",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1532134358497-43fa3c6a02b0?q=80&w=435&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Vibrant electric luminescent wireframe lines, intense ultraviolet fluorescent glow accents, high-contrast dark ambient background formatting, radiant glowing edge illumination."
-  },
-  {
-    id: 14,
-    name: "Gothic",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1516410529446-2c777cb7366d?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
-    prompt: "Dark ornate gothic art style, moody romantic macabre aesthetics, intricate charcoal filigree textures, high-contrast dark Victorian ambient lighting."
-  },
-  {
-    id: 15,
-    name: "Pop Art",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1506792006437-256b665541e2?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D=crop' },
-    prompt: "Bold retro pop art style, vibrant flat saturated color blocks, high-contrast graphic overlays, stylized silk-screen print aesthetic, clean uniform poster outlines."
-  },
-  {
-    id: 16,
-    name: "Vaporwave",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1706466615917-e44750d177d7?w=300&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dmFwb3J3YXZlfGVufDB8fDB8fHww=crop' },
-    prompt: "Glitchy 1980s vaporwave aesthetic, pastel pink and teal neon hues, surreal digital artifact lines, retro VHS tracking scanlines."
-  },
-  {
-    id: 17,
-    name: "Charcoal",
-    imageSource: { uri: 'https://plus.unsplash.com/premium_photo-1675186945628-b28212b76e3f?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D=crop' },
-    prompt: "Raw smudge charcoal sketch art, heavy dark carbon powder strokes, high-contrast rough textured paper background, expressive monochrome shading."
-  },
-  {
-    id: 18,
-    name: "Ink Wash",
-    imageSource: { uri: 'https://images.unsplash.com/photo-1642285230633-cf8012546f14?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D=format&fit=crop' },
-    prompt: "Traditional East Asian sumi-e ink wash painting, elegant monochrome calligraphic brush strokes, ethereal atmospheric minimal layout canvas, soft carbon ink bleeding gradients."
+    id: "pirate_captain",
+    name: "Pirate Captain",
+    modelType: "character",
+    imageUrl: "https://images.unsplash.com/photo-1590845947376-2638caa06a1a?auto=format&fit=crop&w=600&q=80",
+    imageSource: { uri: "https://images.unsplash.com/photo-1590845947376-2638caa06a1a?auto=format&fit=crop&w=600&q=80" },
+    targetPrompt: "Weathered rustic historic naval colonial pirate captain longcoat jacket with polished golden brass buttons, heavy leather crossed shoulder bandolier ammo strap, dapper ruffled linen collar cuffs, vintage wooden pirate warship deck backdrop at dramatic golden sunset, hyper-textured 8k frame."
   }
 ];
 
@@ -143,7 +115,7 @@ export default function AIRemixScreen({ route, navigation }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [sourceImageUri, setSourceImageUri] = useState(null);
   const [generationLimit, setGenerationLimit] = useState(1);
-  const [remixStrength, setRemixStrength] = useState(0.5);
+  const [remixStrength, setRemixStrength] = useState(0.38);
   const [selectedModelPrompt, setSelectedModelPrompt] = useState('');
   const [remixedResult, setRemixedResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -213,7 +185,7 @@ export default function AIRemixScreen({ route, navigation }) {
 
   const handleSelectModel = (model) => {
     setSelectedModel(model);
-    setSelectedModelPrompt(model.prompt);
+    setSelectedModelPrompt(model.targetPrompt || model.prompt);
     setCurrentPhase(2);
   };
 
@@ -227,7 +199,12 @@ export default function AIRemixScreen({ route, navigation }) {
 
     try {
       console.log(`[Remix] Starting style transfer using model "${selectedModel.name}" with prompt: "${selectedModelPrompt}" and strength ${remixStrength}`);
-      const base64Result = await generateImageToImage(sourceImageUri, selectedModelPrompt, remixStrength);
+      const base64Result = await generateImageToImage(
+        sourceImageUri,
+        selectedModelPrompt,
+        selectedModel?.modelType || 'style',
+        remixStrength
+      );
       setRemixedResult(base64Result);
       setCurrentPhase(4);
       showToast(`Successfully created ${selectedModel.name} remix!`);
@@ -321,7 +298,7 @@ export default function AIRemixScreen({ route, navigation }) {
     setSourceImageUri(null);
     setRemixedResult(null);
     setGenerationLimit(1);
-    setRemixStrength(0.5);
+    setRemixStrength(0.38);
     setCurrentPhase(1);
   };
 

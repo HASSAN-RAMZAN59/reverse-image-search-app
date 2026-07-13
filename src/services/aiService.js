@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Buffer } from 'buffer';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 /**
  * Connects to Stability AI's Stable Image Core V2 API to generate an image based on the prompt text and options.
@@ -105,51 +106,75 @@ export async function generateAIImage(promptText, options = {}) {
 }
 
 /**
- * Transforms an input image using Stability AI's V2 Image-to-Image API (SD3) based on a style prompt and strength.
- * 
- * @param {string} imageUri - The local URI of the source image.
- * @param {string} stylePrompt - The stylized prompt suffix configured from the grid selection.
- * @param {number} strength - Conditioning strength (0.0 to 1.0, default 0.55).
- * @returns {Promise<string>} A promise that resolves to a Base64-encoded JPEG image string.
+ * Dynamic AI Remix Engine (Handles both Style Transfer and Character Costume Swaps)
+ * @param {string} imageUri - Local URI of the source image.
+ * @param {string} targetPrompt - What to generate (Style or Costume).
+ * @param {string} modelType - Either 'style' or 'character'
+ * @param {number} strength - Conditioning strength (Only used for style transfer).
  */
-export async function generateImageToImage(imageUri, stylePrompt, strength = 0.5) {
+export async function generateImageToImage(imageUri, targetPrompt, modelType = 'style', strength = 0.38) {
   try {
-    const filename = imageUri.split('/').pop() || 'input_image.jpg';
+    // Automatically downscale the image if it exceeds the maximum dimension to prevent Stability AI's pixel limit error
+    let targetImageUri = imageUri;
+    try {
+      console.log(`[Remix Engine] Optimizing and resizing image before upload to avoid Stability API dimension limits...`);
+      const manipResult = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 1200 } }], // Safely scales width to 1200 and preserves aspect ratio
+        { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      targetImageUri = manipResult.uri;
+      console.log(`[Remix Engine] Image successfully optimized and scaled down: ${targetImageUri}`);
+    } catch (manipError) {
+      console.warn(`[Remix Engine] ImageManipulator failed, uploading original image. Error:`, manipError);
+    }
+
+    const filename = targetImageUri.split('/').pop() || 'input_image.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
 
     const formData = new FormData();
     formData.append('image', {
-      uri: imageUri,
+      uri: targetImageUri,
       name: filename,
       type: type,
     });
-    formData.append('prompt', stylePrompt); // Ensure the unique screen prompt string is bound directly here
-    formData.append('strength', String(strength)); // Map the precise slider float string (Default to 0.50 for ideal fidelity)
-    formData.append('mode', 'image-to-image');
-    formData.append('model', 'sd3.5-large');
+    
     formData.append('output_format', 'jpeg');
+
+    let apiEndpoint = '';
+
+    // CONDITIONAL ROUTING BASED ON MODEL TYPE
+    if (modelType === 'character') {
+      // Character Transformation via Search and Replace (Preserves face completely)
+      apiEndpoint = 'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
+      formData.append('prompt', targetPrompt);
+      formData.append('search_prompt', 'clothing, clothes, shirt, jacket, suit, dress, background');
+      console.log(`[Remix Engine] Routing to Search-and-Replace Endpoint for Character Cosplay.`);
+    } else {
+      // Pure Style Transfer via standard Image-to-Image (SD3)
+      apiEndpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
+      formData.append('prompt', targetPrompt);
+      formData.append('strength', String(strength));
+      formData.append('mode', 'image-to-image');
+      formData.append('model', 'sd3.5-large');
+      console.log(`[Remix Engine] Routing to standard Image-to-Image Endpoint for Stylization.`);
+    }
 
     const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
     if (!apiKey) {
       console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
     }
 
-    console.log(`[Remix Network] Sending image-to-image SD3 request with prompt: "${stylePrompt}" and strength: ${strength}`);
-
-    // We use standard fetch here to ensure boundary auto-generation is perfectly preserved
-    const response = await fetch(
-      'https://api.stability.ai/v2beta/stable-image/generate/sd3',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Accept': 'image/*',
-          // Note: Content-Type header MUST be omitted to let the environment inject boundary automatically
-        },
-        body: formData,
-      }
-    );
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'image/*',
+        // Note: Content-Type header MUST be omitted to let the environment inject boundary automatically
+      },
+      body: formData,
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -160,7 +185,7 @@ export async function generateImageToImage(imageUri, stylePrompt, strength = 0.5
     const base64String = Buffer.from(arrayBuffer).toString('base64');
     return `data:image/jpeg;base64,${base64String}`;
   } catch (error) {
-    console.error('Error in generateImageToImage with Stability API:', error);
+    console.error('Error in Dynamic Image Transformation:', error);
     throw error;
   }
 }
