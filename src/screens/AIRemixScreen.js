@@ -15,12 +15,14 @@ import {
   Dimensions,
   Modal,
   PanResponder,
+  TextInput,
 } from 'react-native';
 import { ArrowLeft, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximize2 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
 import { generateImageToImage } from '../services/aiService';
+import { addSavedDownload } from '../utils/downloadManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -28,121 +30,121 @@ const AI_MODELS = [
   {
     index: 1,
     name: 'Anime V2',
-    prompt: 'Highly detailed anime illustration, vibrant cel-shading, studio masterpiece',
+    prompt: 'anime style, vibrant cel-shading, colorful cartoon aesthetic',
     imageSource: { uri: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400' },
   },
   {
     index: 2,
     name: 'Watercolor',
-    prompt: 'Fluid watercolor wash painting, elegant bleeding canvas textures, artistic brushstrokes',
+    prompt: 'watercolor painting style, bleeding ink textures, artistic wash textures',
     imageSource: { uri: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400' },
   },
   {
     index: 3,
     name: 'Sketch',
-    prompt: 'Hand-drawn graphite pencil sketch, fine cross-hatching detail, monochrome classic art',
+    prompt: 'graphite pencil sketch style, cross-hatching textures, monochrome hand-drawn details',
     imageSource: { uri: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400' },
   },
   {
     index: 4,
     name: 'Cyberpunk',
-    prompt: 'Gritty cyberpunk aesthetic, futuristic neon glow, high-fidelity synthwave portrait',
+    prompt: 'cyberpunk style, futuristic neon glow lights, glowing synthwave colors',
     imageSource: { uri: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400' },
   },
   {
     index: 5,
     name: 'Oil Painting',
-    prompt: 'Thick impasto oil painting, rich textured canvas strokes, classical fine art finish',
+    prompt: 'oil painting style, thick impasto brushstrokes, rich oil canvas texture',
     imageSource: { uri: 'https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?w=400' },
   },
   {
     index: 6,
     name: 'Steampunk',
-    prompt: 'Retro-futuristic steampunk machinery, brass gears, copper pipes, Victorian industrial lighting',
+    prompt: 'steampunk theme style, Victorian brass and copper metallic textures, industrial gear accents',
     imageSource: { uri: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400' },
   },
   {
     index: 7,
     name: '3D Render',
-    prompt: 'Hyper-realistic 3D octane render, smooth volumetric lighting, digital art masterpiece',
+    prompt: '3d octane render style, smooth volumetric rendering, digital 3d lighting',
     imageSource: { uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400' },
   },
   {
     index: 8,
     name: 'Origami',
-    prompt: 'Intricate folded paper origami craft art, soft paper shadow geometry, minimalist clean style',
+    prompt: 'folded paper origami style, papercraft design, geometric paper shadows',
     imageSource: { uri: 'https://images.unsplash.com/photo-1614036417651-efe5912149d8?w=400' },
   },
   {
     index: 9,
     name: 'Cinematic',
-    prompt: 'Epic cinematic movie still composition, dramatic studio rim lighting, 8k resolution anamorphic lens',
+    prompt: 'cinematic look style, movie lighting, warm rim light, anamorphic lens colors',
     imageSource: { uri: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400' },
   },
   {
     index: 10,
     name: 'Vintage Pencil',
-    prompt: 'Old 19th-century vintage pencil drawing, sepia aged paper texture, fine historical lines',
+    prompt: 'vintage pencil drawing style, aged sepia paper texture, vintage sketch details',
     imageSource: { uri: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=400' },
   },
   {
     index: 11,
     name: 'Comic Book',
-    prompt: 'Retro vintage comic book illustration, dynamic pop ink outlines, classic half-tone dot shading',
+    prompt: 'retro comic book style, pop art ink outlines, half-tone dot shader pattern',
     imageSource: { uri: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400' },
   },
   {
     index: 12,
     name: 'Pixel Art',
-    prompt: '8-bit nostalgic retro arcade pixel art, crisp square pixel grids, limited colorful palette',
+    prompt: '8-bit retro arcade pixel art style, blocky pixel grids, limited retro color palette',
     imageSource: { uri: 'https://images.unsplash.com/photo-1566241477600-ac026ad43874?w=400' },
   },
   {
     index: 13,
     name: 'Neon Glow',
-    prompt: 'Dazzling futuristic neon glow, vibrant luminescent outline strokes, high-contrast dark backdrop',
+    prompt: 'neon glow style, glowing luminescent outlines, vibrant neon light highlights',
     imageSource: { uri: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400' },
   },
   {
     index: 14,
     name: 'Gothic',
-    prompt: 'Dark moody gothic architecture design, eerie ethereal shadow textures, haunting surreal oil art',
+    prompt: 'dark gothic style, spooky shadows, moody architecture textures',
     imageSource: { uri: 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=400' },
   },
   {
     index: 15,
     name: 'Pop Art',
-    prompt: 'Bold retro pop art aesthetic, high-contrast saturated colors, Andy Warhol silk-screen print style',
+    prompt: 'pop art style, high-contrast saturated colors, retro screenprint texture',
     imageSource: { uri: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400' },
   },
   {
     index: 16,
     name: 'Vaporwave',
-    prompt: 'Surreal 80s vaporwave aesthetic, pastel pink and purple gradients, nostalgic glitch art style',
+    prompt: 'vaporwave style, pastel pink and purple gradients, retro 80s glitch aesthetics',
     imageSource: { uri: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400' },
   },
   {
     index: 17,
     name: 'Abstract',
-    prompt: 'Dynamic fluid abstract expressionism, violent splatters, striking color harmonies, modern gallery texture',
+    prompt: 'fluid abstract expressionism style, artistic splatters, modern gallery texture',
     imageSource: { uri: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400' },
   },
   {
     index: 18,
     name: 'Renaissance',
-    prompt: 'Classical Italian renaissance fresco painting, dramatic chiaroscuro shading, fine museum masterwork',
+    prompt: 'renaissance fresco style, dramatic chiaroscuro lighting, classical painting texture',
     imageSource: { uri: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=400' },
   },
   {
     index: 19,
     name: 'Charcoal',
-    prompt: 'Smudged realistic charcoal stick portrait sketch, deep moody black gradients, raw canvas paper grains',
+    prompt: 'charcoal drawing style, smudged black carbon textures, raw paper gradients',
     imageSource: { uri: 'https://images.unsplash.com/photo-1576016770956-debb63d900fe?w=400' },
   },
   {
     index: 20,
     name: 'Ink Wash',
-    prompt: 'Traditional East Asian ink wash painting, zen calligraphic brush strokes, flowing monochrome tones',
+    prompt: 'ink wash painting style, traditional zen brush calligraphy textures, flowing monochrome tones',
     imageSource: { uri: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=400' },
   },
 ];
@@ -153,6 +155,7 @@ export default function AIRemixScreen({ route, navigation }) {
   const [sourceImageUri, setSourceImageUri] = useState(null);
   const [generationLimit, setGenerationLimit] = useState(1);
   const [remixStrength, setRemixStrength] = useState(0.55);
+  const [selectedModelPrompt, setSelectedModelPrompt] = useState('');
   const [remixedResult, setRemixedResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -222,6 +225,7 @@ export default function AIRemixScreen({ route, navigation }) {
 
   const handleSelectModel = (model) => {
     setSelectedModel(model);
+    setSelectedModelPrompt(model.prompt);
     setCurrentPhase(2);
   };
 
@@ -234,8 +238,8 @@ export default function AIRemixScreen({ route, navigation }) {
     setLoading(true);
 
     try {
-      console.log(`[Remix] Starting style transfer using model "${selectedModel.name}" with strength ${remixStrength}`);
-      const base64Result = await generateImageToImage(sourceImageUri, selectedModel.prompt, remixStrength);
+      console.log(`[Remix] Starting style transfer using model "${selectedModel.name}" with prompt: "${selectedModelPrompt}" and strength ${remixStrength}`);
+      const base64Result = await generateImageToImage(sourceImageUri, selectedModelPrompt, remixStrength);
       setRemixedResult(base64Result);
       setCurrentPhase(4);
       showToast(`Successfully created ${selectedModel.name} remix!`);
@@ -271,25 +275,37 @@ export default function AIRemixScreen({ route, navigation }) {
 
       const filename = `ai_remix_${Date.now()}.jpg`;
       const tempUri = `${FileSystem.documentDirectory}${filename}`;
-      
+
       await FileSystem.writeAsStringAsync(tempUri, base64Data, {
         encoding: 'base64',
       });
 
-      const asset = await MediaLibrary.createAssetAsync(tempUri);
+      let assetCreated = false;
+      let galleryAssetId = null;
       const albumName = 'AI Image Downloaded';
-      const album = await MediaLibrary.getAlbumAsync(albumName);
 
-      if (album === null) {
-        await MediaLibrary.createAlbumAsync(albumName, asset, false);
-      } else {
-        await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+      try {
+        const asset = await MediaLibrary.createAssetAsync(tempUri);
+        assetCreated = true;
+        galleryAssetId = asset.id;
+        const album = await MediaLibrary.getAlbumAsync(albumName);
+
+        if (album === null) {
+          await MediaLibrary.createAlbumAsync(albumName, asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+      } catch (albumErr) {
+        console.warn('[Remix] Album saving failed, using direct library save fallback:', albumErr);
+        if (!assetCreated) {
+          await MediaLibrary.saveToLibraryAsync(tempUri);
+        }
       }
 
-      Alert.alert(
-        'Download Complete',
-        `Successfully saved permanent file to gallery album: "${albumName}"`
-      );
+      // Add to internal saved downloads registry
+      await addSavedDownload(tempUri, galleryAssetId, true);
+
+      showToast('Image saved');
     } catch (err) {
       console.error('[Remix] Persistence error:', err);
       Alert.alert('Download Failed', `Could not save image: ${err.message || err}`);
@@ -313,6 +329,7 @@ export default function AIRemixScreen({ route, navigation }) {
 
   const resetFlow = () => {
     setSelectedModel(null);
+    setSelectedModelPrompt('');
     setSourceImageUri(null);
     setRemixedResult(null);
     setGenerationLimit(1);
@@ -357,7 +374,7 @@ export default function AIRemixScreen({ route, navigation }) {
                 onPress={() => handleSelectModel(style)}
               >
                 <Image source={style.imageSource} style={styles.cardImage} />
-                
+
                 <View style={styles.cardIndexBadge}>
                   <Text style={styles.cardIndexText}>#{String(style.index).padStart(2, '0')}</Text>
                 </View>
@@ -380,7 +397,7 @@ export default function AIRemixScreen({ route, navigation }) {
               <Text style={styles.phase2ModelBadgeText}>{selectedModel.name}</Text>
             </View>
           </View>
-          
+
           <View style={styles.phase2Footer}>
             <TouchableOpacity style={styles.gallerySelectLargeBtn} onPress={selectImageFromLibrary}>
               <ImageIcon size={20} color="#FFF" style={styles.btnIconSpacing} />
@@ -403,7 +420,7 @@ export default function AIRemixScreen({ route, navigation }) {
 
           {/* Bottom View Section */}
           <View style={styles.phase3BottomSection}>
-            
+
             {/* ROW 1: Image Limit Selection */}
             <View style={styles.controlRowSection}>
               <View style={styles.controlRowHeader}>
@@ -428,34 +445,6 @@ export default function AIRemixScreen({ route, navigation }) {
               </View>
             </View>
 
-            {/* ROW 2: Algorithmic Strength Tuning */}
-            <View style={styles.controlRowSection}>
-              <View style={styles.controlRowHeader}>
-                <Text style={styles.controlRowTitle}>Algorithmic Strength Tuning</Text>
-                <Text style={styles.controlRowValue}>Strength: {remixStrength.toFixed(2)}</Text>
-              </View>
-              <View style={styles.limitRow}>
-                {[
-                  { label: 'Weak (0.35)', val: 0.35 },
-                  { label: 'Normal (0.55)', val: 0.55 },
-                  { label: 'High (0.75)', val: 0.75 },
-                ].map((item) => {
-                  const isActive = remixStrength === item.val;
-                  return (
-                    <TouchableOpacity
-                      key={item.val}
-                      style={[styles.strengthBtn, isActive && styles.strengthBtnActive]}
-                      onPress={() => setRemixStrength(item.val)}
-                    >
-                      <Text style={[styles.strengthBtnText, isActive && styles.strengthBtnTextActive]}>
-                        {item.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
           </View>
 
           {/* Absolute bottom-aligned execute button */}
@@ -473,24 +462,21 @@ export default function AIRemixScreen({ route, navigation }) {
           <View style={styles.resultCard}>
             <View style={styles.resultImageContainer}>
               <Image source={{ uri: remixedResult }} style={styles.resultImage} />
+              <View style={styles.imageActionsOverlay}>
+                <TouchableOpacity
+                  style={styles.actionIconBtn}
+                  onPress={() => setIsFullScreen(true)}
+                >
+                  <Maximize2 size={20} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionIconBtn}
+                  onPress={handleDownloadRemix}
+                >
+                  <Download size={20} color="#FFF" />
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <View style={styles.resultControls}>
-              <TouchableOpacity style={styles.controlBtn} onPress={() => setIsFullScreen(true)}>
-                <Maximize2 size={18} color="#007AFF" style={styles.btnIconSpacing} />
-                <Text style={styles.controlBtnTextBlue}>Full Screen View</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.controlBtn, styles.downloadBtn]} onPress={handleDownloadRemix}>
-                <Download size={18} color="#FFF" style={styles.btnIconSpacing} />
-                <Text style={styles.controlBtnTextWhite}>Download Remixed Image</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.restartBtn} onPress={resetFlow}>
-              <RefreshCw size={16} color="#5F6368" style={styles.btnIconSpacing} />
-              <Text style={styles.restartBtnText}>Remix Another Image</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       )}
@@ -511,11 +497,12 @@ export default function AIRemixScreen({ route, navigation }) {
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color="#FF9500" />
-            <Text style={styles.loadingOverlayText}>Generating AI Remix...</Text>
-            <Text style={styles.loadingSubText}>Consulting Stability Diffusion neural network</Text>
+            <Text style={styles.loadingOverlayText}>Generating...</Text>
           </View>
         </View>
       )}
+
+
 
       {/* Floating custom premium Toast component */}
       {toastVisible && (
@@ -1058,5 +1045,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  imageActionsOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 48,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  actionIconBtn: {
+    padding: 10,
   },
 });

@@ -114,19 +114,20 @@ export async function generateAIImage(promptText, options = {}) {
  */
 export async function generateImageToImage(imageUri, stylePrompt, strength = 0.55) {
   try {
-    const formData = new FormData();
-    const filename = imageUri.split('/').pop() || 'image.jpg';
+    const filename = imageUri.split('/').pop() || 'input_image.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
 
+    const formData = new FormData();
     formData.append('image', {
       uri: imageUri,
       name: filename,
       type: type,
     });
-    formData.append('prompt', stylePrompt);
-    formData.append('strength', strength.toString());
+    formData.append('prompt', stylePrompt); // Ensure the unique screen prompt string is bound directly here
+    formData.append('strength', String(strength)); // Map the precise slider float string (Default to 0.50 for ideal fidelity)
     formData.append('mode', 'image-to-image');
+    formData.append('model', 'sd3.5-large');
     formData.append('output_format', 'jpeg');
 
     const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
@@ -134,20 +135,38 @@ export async function generateImageToImage(imageUri, stylePrompt, strength = 0.5
       console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
     }
 
-    const response = await axios.post(
+    console.log(`[Remix Network] Sending image-to-image SD3 request with prompt: "${stylePrompt}" and strength: ${strength}`);
+
+    // We use standard fetch here to ensure boundary auto-generation is perfectly preserved
+    const response = await fetch(
       'https://api.stability.ai/v2beta/stable-image/generate/sd3',
-      formData,
       {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Accept': 'image/*',
-          'Content-Type': 'multipart/form-data',
+          // Note: Content-Type header MUST be omitted to let the environment inject boundary automatically
         },
-        responseType: 'arraybuffer',
+        body: formData,
       }
     );
 
-    const base64String = Buffer.from(response.data).toString('base64');
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Stability API Error (${response.status}): ${errorText}`);
+    }
+
+    const responseBlob = await response.blob();
+    const base64String = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(responseBlob);
+    });
+
     return `data:image/jpeg;base64,${base64String}`;
   } catch (error) {
     console.error('Error in generateImageToImage with Stability API:', error);
