@@ -14,14 +14,15 @@ import {
   Animated,
   Dimensions,
   Modal,
+  PanResponder,
 } from 'react-native';
-import { ArrowLeft, Sparkles, Download, Image as ImageIcon, Camera, RefreshCw, X, Maximize2 } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximize2 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
 import { generateImageToImage } from '../services/aiService';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const AI_MODELS = [
   {
@@ -147,19 +148,38 @@ const AI_MODELS = [
 ];
 
 export default function AIRemixScreen({ route, navigation }) {
-  const [currentPhase, setCurrentPhase] = useState(1); // 1: Model Selection, 2: Config, 3: Result
+  const [currentPhase, setCurrentPhase] = useState(1); // 1: Select Style, 2: Model Preview & Gallery, 3: Tune Parameters, 4: Result View
   const [selectedModel, setSelectedModel] = useState(null);
   const [sourceImageUri, setSourceImageUri] = useState(null);
   const [generationLimit, setGenerationLimit] = useState(1);
+  const [remixStrength, setRemixStrength] = useState(0.55);
   const [remixedResult, setRemixedResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [remixStrength, setRemixStrength] = useState(0.55);
 
   // Toast notifications state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  // Custom PanResponder setup for Algorithmic Strength Selector
+  const sliderWidth = SCREEN_WIDTH - 64;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        const x = evt.nativeEvent.locationX;
+        const percentage = Math.max(0, Math.min(1, x / sliderWidth));
+        setRemixStrength(Math.round(percentage * 100) / 100);
+      },
+      onPanResponderMove: (evt) => {
+        const x = evt.nativeEvent.locationX;
+        const percentage = Math.max(0, Math.min(1, x / sliderWidth));
+        setRemixStrength(Math.round(percentage * 100) / 100);
+      },
+    })
+  ).current;
 
   useEffect(() => {
     const passedUri = route?.params?.imageUri || route?.params?.sourceImageUri;
@@ -208,6 +228,8 @@ export default function AIRemixScreen({ route, navigation }) {
       if (!result.canceled && result.assets?.[0]?.uri) {
         setSourceImageUri(result.assets[0].uri);
         showToast('Local image selected successfully!');
+        // Transition straight to step 3
+        setCurrentPhase(3);
       }
     } catch (err) {
       console.error('Gallery launch failed:', err);
@@ -222,18 +244,17 @@ export default function AIRemixScreen({ route, navigation }) {
 
   const handleCreateRemix = async () => {
     if (!sourceImageUri) {
-      Alert.alert('No Image Selected', 'Please click "Select from Gallery" to load a starting photo.');
+      Alert.alert('No Image Selected', 'Please go back and select a photo from your gallery.');
       return;
     }
 
     setLoading(true);
 
     try {
-      console.log(`[Remix] Starting style transfer using model "${selectedModel.name}"`);
-      // Use dynamic remix strength from state
+      console.log(`[Remix] Starting style transfer using model "${selectedModel.name}" with strength ${remixStrength}`);
       const base64Result = await generateImageToImage(sourceImageUri, selectedModel.prompt, remixStrength);
       setRemixedResult(base64Result);
-      setCurrentPhase(3);
+      setCurrentPhase(4);
       showToast(`Successfully created ${selectedModel.name} remix!`);
     } catch (err) {
       console.error('[Remix] Style generation error:', err);
@@ -299,7 +320,11 @@ export default function AIRemixScreen({ route, navigation }) {
       setSelectedModel(null);
       setCurrentPhase(1);
     } else if (currentPhase === 3) {
+      // Go back to static preview
+      setSourceImageUri(null);
       setCurrentPhase(2);
+    } else if (currentPhase === 4) {
+      setCurrentPhase(3);
     }
   };
 
@@ -308,12 +333,14 @@ export default function AIRemixScreen({ route, navigation }) {
     setSourceImageUri(null);
     setRemixedResult(null);
     setGenerationLimit(1);
+    setRemixStrength(0.55);
     setCurrentPhase(1);
   };
 
   const getHeaderTitle = () => {
     if (currentPhase === 1) return 'AI Style Remix';
-    if (currentPhase === 2) return `Configure ${selectedModel?.name}`;
+    if (currentPhase === 2) return selectedModel?.name || 'Preview Model';
+    if (currentPhase === 3) return 'Tune Settings';
     return 'Remix Result';
   };
 
@@ -330,12 +357,12 @@ export default function AIRemixScreen({ route, navigation }) {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* PHASE 1: Style Selection Grid */}
+      {/* SCREEN 1: Pure Model Selection Grid */}
       {currentPhase === 1 && (
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.sectionHeaderContainer}>
-            <Text style={styles.mainTitle}>1. Choose a Base Style</Text>
-            <Text style={styles.mainSubtitle}>Select one of the 20 stylized AI models to begin remixing.</Text>
+            <Text style={styles.mainTitle}>Choose a Base Style</Text>
+            <Text style={styles.mainSubtitle}>Select one of the 20 stylized AI models to begin.</Text>
           </View>
 
           <View style={styles.gridContainer}>
@@ -361,36 +388,43 @@ export default function AIRemixScreen({ route, navigation }) {
         </ScrollView>
       )}
 
-      {/* PHASE 2: Dynamic Selected Model Configuration View */}
+      {/* SCREEN 2: Model Static Preview & Isolated Gallery Trigger */}
       {currentPhase === 2 && selectedModel && (
+        <View style={styles.phase2Container}>
+          <View style={styles.phase2ImageContainer}>
+            <Image source={selectedModel.imageSource} style={styles.phase2Image} />
+            <View style={styles.phase2ModelBadge}>
+              <Text style={styles.phase2ModelBadgeText}>{selectedModel.name}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.phase2Footer}>
+            <TouchableOpacity style={styles.gallerySelectLargeBtn} onPress={selectImageFromLibrary}>
+              <ImageIcon size={20} color="#FFF" style={styles.btnIconSpacing} />
+              <Text style={styles.gallerySelectLargeBtnText}>📸 Select from Gallery</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* SCREEN 3: Multi-Parameter Tuning Configuration (Limit & Strength) */}
+      {currentPhase === 3 && selectedModel && sourceImageUri && (
         <View style={styles.flexOne}>
           <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
             <View style={styles.configContainer}>
               
-              {/* Dynamic Preview Container */}
+              {/* Chosen local image preview */}
               <View style={styles.previewImageContainer}>
-                <Image 
-                  source={sourceImageUri ? { uri: sourceImageUri } : selectedModel.imageSource} 
-                  style={styles.configPreviewImage} 
-                />
+                <Image source={{ uri: sourceImageUri }} style={styles.configPreviewImage} />
                 <View style={styles.previewBadge}>
-                  <Text style={styles.previewBadgeText}>
-                    {sourceImageUri ? '📸 Selected Photo' : '🖼️ Model Reference'}
-                  </Text>
+                  <Text style={styles.previewBadgeText}>📸 Selected Photo</Text>
                 </View>
               </View>
 
-              {/* Select from Gallery Button */}
-              <TouchableOpacity style={styles.gallerySelectBtn} onPress={selectImageFromLibrary}>
-                <ImageIcon size={20} color="#FFF" style={styles.btnIconSpacing} />
-                <Text style={styles.gallerySelectBtnText}>Select from Gallery</Text>
-              </TouchableOpacity>
-
-              {/* Limit selector row: [1] [2] [3] [4] */}
+              {/* Image Generation Limit Row */}
               <View style={styles.limitSection}>
-                <Text style={styles.limitTitle}>Generation Count Limit</Text>
-                <Text style={styles.limitSubtitle}>Choose quantity of style transfer iterations (1-4)</Text>
-                
+                <Text style={styles.limitTitle}>Image Generation Limit</Text>
+                <Text style={styles.limitSubtitle}>Select target output variants to process</Text>
                 <View style={styles.limitRow}>
                   {[1, 2, 3, 4].map((num) => {
                     const isActive = generationLimit === num;
@@ -409,51 +443,44 @@ export default function AIRemixScreen({ route, navigation }) {
                 </View>
               </View>
 
-              {/* Strength selector row: Weak (0.35) | Normal (0.55) | High (0.75) */}
+              {/* Algorithmic Processing Strength Row */}
               <View style={styles.limitSection}>
-                <Text style={styles.limitTitle}>Style Remix Strength</Text>
-                <Text style={styles.limitSubtitle}>Choose creative influence: Weak (0.35), Normal (0.55), High (0.75)</Text>
+                <View style={styles.sliderLabelRow}>
+                  <Text style={styles.limitTitle}>Algorithmic Processing Strength</Text>
+                  <Text style={styles.sliderValueText}>{remixStrength.toFixed(2)}</Text>
+                </View>
+                <Text style={styles.limitSubtitle}>Adjust style transfer variance (0.0 to 1.0)</Text>
                 
-                <View style={styles.limitRow}>
-                  {[
-                    { label: 'Weak (0.35)', val: 0.35 },
-                    { label: 'Normal (0.55)', val: 0.55 },
-                    { label: 'High (0.75)', val: 0.75 },
-                  ].map((item) => {
-                    const isActive = remixStrength === item.val;
-                    return (
-                      <TouchableOpacity
-                        key={item.val}
-                        style={[styles.strengthBtn, isActive && styles.strengthBtnActive]}
-                        onPress={() => setRemixStrength(item.val)}
-                      >
-                        <Text style={[styles.strengthBtnText, isActive && styles.strengthBtnTextActive]}>
-                          {item.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                <View 
+                  style={styles.sliderTrackWrapper} 
+                  {...panResponder.panHandlers}
+                  collapsable={false}
+                >
+                  <View style={styles.sliderTrackBackground} />
+                  <View style={[styles.sliderTrackActive, { width: remixStrength * sliderWidth }]} />
+                  <View style={[styles.sliderThumb, { left: remixStrength * sliderWidth - 12 }]} />
+                </View>
+                <View style={styles.sliderMinMaxRow}>
+                  <Text style={styles.sliderMinMaxText}>0.00 (Original)</Text>
+                  <Text style={styles.sliderMinMaxText}>1.00 (Max Variance)</Text>
                 </View>
               </View>
 
             </View>
           </ScrollView>
 
-          {/* Absolute bottom-aligned execute button */}
+          {/* Absolute bottom execute button */}
           <SafeAreaView style={styles.executeFooter}>
-            <TouchableOpacity 
-              style={[styles.executeBtn, !sourceImageUri && styles.executeBtnDisabled]} 
-              onPress={handleCreateRemix}
-            >
+            <TouchableOpacity style={styles.executeBtn} onPress={handleCreateRemix}>
               <Sparkles size={20} color="#FFF" style={styles.btnIconSpacing} />
-              <Text style={styles.executeBtnText}>Create AI Remix Image</Text>
+              <Text style={styles.executeBtnText}>⚡ Create AI Remix</Text>
             </TouchableOpacity>
           </SafeAreaView>
         </View>
       )}
 
-      {/* PHASE 3: Result View */}
-      {currentPhase === 3 && remixedResult && (
+      {/* SCREEN 4: Result Presentation, Full View Modal, & Scoped Saving */}
+      {currentPhase === 4 && remixedResult && (
         <ScrollView contentContainerStyle={styles.resultScrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.resultCard}>
             <View style={styles.resultImageContainer}>
@@ -624,7 +651,68 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  // Phase 2 styling
+  // Phase 2 Container
+  phase2Container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  phase2ImageContainer: {
+    flex: 0.8,
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#1C1C1E',
+  },
+  phase2Image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  phase2ModelBadge: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  phase2ModelBadgeText: {
+    color: '#FF9500',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  phase2Footer: {
+    flex: 0.2,
+    backgroundColor: '#1C1C1E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#2C2C2E',
+  },
+  gallerySelectLargeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF',
+    paddingVertical: 16,
+    borderRadius: 30,
+    width: '100%',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  gallerySelectLargeBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  // Phase 3 styling
   configContainer: {
     backgroundColor: '#FFF',
     borderRadius: 16,
@@ -664,23 +752,6 @@ const styles = StyleSheet.create({
   previewBadgeText: {
     color: '#FFF',
     fontSize: 12,
-    fontWeight: 'bold',
-  },
-  gallerySelectBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    width: '90%',
-    marginBottom: 24,
-    elevation: 2,
-  },
-  gallerySelectBtnText: {
-    color: '#FFF',
-    fontSize: 15,
     fontWeight: 'bold',
   },
   limitSection: {
@@ -727,50 +798,59 @@ const styles = StyleSheet.create({
   limitNumTextActive: {
     color: '#FF9500',
   },
-  strengthBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: '#F1F3F4',
+  // Custom Slider Styling
+  sliderLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    marginHorizontal: 4,
   },
-  strengthBtnActive: {
-    backgroundColor: '#FFF2E6',
-    borderColor: '#FF9500',
-  },
-  strengthBtnText: {
-    fontSize: 12,
+  sliderValueText: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#5F6368',
-    textAlign: 'center',
-  },
-  strengthBtnTextActive: {
     color: '#FF9500',
   },
-  styleDetailBox: {
+  sliderTrackWrapper: {
+    height: 40,
+    justifyContent: 'center',
     width: '100%',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    padding: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    position: 'relative',
+    marginVertical: 4,
   },
-  detailBoxTitle: {
+  sliderTrackBackground: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E0E0E0',
+    width: '100%',
+    position: 'absolute',
+  },
+  sliderTrackActive: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FF9500',
+    position: 'absolute',
+  },
+  sliderThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFF',
+    borderWidth: 2.5,
+    borderColor: '#FF9500',
+    position: 'absolute',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  sliderMinMaxRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  sliderMinMaxText: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    textTransform: 'uppercase',
-  },
-  detailBoxPrompt: {
-    fontSize: 13,
-    color: '#5F6368',
-    marginTop: 4,
-    fontStyle: 'italic',
-    lineHeight: 18,
+    color: '#757575',
   },
   executeFooter: {
     position: 'absolute',
@@ -798,9 +878,6 @@ const styles = StyleSheet.create({
     width: '100%',
     elevation: 3,
   },
-  executeBtnDisabled: {
-    backgroundColor: '#B0BEC5',
-  },
   executeBtnText: {
     color: '#FFF',
     fontSize: 16,
@@ -809,7 +886,7 @@ const styles = StyleSheet.create({
   btnIconSpacing: {
     marginRight: 6,
   },
-  // Phase 3 styling
+  // Phase 4 styling
   resultCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
