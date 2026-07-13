@@ -147,7 +147,7 @@ export default function AIImageResultScreen({ route, navigation }) {
         }
       }
 
-      await addSavedDownload(localUri, galleryAssetId);
+      await addSavedDownload(localUri, galleryAssetId, true);
       showToast("Image saved successfully!");
     } catch (error) {
       console.error("Save image error:", error);

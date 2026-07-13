@@ -22,7 +22,8 @@ import { getSavedDownloads, deleteSavedDownload } from '../utils/downloadManager
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_WIDTH = (SCREEN_WIDTH - 48) / 3;
 
-export default function DownloadsScreen({ navigation }) {
+export default function DownloadsScreen({ route, navigation }) {
+  const isAIOnly = route?.params?.isAIOnly ?? false;
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
@@ -31,7 +32,11 @@ export default function DownloadsScreen({ navigation }) {
   const fetchDownloads = async () => {
     try {
       const list = await getSavedDownloads();
-      setImages(list);
+      if (isAIOnly) {
+        setImages(list.filter((item) => item.isAI === true));
+      } else {
+        setImages(list.filter((item) => item.isAI !== true));
+      }
     } catch (err) {
       console.error('Error fetching downloads:', err);
     } finally {
@@ -101,7 +106,7 @@ export default function DownloadsScreen({ navigation }) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Saved Downloads</Text>
+        <Text style={styles.headerTitle}>{isAIOnly ? 'AI Art Gallery' : 'Saved Downloads'}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -115,9 +120,11 @@ export default function DownloadsScreen({ navigation }) {
           <View style={styles.emptyIconContainer}>
             <Download size={48} color="#9AA0A6" />
           </View>
-          <Text style={styles.emptyTitle}>No Saved Images</Text>
+          <Text style={styles.emptyTitle}>{isAIOnly ? 'No Saved AI Art' : 'No Saved Images'}</Text>
           <Text style={styles.emptySubtitle}>
-            Long press on any image in the browser search results to save it here.
+            {isAIOnly
+              ? 'Generate AI Art and download it to see your creations saved here.'
+              : 'Long press on any image in the browser search results to save it here.'}
           </Text>
         </View>
       ) : (

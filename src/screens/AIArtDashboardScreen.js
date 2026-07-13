@@ -8,7 +8,7 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import { ArrowLeft, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, Download } from 'lucide-react-native';
 
 export default function AIArtDashboardScreen({ navigation }) {
   return (
@@ -34,6 +34,14 @@ export default function AIArtDashboardScreen({ navigation }) {
         >
           <Sparkles size={24} color="#FFF" style={styles.btnIcon} />
           <Text style={styles.actionButtonText}>AI Text to Image Generation</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, styles.downloadButton]}
+          onPress={() => navigation?.navigate('Downloads', { isAIOnly: true })}
+        >
+          <Download size={24} color="#FFF" style={styles.btnIcon} />
+          <Text style={styles.actionButtonText}>AI Art Downloads</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -93,5 +101,9 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  downloadButton: {
+    backgroundColor: '#5856D6', // Indigo/violet premium accent color
+    marginTop: 10,
   },
 });

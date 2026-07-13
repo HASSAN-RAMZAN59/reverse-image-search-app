@@ -33,7 +33,7 @@ export async function getSavedDownloads() {
   }
 }
 
-export async function addSavedDownload(localUri, galleryAssetId = null) {
+export async function addSavedDownload(localUri, galleryAssetId = null, isAI = false) {
   try {
     const list = await getSavedDownloads();
     
@@ -46,6 +46,7 @@ export async function addSavedDownload(localUri, galleryAssetId = null) {
       id: String(Date.now()),
       uri: localUri,
       galleryAssetId,
+      isAI,
       timestamp: Date.now()
     };
     
