@@ -162,24 +162,7 @@ export default function AIRemixScreen({ route, navigation }) {
   const [toastMessage, setToastMessage] = useState('');
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
-  // Custom PanResponder setup for Algorithmic Strength Selector
-  const sliderWidth = SCREEN_WIDTH - 64;
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        const x = evt.nativeEvent.locationX;
-        const percentage = Math.max(0, Math.min(1, x / sliderWidth));
-        setRemixStrength(Math.round(percentage * 100) / 100);
-      },
-      onPanResponderMove: (evt) => {
-        const x = evt.nativeEvent.locationX;
-        const percentage = Math.max(0, Math.min(1, x / sliderWidth));
-        setRemixStrength(Math.round(percentage * 100) / 100);
-      },
-    })
-  ).current;
+
 
   useEffect(() => {
     const passedUri = route?.params?.imageUri || route?.params?.sourceImageUri;
@@ -447,22 +430,29 @@ export default function AIRemixScreen({ route, navigation }) {
 
             {/* ROW 2: Algorithmic Strength Tuning */}
             <View style={styles.controlRowSection}>
-              <View style={styles.sliderLabelRow}>
+              <View style={styles.controlRowHeader}>
                 <Text style={styles.controlRowTitle}>Algorithmic Strength Tuning</Text>
-                <Text style={styles.sliderValueText}>{remixStrength.toFixed(2)}</Text>
+                <Text style={styles.controlRowValue}>Strength: {remixStrength.toFixed(2)}</Text>
               </View>
-              <View 
-                style={styles.sliderTrackWrapper} 
-                {...panResponder.panHandlers}
-                collapsable={false}
-              >
-                <View style={styles.sliderTrackBackground} />
-                <View style={[styles.sliderTrackActive, { width: remixStrength * sliderWidth }]} />
-                <View style={[styles.sliderThumb, { left: remixStrength * sliderWidth - 12 }]} />
-              </View>
-              <View style={styles.sliderMinMaxRow}>
-                <Text style={styles.sliderMinMaxText}>0.00 (Mild)</Text>
-                <Text style={styles.sliderMinMaxText}>1.00 (Strong)</Text>
+              <View style={styles.limitRow}>
+                {[
+                  { label: 'Weak (0.35)', val: 0.35 },
+                  { label: 'Normal (0.55)', val: 0.55 },
+                  { label: 'High (0.75)', val: 0.75 },
+                ].map((item) => {
+                  const isActive = remixStrength === item.val;
+                  return (
+                    <TouchableOpacity
+                      key={item.val}
+                      style={[styles.strengthBtn, isActive && styles.strengthBtnActive]}
+                      onPress={() => setRemixStrength(item.val)}
+                    >
+                      <Text style={[styles.strengthBtnText, isActive && styles.strengthBtnTextActive]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
