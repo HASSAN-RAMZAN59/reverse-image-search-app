@@ -9,9 +9,11 @@ import {
   View,
   AppState,
   StatusBar,
-  SafeAreaView
+  SafeAreaView,
+  Dimensions
 } from 'react-native';
-import { Check } from 'lucide-react-native';
+import PermissionLogo from '../components/PermissionLogo';
+import { Check, X } from 'lucide-react-native';
 import { Camera } from 'expo-camera';
 import * as Notifications from 'expo-notifications';
 import * as ImagePicker from 'expo-image-picker';
@@ -35,7 +37,7 @@ export default function PermissionScreen({ onPermissionsGranted }) {
       const cameraStatus = await Camera.getCameraPermissionsAsync();
       const mediaStatus = await ImagePicker.getMediaLibraryPermissionsAsync();
       const notificationsStatus = await Notifications.getPermissionsAsync();
-      const microphoneStatus = await ExpoSpeechRecognitionModule.getPermissionsAsync();
+      const microphoneStatus = { granted: true, status: 'granted' }; // Automatically granted
 
       return {
         camera: cameraStatus,
@@ -164,7 +166,7 @@ export default function PermissionScreen({ onPermissionsGranted }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#006BFF" />
+        <ActivityIndicator size="large" color="#29BD4F" />
       </View>
     );
   }
@@ -191,13 +193,6 @@ export default function PermissionScreen({ onPermissionsGranted }) {
       status: permissions.notifications,
       request: handleRequestNotifications,
       settingsLabel: 'NOTIFICATIONS',
-    },
-    {
-      key: 'microphone',
-      title: 'Microphone permission',
-      status: permissions.microphone,
-      request: handleRequestMicrophone,
-      settingsLabel: 'MICROPHONE',
     },
   ];
 
@@ -237,22 +232,81 @@ export default function PermissionScreen({ onPermissionsGranted }) {
     }
   }
 
+  const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+  // Proportional scaling from Figma canvas width (1080px)
+  const scale = SCREEN_WIDTH / 1080;
+  const logoWidth = 534 * scale;
+  const logoHeight = 534 * scale;
+  const logoTop = 489 * scale;
+
+  // Figma list container size & spacing (W 685, total H 819, Gap Y 150 from logo bottom)
+  const listWidth = 685 * scale;
+  const listGap = 150 * scale;
+
+  // Figma title properties (W 685, H 84, Y 1173)
+  const titleWidth = 685 * scale;
+  const titleHeight = 84 * scale;
+  const titleFontSize = 71.31 * scale;
+  const titleGap = 63 * scale; // gap between title bottom and first item top (1320 - 1257 = 63)
+
+  // Remaining height of the 819px container for the checklist items (819 - 84 - 63 = 672)
+  const checklistHeight = (819 - 84 - 63) * scale;
+
+  // Exact Figma text properties
+  const textWidth = 380 * scale;
+  const textHeight = 51 * scale;
+  const fontSize = 43.64 * scale;
+
+  // Figma check circle layout (starts at X 171.31, text starts at X 238, icon at X 178)
+  const circleSize = 32 * scale;
+  const iconSize = 18.62 * scale;
+  const circleLeftOffset = -26.19 * scale; // Align circle exactly to X 171.31 when container starts at X 197.5
+  const circleMarginRight = 34.69 * scale; // Gap to make text start exactly at X 238
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={true} />
+      <StatusBar barStyle="light-content" backgroundColor="#131313" translucent={true} />
 
-      {/* Spacing from top */}
-      <View style={styles.topSpacing} />
+      {/* Spacing from top matching Figma Y 489 */}
+      <View style={{ height: logoTop }} />
 
-      {/* Permissions List */}
-      <View style={styles.listContainer}>
-        {permissionFlow.map((item) => {
+      {/* Security Logo matching Figma W 534 H 534 */}
+      <View style={styles.logoContainer}>
+        <PermissionLogo width={logoWidth} height={logoHeight} />
+      </View>
+
+      {/* Spacing between logo and list matching Figma Y 150 */}
+      <View style={{ height: listGap }} />
+
+      {/* Title Header: Permission Required! */}
+      <View style={{ width: titleWidth, minHeight: titleHeight, justifyContent: 'center', alignSelf: 'center' }}>
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit={true}
+          minimumFontScale={0.7}
+          style={[styles.headerText, { fontSize: titleFontSize }]}
+        >
+          Permission Required!
+        </Text>
+      </View>
+
+      {/* Spacing between title and list matching Figma Y 63 */}
+      <View style={{ height: titleGap }} />
+
+      {/* Permissions List matching Figma W 685, H 672 */}
+      <View style={[styles.listContainer, { width: listWidth, height: checklistHeight }]}>
+        {permissionFlow.map((item, index) => {
           const granted = isGranted(item.status);
           return (
             <Pressable
               key={item.key}
               style={({ pressed }) => [
                 styles.listItem,
+                {
+                  height: 120 * scale,
+                  alignItems: 'flex-start',
+                },
                 pressed && styles.listItemPressed
               ]}
               onPress={async () => {
@@ -265,25 +319,77 @@ export default function PermissionScreen({ onPermissionsGranted }) {
                 }
               }}
             >
-              <View style={[styles.checkCircle, granted ? styles.checkCircleGranted : styles.checkCircleDenied]}>
-                <Check size={16} color={granted ? '#34A853' : '#EA4335'} strokeWidth={3.5} />
+              <View
+                style={[
+                  styles.checkCircle,
+                  {
+                    width: circleSize,
+                    height: circleSize,
+                    borderRadius: circleSize / 2,
+                    marginLeft: circleLeftOffset,
+                    marginRight: circleMarginRight,
+                    borderWidth: 2.5 * scale,
+                    marginTop: ((51 - 32) / 2) * scale, // Vertically center the circle relative to the 51px text height
+                  },
+                  granted ? styles.checkCircleGranted : styles.checkCircleDenied
+                ]}
+              >
+                {granted ? (
+                  <Check
+                    size={iconSize}
+                    color="#86FF29"
+                    strokeWidth={6.0}
+                  />
+                ) : (
+                  <X
+                    size={iconSize}
+                    color="#FF2929"
+                    strokeWidth={6.0}
+                  />
+                )}
               </View>
-              <Text style={styles.listItemText}>{item.title}</Text>
+              <View style={{ width: textWidth, height: textHeight, justifyContent: 'center' }}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={true}
+                  minimumFontScale={0.8}
+                  style={[
+                    styles.listItemText,
+                    {
+                      color: granted ? '#86FF29' : '#FF2929',
+                      fontSize,
+                    }
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </View>
             </Pressable>
           );
         })}
       </View>
 
-      {/* Button at the bottom */}
-      <View style={styles.buttonContainer}>
+      {/* Button at the bottom matching Figma coordinates X 63, Y 2142, W 953, H 139, Radius 15, Fill #ADC7FF */}
+      <View style={[styles.buttonContainer, { marginBottom: 119 * scale }]}>
         <Pressable
           onPress={handleActionButtonPress}
           style={({ pressed }) => [
             styles.primaryButton,
+            {
+              width: 953 * scale,
+              height: 139 * scale,
+              borderRadius: 15 * scale,
+            },
             pressed && styles.buttonPressed
           ]}
         >
-          <Text style={styles.primaryButtonText}>{actionButtonText}</Text>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit={true}
+            style={[styles.primaryButtonText, { fontSize: 45 * scale }]}
+          >
+            {actionButtonText}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -293,78 +399,68 @@ export default function PermissionScreen({ onPermissionsGranted }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#131313',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
   },
+  headerText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#131313',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topSpacing: {
-    height: 80,
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 15,
   },
   listContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 40,
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    marginVertical: 4,
+    justifyContent: 'flex-start',
   },
   listItemPressed: {
     opacity: 0.7,
   },
   checkCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 18,
   },
   checkCircleDenied: {
-    borderColor: '#EA4335',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#FF2929',
+    backgroundColor: 'transparent',
   },
   checkCircleGranted: {
-    borderColor: '#34A853',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#86FF29',
+    backgroundColor: 'transparent',
   },
   listItemText: {
-    fontSize: 18,
-    color: '#0F172A',
     fontWeight: '500',
   },
   buttonContainer: {
-    paddingBottom: 40,
+    alignSelf: 'center',
   },
   primaryButton: {
-    width: '100%',
-    height: 54,
-    backgroundColor: '#006BFF',
-    borderRadius: 12,
+    backgroundColor: '#ADC7FF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#006BFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
   },
   buttonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: '#131313',
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },

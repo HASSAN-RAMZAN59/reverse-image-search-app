@@ -46,6 +46,7 @@ import {
   Download,
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
+import Logo from '../components/Logo';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -528,11 +529,9 @@ export default function HomeScreen({ onSearch, navigation }) {
             onPress={closeDrawer}
           />
           <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
-            {/* Drawer Header with Logo Placeholder */}
+            {/* Drawer Header with Logo */}
             <View style={styles.drawerHeader}>
-              <View style={styles.drawerLogoPlaceholder}>
-                <Text style={styles.drawerLogoText}>Logo Placeholder</Text>
-              </View>
+              <Logo width={90} height={82} />
             </View>
 
             {/* Drawer Menu Items */}
@@ -942,28 +941,13 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   drawerHeader: {
-    padding: 24,
-    backgroundColor: '#007AFF',
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    backgroundColor: '#131313',
     justifyContent: 'center',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#0066D6',
-  },
-  drawerLogoPlaceholder: {
-    width: '100%',
-    height: 80,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  drawerLogoText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: 'bold',
+    borderBottomColor: '#222',
   },
   drawerMenuScroll: {
     flex: 1,
