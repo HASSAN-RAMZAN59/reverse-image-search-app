@@ -268,31 +268,26 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
       let match = /\.(\w+)$/.exec(filename);
       let type = match ? `image/${match[1]}` : 'image/jpeg';
 
-      formData.append('reqtype', 'fileupload');
-      formData.append('time', '1h');
-      formData.append('fileToUpload', {
+      formData.append('files[]', {
         uri: uri,
         name: filename || 'search_image.jpg',
         type: type,
       });
 
-      const response = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+      const response = await fetch('https://uguu.se/upload?output=text', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
       });
 
       if (!response.ok) {
         throw new Error(`Upload failed: ${response.status}`);
       }
 
-      const directUrl = await response.text();
-      if (directUrl && directUrl.trim().startsWith('http')) {
-        setUploadedImageUrl(directUrl.trim());
+      const publicUrl = await response.text();
+      if (publicUrl && publicUrl.trim().startsWith('http')) {
+        setUploadedImageUrl(publicUrl.trim());
       } else {
-        throw new Error(directUrl || 'Failed to upload image.');
+        throw new Error('Failed to get public URL from Uguu response.');
       }
     } catch (err) {
       console.error('Image upload error:', err);

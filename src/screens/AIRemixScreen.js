@@ -21,91 +21,23 @@ import { ArrowLeft, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximi
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
-import { generateImageToImage } from '../services/aiService';
+import { generateImageToImage, uploadImageToTempCloud } from '../services/aiService';
 import { addSavedDownload } from '../utils/downloadManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const AI_REMIX_MODELS = [
+const CHARACTER_TEMPLATES = [
   {
-    id: "astronaut",
-    name: "Astronaut",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Highly detailed realistic cinematic white NASA astronaut spacesuit with tactical gear and patches cleanly wrapped around the shoulders and neck, high-contrast atmospheric professional space lighting, cinematic dramatic outer space backdrop with glowing stellar nebulae and stars, ultra-detailed 8k resolution portrait."
+    id: 'viking',
+    name: 'Viking Warrior',
+    templateUrl: 'https://images.unsplash.com/photo-1603840830260-331b76a4a3d9?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Premium pre-set Viking body asset
+    previewUrl: 'https://images.unsplash.com/photo-1603840830260-331b76a4a3d9?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
   },
   {
-    id: "spiderman",
-    name: "Spider-Man",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1635805737707-575885ab0820?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Iconic red and blue spider-hero suit with advanced carbon-fiber armor textures, detailed sleek webbing patterns on torso and shoulders, sharp atmospheric rim-lighting, dramatic high-rise urban city skyline background, flawless cinematic 8k resolution premium render."
-  },
-  {
-    id: "cyber_warrior",
-    name: "Cyber Warrior",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Futuristic matte-black heavy cybernetic nano-armor plating, intricate neon cyan glowing power conduits along the shoulders and chest, tactical sci-fi military combat exoskeleton, gritty rainy cyberpunk neon alleyway background, hyper-detailed 8k resolution tech-portrait."
-  },
-  {
-    id: "royal_knight",
-    name: "Royal Knight",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Polished mirrors silver medieval steel plate knight armor, magnificent hand-engraved royal gold metal filigree details on chestplate, deep crimson velvet ceremonial cape draped gracefully, epic cinematic stone castle throne room lighting, immaculate 8k mastery texture."
-  },
-  {
-    id: "pharaoh",
-    name: "Pharaoh",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1600577916048-804c9191e36c?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1600577916048-804c9191e36c?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Ancient Egyptian imperial golden pharaoh regalia, majestic deep blue lapis lazuli jewel encrusted pectorals, grand traditional striped gold nemes headdress structures, glowing atmospheric ancient pyramid treasure chamber interior, stunning 8k golden ambient lighting."
-  },
-  {
-    id: "vikings",
-    name: "Viking Warrior",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Rugged norse viking chieftain leather and layered fur combat armor, heavy historical steel chainmail overlays on chest, weathered bone and runic metal accents, dramatic dark moody misty scandinavian mountain peak backdrop with cinematic 8k volumetric lighting."
-  },
-  {
-    id: "cyborg",
-    name: "Cyborg",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1589254065878-42c9da997008?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1589254065878-42c9da997008?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Sleek streamlined futuristic silver chrome and polished titanium robotic bionic plating, exposed hyper-intricate glowing cybernetic micro-circuitry lines on neck, clinical high-tech corporation data laboratory hub background, crystal-clear 8k studio product visibility."
-  },
-  {
-    id: "wizard",
-    name: "Wizard",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1519074069444-1ba4e56b544c?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1519074069444-1ba4e56b544c?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Mystical elder sorcerer heavy deep royal purple velvet robes, intricate glowing woven golden arcane defensive runes embroidered on collar and sleeves, ancient cosmic library canvas setting with levitating floating magical spellbooks, beautiful ethereal 8k wizard aesthetic."
-  },
-  {
-    id: "samurai",
-    name: "Samurai",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Traditional authentic lacquered obsidian black and crimson samurai armor plating, highly detailed silken cord bindings on chest plate, magnificent decorative metallic shoulder guards, serene sunlit Kyoto zen garden canvas with pink cherry blossom petals falling, perfect 8k resolution art."
-  },
-  {
-    id: "pirate_captain",
-    name: "Pirate Captain",
-    modelType: "character",
-    imageUrl: "https://images.unsplash.com/photo-1590845947376-2638caa06a1a?auto=format&fit=crop&w=600&q=80",
-    imageSource: { uri: "https://images.unsplash.com/photo-1590845947376-2638caa06a1a?auto=format&fit=crop&w=600&q=80" },
-    targetPrompt: "Weathered rustic historic naval colonial pirate captain longcoat jacket with polished golden brass buttons, heavy leather crossed shoulder bandolier ammo strap, dapper ruffled linen collar cuffs, vintage wooden pirate warship deck backdrop at dramatic golden sunset, hyper-textured 8k frame."
+    id: 'samurai',
+    name: 'Samurai Master',
+    templateUrl: 'https://images.unsplash.com/photo-1616005639387-9d59e4b1bdb9?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Premium pre-set Samurai armor asset
+    previewUrl: 'https://images.unsplash.com/photo-1616005639387-9d59e4b1bdb9?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
   }
 ];
 
@@ -185,8 +117,11 @@ export default function AIRemixScreen({ route, navigation }) {
 
   const handleSelectModel = (model) => {
     setSelectedModel(model);
-    setSelectedModelPrompt(model.targetPrompt || model.prompt);
-    setCurrentPhase(2);
+    if (sourceImageUri) {
+      setCurrentPhase(3);
+    } else {
+      setCurrentPhase(2);
+    }
   };
 
   const handleCreateRemix = async () => {
@@ -198,21 +133,25 @@ export default function AIRemixScreen({ route, navigation }) {
     setLoading(true);
 
     try {
-      console.log(`[Remix] Starting style transfer using model "${selectedModel.name}" with prompt: "${selectedModelPrompt}" and strength ${remixStrength}`);
-      const base64Result = await generateImageToImage(
-        sourceImageUri,
-        selectedModelPrompt,
-        selectedModel?.modelType || 'style',
-        remixStrength
+      console.log(`[Remix] Starting Magic Hour Face-Swap using template "${selectedModel.name}"`);
+      
+      // Step 1: Upload the local face image to temp cloud storage
+      const userUploadedImagePublicUrl = await uploadImageToTempCloud(sourceImageUri);
+      
+      // Step 2: Call the Magic Hour Face Swap API
+      const resultUrl = await generateImageToImage(
+        userUploadedImagePublicUrl,
+        selectedModel.templateUrl
       );
-      setRemixedResult(base64Result);
+      
+      setRemixedResult(resultUrl);
       setCurrentPhase(4);
       showToast(`Successfully created ${selectedModel.name} remix!`);
     } catch (err) {
-      console.error('[Remix] Style generation error:', err);
+      console.error('[Remix] Generation error:', err);
       Alert.alert(
         'Generation Failed',
-        'An error occurred while generating style transfer. Please verify your internet connection and Stability API Key configuration.'
+        'An error occurred while generating. Please verify your internet connection and Magic Hour API Key configuration.'
       );
     } finally {
       setLoading(false);
@@ -235,15 +174,21 @@ export default function AIRemixScreen({ route, navigation }) {
     }
 
     try {
-      const parts = remixedResult.split(';base64,');
-      const base64Data = parts.length === 2 ? parts[1] : remixedResult;
-
-      const filename = `ai_remix_${Date.now()}.jpg`;
-      const tempUri = `${FileSystem.documentDirectory}${filename}`;
-
-      await FileSystem.writeAsStringAsync(tempUri, base64Data, {
-        encoding: 'base64',
-      });
+      let tempUri = '';
+      if (remixedResult.startsWith('http://') || remixedResult.startsWith('https://')) {
+        const filename = `ai_remix_${Date.now()}.jpg`;
+        const localDest = `${FileSystem.documentDirectory}${filename}`;
+        const downloadResult = await FileSystem.downloadAsync(remixedResult, localDest);
+        tempUri = downloadResult.uri;
+      } else {
+        const parts = remixedResult.split(';base64,');
+        const base64Data = parts.length === 2 ? parts[1] : remixedResult;
+        const filename = `ai_remix_${Date.now()}.jpg`;
+        tempUri = `${FileSystem.documentDirectory}${filename}`;
+        await FileSystem.writeAsStringAsync(tempUri, base64Data, {
+          encoding: 'base64',
+        });
+      }
 
       let assetCreated = false;
       let galleryAssetId = null;
@@ -278,15 +223,15 @@ export default function AIRemixScreen({ route, navigation }) {
   };
 
   const handleHeaderBack = () => {
+    if (loading) return; // Strict UI Lock
     if (currentPhase === 1) {
       navigation?.goBack();
     } else if (currentPhase === 2) {
       setSelectedModel(null);
       setCurrentPhase(1);
     } else if (currentPhase === 3) {
-      // Go back to static preview
-      setSourceImageUri(null);
-      setCurrentPhase(2);
+      // Go back to model selection grid (Phase 1) keeping the source image intact
+      setCurrentPhase(1);
     } else if (currentPhase === 4) {
       setCurrentPhase(3);
     }
@@ -315,7 +260,11 @@ export default function AIRemixScreen({ route, navigation }) {
 
       {/* Dynamic Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleHeaderBack}>
+        <TouchableOpacity
+          style={[styles.backBtn, loading && { opacity: 0.5 }]}
+          onPress={loading ? null : handleHeaderBack}
+          disabled={loading}
+        >
           <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{getHeaderTitle()}</Text>
@@ -328,14 +277,17 @@ export default function AIRemixScreen({ route, navigation }) {
 
 
           <View style={styles.gridContainer}>
-            {AI_REMIX_MODELS.map((style, idx) => (
+            {CHARACTER_TEMPLATES.map((style, idx) => (
               <TouchableOpacity
                 key={style.id}
                 style={styles.styleCard}
                 activeOpacity={0.85}
                 onPress={() => handleSelectModel(style)}
               >
-                <Image source={style.imageSource} style={styles.cardImage} />
+                <Image source={{ uri: style.templateUrl }} style={styles.cardImage} />
+                <View style={styles.textOverlayBar}>
+                  <Text style={styles.styleNameText}>{style.name}</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -346,14 +298,18 @@ export default function AIRemixScreen({ route, navigation }) {
       {currentPhase === 2 && selectedModel && (
         <View style={styles.phase2Container}>
           <View style={styles.phase2ImageContainer}>
-            <Image source={selectedModel.imageSource} style={styles.phase2Image} />
+            <Image source={{ uri: selectedModel.templateUrl }} style={styles.phase2Image} />
             <View style={styles.phase2ModelBadge}>
               <Text style={styles.phase2ModelBadgeText}>{selectedModel.name}</Text>
             </View>
           </View>
 
           <View style={styles.phase2Footer}>
-            <TouchableOpacity style={styles.gallerySelectLargeBtn} onPress={selectImageFromLibrary}>
+            <TouchableOpacity
+              style={[styles.gallerySelectLargeBtn, loading && { opacity: 0.6 }]}
+              onPress={loading ? null : selectImageFromLibrary}
+              disabled={loading}
+            >
               <ImageIcon size={20} color="#FFF" style={styles.btnIconSpacing} />
               <Text style={styles.gallerySelectLargeBtnText}>Select from Gallery</Text>
             </TouchableOpacity>
@@ -387,8 +343,9 @@ export default function AIRemixScreen({ route, navigation }) {
                   return (
                     <TouchableOpacity
                       key={num}
-                      style={[styles.limitNumBtn, isActive && styles.limitNumBtnActive]}
-                      onPress={() => setGenerationLimit(num)}
+                      style={[styles.limitNumBtn, isActive && styles.limitNumBtnActive, loading && { opacity: 0.6 }]}
+                      onPress={loading ? null : () => setGenerationLimit(num)}
+                      disabled={loading}
                     >
                       <Text style={[styles.limitNumText, isActive && styles.limitNumTextActive]}>
                         {num}
@@ -403,8 +360,12 @@ export default function AIRemixScreen({ route, navigation }) {
 
           {/* Absolute bottom-aligned execute button */}
           <SafeAreaView style={styles.executeFooter}>
-            <TouchableOpacity style={styles.executeBtn} onPress={handleCreateRemix}>
-              <Text style={styles.executeBtnText}>Create AI Remix</Text>
+            <TouchableOpacity
+              style={[styles.executeBtn, loading && { opacity: 0.6 }]}
+              onPress={loading ? null : handleCreateRemix}
+              disabled={loading}
+            >
+              <Text style={styles.executeBtnText}>⚡ Create AI Remix</Text>
             </TouchableOpacity>
           </SafeAreaView>
         </View>
@@ -418,14 +379,16 @@ export default function AIRemixScreen({ route, navigation }) {
               <Image source={{ uri: remixedResult }} style={styles.resultImage} />
               <View style={styles.imageActionsOverlay}>
                 <TouchableOpacity
-                  style={styles.actionIconBtn}
-                  onPress={() => setIsFullScreen(true)}
+                  style={[styles.actionIconBtn, loading && { opacity: 0.5 }]}
+                  onPress={loading ? null : () => setIsFullScreen(true)}
+                  disabled={loading}
                 >
                   <Maximize2 size={20} color="#FFF" />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.actionIconBtn}
-                  onPress={handleDownloadRemix}
+                  style={[styles.actionIconBtn, loading && { opacity: 0.5 }]}
+                  onPress={loading ? null : handleDownloadRemix}
+                  disabled={loading}
                 >
                   <Download size={20} color="#FFF" />
                 </TouchableOpacity>

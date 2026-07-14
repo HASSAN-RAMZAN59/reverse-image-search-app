@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Buffer } from 'buffer';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system/legacy';
 
 /**
  * Connects to Stability AI's Stable Image Core V2 API to generate an image based on the prompt text and options.
@@ -106,86 +107,153 @@ export async function generateAIImage(promptText, options = {}) {
 }
 
 /**
- * Dynamic AI Remix Engine (Handles both Style Transfer and Character Costume Swaps)
- * @param {string} imageUri - Local URI of the source image.
- * @param {string} targetPrompt - What to generate (Style or Costume).
- * @param {string} modelType - Either 'style' or 'character'
- * @param {number} strength - Conditioning strength (Only used for style transfer).
+ * High-Fidelity Image Face Swap via Magic Hour API.
+ * Maps user's face perfectly onto predefined character layouts.
+ * @param {string} sourceFaceUrl - Public cloud/temp URL of the user's uploaded face image.
+ * @param {string} targetTemplateUrl - Public URL of our static character body template image.
+ * @returns {Promise<string>} Output render result image asset URL.
  */
-export async function generateImageToImage(imageUri, targetPrompt, modelType = 'style', strength = 0.38) {
+export async function generateImageToImage(sourceFaceUrl, targetTemplateUrl) {
   try {
-    // Automatically downscale the image if it exceeds the maximum dimension to prevent Stability AI's pixel limit error
-    let targetImageUri = imageUri;
-    try {
-      console.log(`[Remix Engine] Optimizing and resizing image before upload to avoid Stability API dimension limits...`);
-      const manipResult = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 1200 } }], // Safely scales width to 1200 and preserves aspect ratio
-        { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      targetImageUri = manipResult.uri;
-      console.log(`[Remix Engine] Image successfully optimized and scaled down: ${targetImageUri}`);
-    } catch (manipError) {
-      console.warn(`[Remix Engine] ImageManipulator failed, uploading original image. Error:`, manipError);
+    const apiKey = process.env.EXPO_PUBLIC_MAGIC_HOUR_API_KEY;
+    if (!apiKey) {
+      throw new Error("EXPO_PUBLIC_MAGIC_HOUR_API_KEY is not defined in your .env configuration.");
     }
 
-    const filename = targetImageUri.split('/').pop() || 'input_image.jpg';
+    let finalTargetUrl = targetTemplateUrl;
+    
+    // Check if targetTemplateUrl lacks a valid file extension in its path.
+    // If so, download it to local cache and upload to Uguu.se to guarantee a valid extension.
+    const isRemote = targetTemplateUrl.startsWith('http');
+    const hasValidExt = /\.(png|jpg|jpeg|jfif|heic|heif|webp|avif|jp2|tiff|bmp)($|\?)/i.test(targetTemplateUrl);
+    
+    if (isRemote && !hasValidExt) {
+      console.log("[Magic Hour Engine] Target URL has no valid extension. Downloading and proxying via Uguu...");
+      try {
+        const tempUri = `${FileSystem.documentDirectory}temp_template_${Date.now()}.jpg`;
+        console.log("[Magic Hour Engine] Downloading template to:", tempUri);
+        const downloadResult = await FileSystem.downloadAsync(targetTemplateUrl, tempUri);
+        console.log("[Magic Hour Engine] Download completed. Uploading template to Uguu...");
+        finalTargetUrl = await uploadImageToTempCloud(downloadResult.uri);
+        console.log("[Magic Hour Engine] Template uploaded successfully. Proxied URL:", finalTargetUrl);
+      } catch (dlErr) {
+        console.error("[Magic Hour Engine] Template proxy failed critical error:", dlErr);
+      }
+    }
+
+    console.log("[Magic Hour Engine] Launching face swap synthesis job...");
+
+    const response = await axios.post(
+      'https://api.magichour.ai/v1/face-swap-photo',
+      {
+        name: "Remix Face Swap",
+        assets: {
+          face_swap_mode: "all-faces",
+          source_file_path: sourceFaceUrl,
+          target_file_path: finalTargetUrl
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    if (response.data && response.data.id) {
+      const projectId = response.data.id;
+      console.log(`[Magic Hour Engine] Swap job queued successfully. Job ID: ${projectId}. Polling for completion...`);
+
+      const pollUrl = `https://api.magichour.ai/v1/image-projects/${projectId}`;
+      let attempts = 0;
+      const maxAttempts = 30; // Wait up to 60 seconds
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        // Wait 2 seconds before checking status again
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const pollResponse = await axios.get(pollUrl, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+          }
+        });
+
+        const job = pollResponse.data;
+        console.log(`[Magic Hour Engine] Polling attempt ${attempts}/${maxAttempts}. Status: ${job.status}`);
+
+        if (job.status === 'complete') {
+          if (job.downloads && job.downloads[0] && job.downloads[0].url) {
+            console.log("[Magic Hour Engine] Swap processed successfully!", job.downloads[0].url);
+            return job.downloads[0].url;
+          }
+          throw new Error("Job completed but no download URL was found.");
+        } else if (job.status === 'error' || job.status === 'failed') {
+          throw new Error(job.error || "Job failed during generation.");
+        }
+      }
+
+      throw new Error("Generation timed out. Please try again.");
+    } else {
+      throw new Error("Invalid or empty response schema caught from Magic Hour gateway.");
+    }
+  } catch (error) {
+    console.error("[Magic Hour Engine] Execution pipeline failed:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+/**
+ * Uploads a local image file to a public temp cloud host (litterbox.catbox.moe).
+ * @param {string} localUri - Local file URI of the image.
+ * @returns {Promise<string>} Public URL of the uploaded image.
+ */
+export async function uploadImageToTempCloud(localUri) {
+  try {
+    console.log("[Temp Cloud Upload] Uploading local image to temporary cloud storage...");
+    
+    let targetUri = localUri;
+    try {
+      const manipResult = await ImageManipulator.manipulateAsync(
+        localUri,
+        [{ resize: { width: 800 } }], // 800px is perfect for fast upload and excellent face swap detail
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      targetUri = manipResult.uri;
+    } catch (e) {
+      console.warn("[Temp Cloud Upload] Manipulation failed, uploading original:", e);
+    }
+
+    const formData = new FormData();
+    const filename = targetUri.split('/').pop() || 'face.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-    const formData = new FormData();
-    formData.append('image', {
-      uri: targetImageUri,
+    formData.append('files[]', {
+      uri: targetUri,
       name: filename,
       type: type,
     });
-    
-    formData.append('output_format', 'jpeg');
 
-    let apiEndpoint = '';
-
-    // CONDITIONAL ROUTING BASED ON MODEL TYPE
-    if (modelType === 'character') {
-      // Character Transformation via Search and Replace (Preserves face completely)
-      apiEndpoint = 'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
-      formData.append('prompt', targetPrompt);
-      formData.append('search_prompt', 'clothing, clothes, shirt, jacket, suit, dress, background');
-      console.log(`[Remix Engine] Routing to Search-and-Replace Endpoint for Character Cosplay.`);
-    } else {
-      // Pure Style Transfer via standard Image-to-Image (SD3)
-      apiEndpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
-      formData.append('prompt', targetPrompt);
-      formData.append('strength', String(strength));
-      formData.append('mode', 'image-to-image');
-      formData.append('model', 'sd3.5-large');
-      console.log(`[Remix Engine] Routing to standard Image-to-Image Endpoint for Stylization.`);
-    }
-
-    const apiKey = process.env.EXPO_PUBLIC_STABILITY_API_KEY;
-    if (!apiKey) {
-      console.warn("WARNING: EXPO_PUBLIC_STABILITY_API_KEY is undefined. Please restart your Expo server with cache clear ('npx expo start -c') so it loads the new .env file.");
-    }
-
-    const response = await fetch(apiEndpoint, {
+    const response = await fetch('https://uguu.se/upload?output=text', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Accept': 'image/*',
-        // Note: Content-Type header MUST be omitted to let the environment inject boundary automatically
-      },
       body: formData,
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Stability API Error (${response.status}): ${errorText}`);
+      throw new Error(`Upload failed with status code ${response.status}`);
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const base64String = Buffer.from(arrayBuffer).toString('base64');
-    return `data:image/jpeg;base64,${base64String}`;
+    const publicUrl = await response.text();
+    if (publicUrl && publicUrl.trim().startsWith('http')) {
+      console.log("[Temp Cloud Upload] Uploaded successfully! Public URL:", publicUrl.trim());
+      return publicUrl.trim();
+    } else {
+      throw new Error("Failed to get public URL from Uguu response.");
+    }
   } catch (error) {
-    console.error('Error in Dynamic Image Transformation:', error);
+    console.error("[Temp Cloud Upload] Failed to upload image:", error);
     throw error;
   }
 }
