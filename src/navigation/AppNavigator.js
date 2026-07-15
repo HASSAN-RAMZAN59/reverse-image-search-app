@@ -11,9 +11,7 @@ import AIImageResultScreen from '../screens/AIImageResultScreen';
 import QRScannerScreen from '../screens/QRScannerScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
 import AIRemixScreen from '../screens/AIRemixScreen';
-import OnboardingScreen1 from '../screens/OnboardingScreen1';
-import OnboardingScreen2 from '../screens/OnboardingScreen2';
-import OnboardingScreen3 from '../screens/OnboardingScreen3';
+import OnboardingPager from '../screens/OnboardingPager';
 import PremiumVIPScreen from '../screens/PremiumVIPScreen';
 import { usePremium } from '../context/PremiumContext';
 
@@ -33,37 +31,12 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={isOnboardingComplete ? "Home" : "Onboarding1"}
+        initialRouteName={isOnboardingComplete ? "Home" : "Onboarding"}
         screenOptions={{
           headerShown: false,
         }}
       >
-        <Stack.Screen name="Onboarding1">
-          {(props) => (
-            <OnboardingScreen1
-              {...props}
-              onNext={() => props.navigation.navigate('Onboarding2')}
-              onSkip={() => props.navigation.navigate('PremiumVIP')}
-            />
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Onboarding2">
-          {(props) => (
-            <OnboardingScreen2
-              {...props}
-              onNext={() => props.navigation.navigate('Onboarding3')}
-              onSkip={() => props.navigation.navigate('PremiumVIP')}
-            />
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Onboarding3">
-          {(props) => (
-            <OnboardingScreen3
-              {...props}
-              onNext={() => props.navigation.navigate('PremiumVIP')}
-            />
-          )}
-        </Stack.Screen>
+        <Stack.Screen name="Onboarding" component={OnboardingPager} />
         <Stack.Screen name="PremiumVIP" component={PremiumVIPScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Result" component={ResultScreen} />

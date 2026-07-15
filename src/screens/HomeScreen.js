@@ -55,11 +55,15 @@ export default function HomeScreen({ onSearch, navigation }) {
   const { isPremiumUser } = usePremium();
 
   const handleFeaturePress = (feature) => {
+    // Commented out premium gating logic for now
+    /*
     if (feature.isPremiumRequired && !isPremiumUser) {
       navigation.navigate('PremiumVIP');
     } else {
       navigation.navigate(feature.targetScreen);
     }
+    */
+    navigation.navigate(feature.targetScreen);
   };
 
   const [searchText, setSearchText] = useState('');
@@ -494,12 +498,14 @@ export default function HomeScreen({ onSearch, navigation }) {
           <Text style={styles.actionButtonText}>Scan QR Code</Text>
         </TouchableOpacity>
 
-        {/* Dynamic Ad Injection Template */}
+        {/* Dynamic Ad Injection Template (Commented out for now) */}
+        {/*
         { !isPremiumUser && (
           <View style={{ marginTop: 20, padding: 15, backgroundColor: '#222', borderRadius: 8, alignItems: 'center' }}>
             <Text style={{ color: '#aaa' }}>[Ad Placeholder Node]</Text>
           </View>
         )}
+        */}
 
         {/* Voice Search Overlay Modal */}
         <Modal
