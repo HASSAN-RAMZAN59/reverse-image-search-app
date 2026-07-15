@@ -2,19 +2,23 @@ import React from 'react';
 import {
   StyleSheet,
   View,
+  Text,
   Dimensions,
-  StatusBar,
-  Image,
   Pressable,
+  StatusBar,
 } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 import { usePremium } from '../context/PremiumContext';
+import { DynamicImageCollageSvgXml } from '../components/DynamicImageCollageSvgXml';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
 
-// Original design dimensions of Remove Add.png
-const DESIGN_WIDTH = 1080;
-const DESIGN_HEIGHT = 2430;
-const IMAGE_ASPECT_RATIO = DESIGN_WIDTH / DESIGN_HEIGHT;
+// Modify the original SVG viewBox and size to show the full masked/offset collage area (890 x 1195.79)
+const modifiedXml = DynamicImageCollageSvgXml
+  .replace('viewBox="0 0 528 978"', 'viewBox="-362 -218 890 1195.79"')
+  .replace('width="528"', 'width="890"')
+  .replace('height="978"', 'height="1195.79"');
 
 export default function PremiumVIPScreen({ navigation }) {
   const { unlockPremium, bypassPremium } = usePremium();
@@ -29,66 +33,51 @@ export default function PremiumVIPScreen({ navigation }) {
     navigation.replace('Home');
   };
 
-  // Calculate layout dimensions to fit the screen while preserving aspect ratio exactly
-  let containerWidth = SCREEN_WIDTH;
-  let containerHeight = SCREEN_WIDTH / IMAGE_ASPECT_RATIO;
-
-  // Scale down if the calculated height exceeds the available screen height
-  if (containerHeight > SCREEN_HEIGHT) {
-    containerHeight = SCREEN_HEIGHT;
-    containerWidth = SCREEN_HEIGHT * IMAGE_ASPECT_RATIO;
-  }
-
-  // Scale factors for positioning hit targets relative to the aspect-ratio-locked container
-  const scaleX = containerWidth / DESIGN_WIDTH;
-  const scaleY = containerHeight / DESIGN_HEIGHT;
-
   return (
     <View style={styles.container}>
-      {/* Set status bar to not merge with the design */}
-      <StatusBar barStyle="light-content" backgroundColor="#131313" translucent={false} />
+      <StatusBar barStyle="light-content" backgroundColor="#0E0E10" translucent={false} />
 
-      {/* Aspect Ratio Locked Container to prevent distortion or low-resolution scaling */}
-      <View style={{ width: containerWidth, height: containerHeight, position: 'relative', transform: [{ translateY: 50 * scaleY }] }}>
-        <Image
-          source={require('../components/Remove Add.png')}
-          style={styles.backgroundImage}
-          resizeMode="contain"
+      {/* Collage Image 1 container positioned absolutely with Figma coordinates */}
+      <View style={styles.imageContainerLeft}>
+        <SvgXml
+          xml={modifiedXml}
+          width={890 * scale}
+          height={1195.75 * scale}
         />
+      </View>
 
-        {/* Close/Skip button hit target (top right area) */}
-        <Pressable
-          onPress={handleSkip}
-          style={({ pressed }) => [
-            {
-              position: 'absolute',
-              top: 50 * scaleY,
-              right: 50 * scaleX,
-              width: 140 * scaleX,
-              height: 140 * scaleY,
-              borderRadius: 70 * scaleX,
-              backgroundColor: 'rgba(255, 255, 255, 0.01)',
-            },
-            pressed && styles.overlayPressed
-          ]}
+      {/* Collage Image 2 container positioned absolutely with Figma coordinates */}
+      <View style={styles.imageContainerRight}>
+        <SvgXml
+          xml={modifiedXml}
+          width={890 * scale}
+          height={1195.79 * scale}
         />
+      </View>
 
-        {/* CTA Button hit target (bottom button area) */}
+      {/* Basic Functional Buttons positioned at the bottom */}
+      <View style={styles.buttonContainer}>
         <Pressable
           onPress={handleStartTrial}
+          android_ripple={{ color: 'rgba(255, 255, 255, 0.2)', borderless: false }}
           style={({ pressed }) => [
-            {
-              position: 'absolute',
-              bottom: 172 * scaleY,
-              alignSelf: 'center',
-              width: 953 * scaleX,
-              height: 112 * scaleY,
-              borderRadius: 25 * scaleX,
-              backgroundColor: 'rgba(255, 255, 255, 0.01)',
-            },
-            pressed && styles.overlayPressed
+            styles.button,
+            pressed && styles.buttonPressed
           ]}
-        />
+        >
+          <Text style={styles.buttonText}>Start Free Trial</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={handleSkip}
+          android_ripple={{ color: 'rgba(255, 255, 255, 0.1)', borderless: false }}
+          style={({ pressed }) => [
+            styles.skipButton,
+            pressed && styles.buttonPressed
+          ]}
+        >
+          <Text style={styles.skipButtonText}>Skip / Close</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -97,15 +86,59 @@ export default function PremiumVIPScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#131313', // Seamless dark background to match the mockup
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#0E0E10', // Dark background color from Figma specs
+    position: 'relative',
   },
-  backgroundImage: {
+  imageContainerLeft: {
+    position: 'absolute',
+    left: -362 * scale,
+    top: -218 * scale,
+    width: 890 * scale,
+    height: 1195.75 * scale,
+  },
+  imageContainerRight: {
+    position: 'absolute',
+    left: 552 * scale,
+    top: -218 * scale,
+    width: 890 * scale,
+    height: 1195.79 * scale,
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 80 * scale,
     width: '100%',
-    height: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 40 * scale,
   },
-  overlayPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  button: {
+    width: 890 * scale,
+    height: 110 * scale,
+    backgroundColor: '#ADC7FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15 * scale,
+    marginBottom: 20 * scale,
+    overflow: 'hidden', // Prevents click/ripple overlay showing outside the rounded container
+  },
+  buttonText: {
+    color: '#002E68',
+    fontWeight: 'bold',
+    fontSize: 38 * scale,
+  },
+  skipButton: {
+    width: 890 * scale,
+    height: 110 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15 * scale,
+    overflow: 'hidden', // Prevents ripple overflow
+  },
+  skipButtonText: {
+    color: '#A0A3BD',
+    fontSize: 34 * scale,
+    textDecorationLine: 'underline',
+  },
+  buttonPressed: {
+    opacity: 0.8,
   },
 });
