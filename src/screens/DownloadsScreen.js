@@ -242,7 +242,7 @@ export default function DownloadsScreen({ route, navigation }) {
       {!!previewImage && (
         <View style={styles.modalOverlay}>
           {previewImage && (
-            <Image source={{ uri: previewImage }} style={styles.modalPreviewImage} resizeMode="contain" />
+            <Image source={{ uri: previewImage }} style={styles.modalPreviewImage} resizeMode="cover" />
           )}
         </View>
       )}

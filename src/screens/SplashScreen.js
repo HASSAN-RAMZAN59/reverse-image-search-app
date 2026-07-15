@@ -1,49 +1,32 @@
 import React from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, Dimensions } from 'react-native';
-import Logo from '../components/Logo';
+import { StyleSheet, View, Text, ActivityIndicator, Dimensions, Image } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
 
 export default function SplashScreen() {
-  // 1. Logo proportion calculation (Design: W 401, H 365.37)
-  const maxLogoWidth = 401;
-  const logoWidth = Math.min(maxLogoWidth, SCREEN_WIDTH * 0.45); // Keep it around ~45% of viewport width for mobile
-  const logoHeight = logoWidth * (365.37 / 401);
-
-  // 2. App Name proportion calculation (Design: W 600, H 84)
-  const appNameWidth = logoWidth * (600 / 401);
-  const appNameHeight = logoWidth * (84 / 401);
-
-  // Calculate dynamic font size based on design height
-  const fontSize = Math.max(18, appNameHeight * 0.45);
-
-  // 3. Proportional vertical gap between bottom of logo and top of app name (Design: Gap is 138.63px for W 401 logo)
-  const gapBetweenLogoAndText = logoWidth * (138.63 / 401);
-
   return (
     <View style={styles.container}>
-      {/* Spacer to push content to middle */}
-      <View style={{ flex: 1.5 }} />
+      {/* Logo — Group 110.png at X:340, Y:921, W:401, H:385.37 */}
+      <Image
+        source={require('../components/Group 110.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
 
-      {/* Main Logo */}
-      <View style={styles.logoContainer}>
-        <Logo width={logoWidth} height={logoHeight} />
-      </View>
+      {/* App Name — "Reverse Image Search" at X:240, Y:1425, W:600, H:84 */}
+      <Text 
+        style={styles.appName} 
+        numberOfLines={1} 
+        adjustsFontSizeToFit={true}
+      >
+        Reverse Image Search
+      </Text>
 
-      {/* Spinner & Spacer Area */}
-      <View style={[styles.gapContainer, { height: gapBetweenLogoAndText }]}>
+      {/* Spinner at bottom */}
+      <View style={styles.spinnerContainer}>
         <ActivityIndicator size="small" color="#29BD4F" />
       </View>
-
-      {/* App Name Container with W 600, H 84 Aspect Ratio */}
-      <View style={[styles.appNameContainer, { width: appNameWidth, height: appNameHeight }]}>
-        <Text style={[styles.appName, { fontSize }]}>
-          Reverse Image Search
-        </Text>
-      </View>
-
-      {/* Spacer at bottom */}
-      <View style={{ flex: 1 }} />
     </View>
   );
 }
@@ -52,26 +35,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#131313',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gapContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  appNameContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  logo: {
+    position: 'absolute',
+    left: 340 * scale,
+    top: 921 * scale,
+    width: 401 * scale,
+    height: 385.37 * scale,
   },
   appName: {
-    fontWeight: 'bold',
+    position: 'absolute',
+    left: 240 * scale,
+    top: 1425 * scale,
+    width: 600 * scale,
+    height: 84 * scale,
+    fontFamily: 'Jua',
+    fontWeight: '400',
+    fontSize: 55.55 * scale,
+    lineHeight: 55.55 * scale * 1.52,
+    letterSpacing: 55.55 * scale * 0.065,
     color: '#FFFFFF',
     textAlign: 'center',
-    letterSpacing: 0.5,
+  },
+  spinnerContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 120 * scale,
+    alignItems: 'center',
   },
 });
-
