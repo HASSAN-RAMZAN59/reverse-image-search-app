@@ -6,57 +6,36 @@ import {
   Pressable,
   Dimensions,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  Image
 } from 'react-native';
-import Svg, { Path, Rect, Defs, LinearGradient, Stop, G } from 'react-native-svg';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
+const scaleY = (SCREEN_HEIGHT - 100) / 2430;
 
-const QRIllustration = () => (
-  <Svg width={534 * scale} height={534 * scale} viewBox="0 0 200 200" fill="none">
-    <Defs>
-      <LinearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
-        <Stop offset="0%" stopColor="#86FF29" />
-        <Stop offset="100%" stopColor="#00E5FF" />
-      </LinearGradient>
-    </Defs>
-    <Path d="M45 60V45H60" stroke="url(#greenGrad)" strokeWidth="4" strokeLinecap="round" />
-    <Path d="M155 60V45H140" stroke="url(#greenGrad)" strokeWidth="4" strokeLinecap="round" />
-    <Path d="M45 140V155H60" stroke="url(#greenGrad)" strokeWidth="4" strokeLinecap="round" />
-    <Path d="M155 140V155H140" stroke="url(#greenGrad)" strokeWidth="4" strokeLinecap="round" />
-    <G transform="translate(60, 60)" stroke="#FFFFFF" strokeWidth="3">
-      <Rect x="0" y="0" width="24" height="24" rx="4" fill="transparent" />
-      <Rect x="6" y="6" width="12" height="12" rx="2" fill="#FFFFFF" />
-      <Rect x="56" y="0" width="24" height="24" rx="4" fill="transparent" />
-      <Rect x="62" y="6" width="12" height="12" rx="2" fill="#FFFFFF" />
-      <Rect x="0" y="56" width="24" height="24" rx="4" fill="transparent" />
-      <Rect x="6" y="62" width="12" height="12" rx="2" fill="#FFFFFF" />
-      <Rect x="36" y="10" width="8" height="8" rx="1" fill="#86FF29" stroke="none" />
-      <Rect x="36" y="36" width="14" height="14" rx="2" fill="#FFFFFF" stroke="none" />
-      <Rect x="56" y="56" width="8" height="8" rx="1" fill="#86FF29" stroke="none" />
-      <Rect x="68" y="68" width="12" height="12" rx="2" fill="#FFFFFF" stroke="none" />
-      <Rect x="10" y="36" width="12" height="8" rx="1.5" fill="#FFFFFF" stroke="none" />
-    </G>
-    <Path d="M35 100H165" stroke="#FF2929" strokeWidth="3" strokeLinecap="round" />
-    <Rect x="35" y="97" width="130" height="6" fill="#FF2929" opacity="0.15" />
-  </Svg>
+const SmartScannerIllustration = () => (
+  <View style={styles.graphicContainer}>
+    <Image
+      source={require('../components/3D Tool Space Visualization_margin.png')}
+      style={styles.illustrationImage}
+      resizeMode="contain"
+    />
+  </View>
 );
 
 export default function OnboardingScreen3({ onNext }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#131313" translucent={false} />
-      
-      {/* Top empty header for vertical alignment parity */}
+
+      {/* Top spacing header */}
       <View style={styles.header} />
 
-      <View style={styles.slideContainer}>
-        {/* Illustration */}
-        <View style={styles.illustrationWrapper}>
-          <QRIllustration />
-        </View>
-        
+      <View style={styles.contentContainer}>
+        {/* Render circular visual illustration */}
+        <SmartScannerIllustration />
+
         {/* Text Info */}
         <View style={styles.textWrapper}>
           <Text numberOfLines={1} adjustsFontSizeToFit={true} style={styles.slideTitle}>
@@ -66,28 +45,33 @@ export default function OnboardingScreen3({ onNext }) {
             Quickly scan QR codes, barcode labels, and text to pull up search results, product details, and link information.
           </Text>
         </View>
-      </View>
 
-      {/* Pagination dots indicators */}
-      <View style={styles.paginationContainer}>
-        <View style={[styles.dot, styles.dotInactive]} />
-        <View style={[styles.dot, styles.dotInactive]} />
-        <View style={[styles.dot, styles.dotActive]} />
-      </View>
+        {/* Pagination dots indicators */}
+        <View style={styles.paginationContainer}>
+          <View style={[styles.dot, styles.dotInactive]} />
+          <View style={[styles.dot, styles.dotInactive]} />
+          <View style={[styles.dot, styles.dotActive]} />
+        </View>
 
-      {/* Bottom Button */}
-      <View style={styles.buttonContainer}>
-        <Pressable
-          onPress={onNext}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed
-          ]}
-        >
-          <Text numberOfLines={1} adjustsFontSizeToFit={true} style={styles.primaryButtonText}>
-            GET STARTED
-          </Text>
-        </Pressable>
+        {/* Bottom Button matches button layout properties */}
+        <View style={styles.buttonContainer}>
+          <Pressable
+            onPress={onNext}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.buttonPressed
+            ]}
+          >
+            <Text numberOfLines={1} adjustsFontSizeToFit={true} style={styles.primaryButtonText}>
+              GET STARTED
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Native Ad Placeholder Card at the bottom */}
+        <View style={styles.adPlaceholderCard}>
+          <Text style={styles.adPlaceholderText}>Show Native AD</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -97,26 +81,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#131313',
-    justifyContent: 'space-between',
   },
   header: {
-    height: 60 * scale,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingHorizontal: 63 * scale,
-    marginTop: 20 * scale,
+    height: 0,
   },
-  slideContainer: {
+  contentContainer: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 100 * scale,
   },
-  illustrationWrapper: {
-    width: 534 * scale,
-    height: 534 * scale,
+  graphicContainer: {
+    width: 788 * scale,
+    height: 788 * scale,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 120 * scale,
+    marginTop: 151.97 * scaleY,
+    marginBottom: 64.37 * scaleY,
+    position: 'relative',
+  },
+  illustrationImage: {
+    width: '100%',
+    height: '100%',
   },
   textWrapper: {
     width: 953 * scale,
@@ -124,44 +108,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20 * scale,
   },
   slideTitle: {
-    color: '#FFFFFF',
-    fontSize: 70 * scale,
+    color: '#E2E2E8',
+    fontSize: 56.16 * scale,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 40 * scale,
-    width: '100%',
+    lineHeight: 74.9 * scale,
+    letterSpacing: -1.4 * scale,
+    width: 765.04 * scale,
+    height: 74.88 * scale,
+    alignSelf: 'center',
+    marginBottom: 37.44 * scaleY,
   },
   slideDescription: {
-    color: '#A0A3BD',
-    fontSize: 42 * scale,
+    color: '#C1C6D7',
+    fontSize: 37.44 * scale,
     fontWeight: '400',
     textAlign: 'center',
-    lineHeight: 64 * scale,
-    letterSpacing: 0.2,
+    lineHeight: 80.8 * scale,
+    letterSpacing: 0,
+    width: 786 * scale,
+    height: 183 * scale,
+    alignSelf: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 60 * scale,
+    width: 158.67 * scale,
+    height: 14 * scale,
+    marginTop: 87.34 * scaleY,
+    marginBottom: 60 * scaleY,
   },
   dot: {
-    height: 24 * scale,
-    borderRadius: 12 * scale,
-    marginHorizontal: 12 * scale,
+    height: 14 * scale,
+    borderRadius: 7 * scale,
+    marginHorizontal: 14 * scale,
   },
   dotActive: {
-    width: 60 * scale,
+    width: 62.67 * scale,
     backgroundColor: '#ADC7FF',
   },
   dotInactive: {
-    width: 24 * scale,
-    backgroundColor: '#3A3A3C',
+    width: 20 * scale,
+    backgroundColor: '#333539',
   },
   buttonContainer: {
     alignSelf: 'center',
-    marginBottom: 119 * scale,
+    marginTop: 62 * scaleY,
   },
   primaryButton: {
     width: 953 * scale,
@@ -176,9 +170,30 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   primaryButtonText: {
-    color: '#131313',
+    color: '#002E68',
     fontWeight: 'bold',
     fontSize: 45 * scale,
     letterSpacing: 0.5,
+  },
+  adPlaceholderCard: {
+    width: 988 * scale,
+    height: 612 * scale,
+    backgroundColor: '#EDEEEF',
+    borderRadius: 21 * scale,
+    marginTop: 117 * scaleY,
+    marginBottom: 45 * scale,
+    position: 'relative',
+    alignSelf: 'center',
+  },
+  adPlaceholderText: {
+    position: 'absolute',
+    top: 247 * scale,
+    width: 569 * scale,
+    height: 88 * scale,
+    alignSelf: 'center',
+    color: '#000000',
+    fontSize: 72.8 * scale,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
