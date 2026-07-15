@@ -15,6 +15,7 @@ import {
   Modal,
   Animated,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { ArrowLeft, RefreshCw, Share2, ZoomIn, X, Download } from 'lucide-react-native';
 import { generateAIImage } from '../services/aiService';
@@ -147,7 +148,10 @@ export default function AIImageResultScreen({ route, navigation }) {
         }
       }
 
-      await addSavedDownload(localUri, galleryAssetId, true);
+      const aiOriginalName = uri.startsWith('http')
+        ? (uri.split('/').pop().split('?')[0] || `ai_art_${Date.now()}.jpg`)
+        : `ai_art_${Date.now()}.jpg`;
+      await addSavedDownload(localUri, galleryAssetId, true, aiOriginalName);
       showToast("Image saved successfully!");
     } catch (error) {
       console.error("Save image error:", error);
@@ -198,6 +202,22 @@ export default function AIImageResultScreen({ route, navigation }) {
   useEffect(() => {
     runGenerations();
   }, [prompt, style, aspectRatio, imageCount, negativePrompt]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (previewImage) {
+        setPreviewImage(null);
+        return true;
+      }
+      if (navigation) {
+        navigation.navigate('Home');
+        return true;
+      }
+      return false; // let the default action happen
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [previewImage, navigation]);
 
   const handleShare = async (uri) => {
     try {

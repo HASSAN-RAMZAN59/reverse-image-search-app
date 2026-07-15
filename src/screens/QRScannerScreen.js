@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ArrowLeft, Copy, Check, RefreshCw, AlertCircle, Camera } from 'lucide-react-native';
+import { addHistoryEntry } from '../utils/historyManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SCANNER_SIZE = SCREEN_WIDTH * 0.7;
@@ -103,6 +104,8 @@ export default function QRScannerScreen({ navigation }) {
 
     const trimmedData = data.trim();
     
+    addHistoryEntry('qr', trimmedData);
+
     // Navigate to Result screen with the scanned content and a fromQR flag
     navigation.navigate('Result', { 
       searchQuery: trimmedData, 

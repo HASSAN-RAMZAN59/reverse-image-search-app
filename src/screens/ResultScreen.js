@@ -11,6 +11,9 @@ import {
   Alert,
   Animated,
   StatusBar,
+  Dimensions,
+  Image,
+  BackHandler,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { ArrowLeft, Download, X } from 'lucide-react-native';
@@ -18,6 +21,9 @@ import { SvgXml } from 'react-native-svg';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import { addSavedDownload } from '../utils/downloadManager';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
 
 const googleXml = `
   <svg width="24" height="24" viewBox="0 0 24 24">
@@ -30,45 +36,19 @@ const googleXml = `
 
 const GoogleIcon = () => (
   <View style={styles.logoBadge}>
-    <SvgXml xml={googleXml} width={16} height={16} />
+    <Image
+      source={require('../components/google.png')}
+      style={styles.googleLogo}
+      resizeMode="contain"
+    />
   </View>
 );
 
-const bingXml = `
-  <svg width="16" height="16" viewBox="0 0 16 16">
-    <defs>
-      <linearGradient id="bingStem" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#30B2FF" />
-        <stop offset="100%" stop-color="#005BFF" />
-      </linearGradient>
-      <linearGradient id="bingLoop" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#005BFF" />
-        <stop offset="70%" stop-color="#00D2FF" />
-        <stop offset="100%" stop-color="#30B2FF" />
-      </linearGradient>
-      <linearGradient id="bingHook" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#30B2FF" />
-        <stop offset="100%" stop-color="#005BFF" />
-      </linearGradient>
-    </defs>
-    <path
-      fill="url(#bingHook)"
-      d="M8.35 5.046a.615.615 0 0 0-.54.575c-.009.13-.006.14.289.899.67 1.727.833 2.142.86 2.2q.101.215.277.395c.089.092.148.141.247.208.176.117.262.15.944.351.664.197 1.026.327 1.338.482.405.201.688.43.866.7.128.195.242.544.291.896.02.137.02.44 0 .564-.041.27-.124.495-.252.684-.067.1-.044.084.055-.039.278-.346.562-.938.707-1.475a4.42 4.42 0 0 0-2.14-5.028 70 70 0 0 0-.888-.465l-.53-.277-.353-.184c-.16-.082-.266-.138-.345-.18-.368-.192-.523-.27-.568-.283a1 1 0 0 0-.194-.03z"
-    />
-    <path
-      fill="url(#bingLoop)"
-      d="M9.152 11.493a3 3 0 0 0-.135.083 320 320 0 0 0-1.513.934l-.8.496c-.012.01-.587.367-.876.543a1.9 1.9 0 0 1-.732.257c-.12.017-.349.017-.47 0a1.9 1.9 0 0 1-.884-.358 2.5 2.5 0 0 1-.365-.364 1.9 1.9 0 0 1-.34-.76 1 1 0 0 0-.027-.121c-.005-.006.004.092.022.22.018.132.057.324.098.489a4.1 4.1 0 0 0 2.487 2.796c.359.142.72.23 1.114.275.147.016.566.023.72.011a4.1 4.1 0 0 0 1.956-.661l.235-.149.394-.248.258-.163 1.164-.736c.51-.32.663-.433.9-.665.099-.097.248-.262.255-.283.002-.005.028-.046.059-.091a1.64 1.64 0 0 0 .25-.682c.02-.124.02-.427 0-.565a3 3 0 0 0-.213-.758c-.15-.314-.47-.6-.928-.83a2 2 0 0 0-.273-.12c-.006 0-.433.26-.948.58l-1.113.687z"
-    />
-    <path
-      fill="url(#bingStem)"
-      d="m3.004 12.184.03.129c.089.402.245.693.515.963a1.82 1.82 0 0 0 1.312.543c.361 0 .673-.09.994-.287l.472-.29.373-.23V5.334c0-1.537-.003-2.45-.008-2.521a1.82 1.82 0 0 0-.535-1.177c-.097-.096-.18-.16-.427-.33L4.183.24c-.239-.163-.258-.175-.33-.2a.63.63 0 0 0-.842.464c-.009.042-.01.603-.01 3.646l.003 8.035Z"
-    />
-  </svg>
-`;
+const bingXml = `<svg width="106" height="106" viewBox="0 0 106 106" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="106" height="106" rx="15" fill="white"/><path d="M87.9956 46.8143C87.9784 46.3925 87.8369 45.9853 87.5891 45.6443C87.3412 45.3034 86.998 45.0441 86.6032 44.8993L45.3903 32.0769C44.6217 31.8386 44.2703 32.249 44.6085 32.9859L52.2731 49.8986C52.6113 50.6399 53.4853 51.518 54.2145 51.8533L64.7296 56.6893C65.4587 57.0246 65.4763 57.6115 64.7648 57.9909L19.9019 81.9591C19.1947 82.3386 19.1025 82.2062 19.6998 81.6635L36.9352 66.0701C37.5859 65.4108 37.9734 64.5349 38.0245 63.6079L38.042 16.3423C38.0248 15.9193 37.8828 15.511 37.6341 15.1692C37.3854 14.8275 37.0413 14.5677 36.6453 14.4229L19.3967 9.06179C18.6281 8.82352 18 9.29564 18 10.1119V81.8135C18 82.6298 18.5359 83.68 19.1947 84.1477L36.72 96.6216C37.3788 97.0893 38.4769 97.129 39.1665 96.7098L86.7438 67.9277C87.11 67.6766 87.4137 67.3442 87.6315 66.9563C87.8494 66.5684 87.9754 66.1353 88 65.6906V46.8143H87.9956Z" fill="#04912B"/></svg>`;
 
 const BingIcon = () => (
   <View style={styles.logoBadge}>
-    <SvgXml xml={bingXml} width={16} height={16} />
+    <SvgXml xml={bingXml} width={106 * scale} height={106 * scale} />
   </View>
 );
 
@@ -89,7 +69,11 @@ const yandexXml = `
 
 const YandexIcon = () => (
   <View style={styles.logoBadge}>
-    <SvgXml xml={yandexXml} width={16} height={16} />
+    <Image
+      source={require('../components/yandex.png')}
+      style={styles.yandexLogo}
+      resizeMode="contain"
+    />
   </View>
 );
 
@@ -99,11 +83,24 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
 
   const handleBack = () => {
     if (navigation) {
-      navigation.goBack();
+      navigation.navigate('Home');
     } else if (onBack) {
       onBack();
     }
   };
+
+  useEffect(() => {
+    const handleHardwareBack = () => {
+      if (navigation) {
+        navigation.navigate('Home');
+        return true;
+      }
+      return false;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
+    return () => sub.remove();
+  }, [navigation]);
 
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -216,7 +213,22 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
       }
 
       // Save to custom downloads metadata to display on saved downloads screen
-      await addSavedDownload(localUri, galleryAssetId);
+      // Extract a meaningful original name from the source URL
+      let originalName = '';
+      try {
+        const rawSegment = targetUrlClean.split('/').pop().split('?')[0];
+        const hasImageExt = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(rawSegment);
+        if (rawSegment && hasImageExt) {
+          originalName = rawSegment;
+        } else {
+          // Fallback: build a name from the domain + timestamp
+          const domain = targetUrlClean.match(/https?:\/\/([^/]+)/)?.[1]?.replace('www.', '') || 'image';
+          originalName = `${domain}_${Date.now()}.jpg`;
+        }
+      } catch (_) {
+        originalName = `image_${Date.now()}.jpg`;
+      }
+      await addSavedDownload(localUri, galleryAssetId, false, originalName);
 
       showToast("Image saved successfully!");
     } catch (err) {
@@ -376,6 +388,19 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
     }
   };
 
+  const getTabLeft = (id) => {
+    switch (id) {
+      case 'google':
+        return 84 * scale;
+      case 'yandex':
+        return 432 * scale;
+      case 'bing':
+        return 780 * scale;
+      default:
+        return 84 * scale;
+    }
+  };
+
   // JavaScript injected to hide extra content, logos, search forms, and navigation panels, and detect image long presses
   const injectedJS = `
     (function() {
@@ -457,13 +482,17 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-            <ArrowLeft size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{getHeaderTitle()}</Text>
-        </View>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle} numberOfLines={1}>Image Search</Text>
+      </View>
+
+      {/* Ad Banner */}
+      <View style={styles.adBannerContainer}>
+        <Image
+          source={require('../components/Rectangle 107 (1).png')}
+          style={styles.adBannerImage}
+          resizeMode="cover"
+        />
+        <Text style={styles.adBannerLabel}>Banner AD</Text>
       </View>
 
       {!imageUri && (
@@ -538,32 +567,28 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
       </View>
 
       <View style={styles.bottomTabBar}>
+        <Image
+          source={require('../components/Rectangle 71.png')}
+          style={styles.bottomTabBarBg}
+          resizeMode="cover"
+        />
         {browsers.map((browser) => {
           const isActive = activeBrowser === browser.id;
           return (
             <TouchableOpacity
               key={browser.id}
-              style={[
-                styles.bottomTab,
-                isActive && {
-                  backgroundColor: browser.activeBg,
-                  borderColor: browser.activeColor,
-                },
-              ]}
+              style={[styles.bottomTab, { left: getTabLeft(browser.id) }]}
               onPress={() => setActiveBrowser(browser.id)}
             >
+              {isActive && (
+                <Image
+                  source={require('../components/Rectangle 108.png')}
+                  style={styles.activeRectangleBg}
+                  resizeMode="stretch"
+                />
+              )}
               <View style={styles.tabContent}>
                 {getBrowserLogo(browser.id)}
-                <Text
-                  style={[
-                    styles.bottomTabText,
-                    isActive
-                      ? { color: browser.activeColor, fontWeight: '700' }
-                      : { color: '#666', fontWeight: '500' },
-                  ]}
-                >
-                  {browser.name}
-                </Text>
               </View>
             </TouchableOpacity>
           );
@@ -580,31 +605,59 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
-  // Blue Header
+  container: { flex: 1, backgroundColor: '#000' },
+  // Black Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    backgroundColor: '#1A73E8',
+    height: 312 * scale,
+    backgroundColor: '#000',
+    justifyContent: 'flex-end',
+    paddingBottom: 20 * scale,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 16,
+  headerTitle: {
+    position: 'absolute',
+    left: 46 * scale,
+    bottom: 20 * scale,
+    width: 318 * scale,
+    height: 58 * scale,
+    color: '#FFFFFF',
+    fontFamily: 'Inter',
+    fontWeight: '500',
+    fontSize: 48.68 * scale,
+    lineHeight: 48.68 * scale * 1.2,
+    letterSpacing: 0,
   },
-  backBtn: { padding: 4, marginRight: 16 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', flex: 1 },
+  adBannerContainer: {
+    width: 1080 * scale,
+    height: 258 * scale,
+    marginTop: 12 * scale,
+    backgroundColor: '#EDEEEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  adBannerImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  adBannerLabel: {
+    position: 'absolute',
+    left: 350 * scale,
+    top: 85 * scale,
+    width: 379 * scale,
+    height: 88 * scale,
+    color: '#9AA0A6',
+    fontFamily: 'Inter',
+    fontWeight: 'bold',
+    fontSize: 72.8 * scale,
+    letterSpacing: 0,
+  },
 
   // Scrollable tabs
   subTabsContainer: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    backgroundColor: '#FFF',
+    borderBottomColor: '#222',
+    backgroundColor: '#000',
   },
   subTabsScroll: {
     paddingHorizontal: 8,
@@ -616,47 +669,56 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   subTabButtonActive: {
-    borderBottomColor: '#000000', // Black indicator bar
+    borderBottomColor: '#FFF',
   },
   subTabText: {
     fontSize: 15,
-    color: '#666',
+    color: '#AAA',
     fontWeight: '500',
   },
   subTabTextActive: {
-    color: '#000000',
+    color: '#FFF',
     fontWeight: 'bold',
   },
 
   // WebView container
-  webViewContainer: { flex: 1 },
+  webViewContainer: { flex: 1, marginBottom: 166 * scale },
   webView: { flex: 1 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#FFF',
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: { marginTop: 10, fontSize: 14, color: '#666' },
+  loadingText: { marginTop: 10, fontSize: 14, color: '#AAA' },
 
   // Bottom selector tabs
   bottomTabBar: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'space-between',
+    position: 'absolute',
+    left: 0,
+    top: 2130 * scale,
+    width: 1080 * scale,
+    height: 166 * scale,
+    zIndex: 20,
+  },
+  bottomTabBarBg: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
   },
   bottomTab: {
-    flex: 1,
-    paddingVertical: 10,
+    position: 'absolute',
+    width: 216 * scale,
+    height: 166 * scale,
     alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    marginHorizontal: 4,
+    justifyContent: 'center',
+  },
+  activeRectangleBg: {
+    position: 'absolute',
+    width: 216 * scale,
+    height: 166 * scale,
   },
   tabContent: {
     flexDirection: 'row',
@@ -665,9 +727,17 @@ const styles = StyleSheet.create({
   },
   bottomTabText: { fontSize: 14 },
   logoBadge: {
-    marginRight: 6,
+    marginRight: 0,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  yandexLogo: {
+    width: 106 * scale,
+    height: 106 * scale,
+  },
+  googleLogo: {
+    width: 106 * scale,
+    height: 106 * scale,
   },
   saveOverlayContainer: {
     position: 'absolute',

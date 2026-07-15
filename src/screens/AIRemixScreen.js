@@ -16,6 +16,7 @@ import {
   Modal,
   PanResponder,
   TextInput,
+  BackHandler,
 } from 'react-native';
 import { ArrowLeft, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximize2 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -66,6 +67,22 @@ export default function AIRemixScreen({ route, navigation }) {
       setSourceImageUri(passedUri);
     }
   }, [route?.params]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (isFullScreen) {
+        setIsFullScreen(false);
+        return true;
+      }
+      if (navigation) {
+        navigation.navigate('Home');
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [isFullScreen, navigation]);
 
   const showToast = (message) => {
     setToastMessage(message);
@@ -213,7 +230,8 @@ export default function AIRemixScreen({ route, navigation }) {
       }
 
       // Add to internal saved downloads registry
-      await addSavedDownload(tempUri, galleryAssetId, true);
+      const remixOriginalName = `ai_remix_${Date.now()}.jpg`;
+      await addSavedDownload(tempUri, galleryAssetId, true, remixOriginalName);
 
       showToast('Image saved');
     } catch (err) {

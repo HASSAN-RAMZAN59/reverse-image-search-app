@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,22 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { ArrowLeft, Sparkles, Download, RefreshCw } from 'lucide-react-native';
 
 export default function AIArtDashboardScreen({ navigation }) {
+  useEffect(() => {
+    const onBackPress = () => {
+      if (navigation) {
+        navigation.navigate('Home');
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />

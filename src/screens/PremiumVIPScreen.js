@@ -25,12 +25,12 @@ export default function PremiumVIPScreen({ navigation }) {
 
   const handleStartTrial = async () => {
     await unlockPremium();
-    navigation.replace('Home');
+    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
   };
 
   const handleSkip = async () => {
     await bypassPremium();
-    navigation.replace('Home');
+    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
   };
 
   return (

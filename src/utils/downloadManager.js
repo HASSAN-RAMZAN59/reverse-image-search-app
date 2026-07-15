@@ -33,7 +33,7 @@ export async function getSavedDownloads() {
   }
 }
 
-export async function addSavedDownload(localUri, galleryAssetId = null, isAI = false) {
+export async function addSavedDownload(localUri, galleryAssetId = null, isAI = false, originalName = null) {
   try {
     const list = await getSavedDownloads();
     
@@ -47,7 +47,8 @@ export async function addSavedDownload(localUri, galleryAssetId = null, isAI = f
       uri: localUri,
       galleryAssetId,
       isAI,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      originalName: originalName || localUri.split('/').pop(),
     };
     
     const updatedList = [newRecord, ...list];

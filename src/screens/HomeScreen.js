@@ -18,6 +18,7 @@ import {
   StatusBar,
   Share,
   Linking,
+  BackHandler,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -44,12 +45,16 @@ import {
   Sparkles,
   QrCode,
   Download,
+  Compass,
+  History,
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import Logo from '../components/Logo';
 import { usePremium } from '../context/PremiumContext';
+import { addHistoryEntry } from '../utils/historyManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
 
 export default function HomeScreen({ onSearch, navigation }) {
   const { isPremiumUser } = usePremium();
@@ -79,6 +84,42 @@ export default function HomeScreen({ onSearch, navigation }) {
   const [isRateModalVisible, setIsRateModalVisible] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
   const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.75)).current;
+
+  // Intercept hardware back button — close editor/crop if open, stay on Home otherwise
+  useEffect(() => {
+    let isFocused = true;
+
+    const focusSub = navigation?.addListener('focus', () => {
+      isFocused = true;
+    });
+
+    const blurSub = navigation?.addListener('blur', () => {
+      isFocused = false;
+    });
+
+    const onBackPress = () => {
+      if (!isFocused) return false;
+
+      if (cropMode) {
+        setCropMode(false);
+        return true;
+      }
+
+      if (editorUri) {
+        setEditorUri(null);
+        setImageUri(null);
+        return true;
+      }
+      return true; // stay on Home
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      focusSub?.();
+      blurSub?.();
+      sub.remove();
+    };
+  }, [editorUri, cropMode, navigation]);
 
   const handleOpenSavedDownloads = () => {
     if (navigation) {
@@ -322,16 +363,14 @@ export default function HomeScreen({ onSearch, navigation }) {
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
         {/* Header */}
         <View style={styles.editorHeader}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => setEditorUri(null)} disabled={busy}>
-            <X size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.editorHeaderTitle}>Edit Image</Text>
+          <Text style={styles.editorHeaderTitle}>Image Search</Text>
           <TouchableOpacity
             style={styles.headerBtn}
             onPress={() => {
               const finalUri = editorUri;
               setEditorUri(null);
               setImageUri(null);
+              addHistoryEntry('image', finalUri);
               if (navigation) {
                 navigation.navigate('Result', { searchQuery: '', imageUri: finalUri });
               } else {
@@ -340,7 +379,7 @@ export default function HomeScreen({ onSearch, navigation }) {
             }}
             disabled={busy}
           >
-            <Check size={24} color="#34C759" />
+            <Text style={styles.editorHeaderTick}>✓</Text>
           </TouchableOpacity>
         </View>
 
@@ -352,7 +391,7 @@ export default function HomeScreen({ onSearch, navigation }) {
             </View>
           )}
 
-          <View style={[styles.imageContainer, { width: container.width, height: container.height }]}>
+          <View style={styles.imageContainer}>
             <Image source={{ uri: editorUri }} style={styles.editorImage} resizeMode="contain" />
 
             {cropMode && (
@@ -382,6 +421,80 @@ export default function HomeScreen({ onSearch, navigation }) {
           </View>
         </View>
 
+        {/* Ad Banner */}
+        <View style={styles.adBannerContainer}>
+          <View style={styles.adBannerBg}>
+            <Text style={styles.adBannerLabel}>Banner AD</Text>
+          </View>
+        </View>
+
+        {/* Image Editor Tab Bar */}
+        <View style={styles.editorTabBar}>
+          {/* Active indicator - slides under active tab */}
+          <View style={[
+            styles.editorTabIndicator,
+            cropMode
+              ? { left: 0 }
+              : { left: SCREEN_WIDTH / 4 }
+          ]} />
+
+          {/* Tab 1: Crop */}
+          <TouchableOpacity
+            style={styles.editorTab}
+            onPress={() => setCropMode(!cropMode)}
+            disabled={busy}
+          >
+            <Image
+              source={require('../components/Group 46.png')}
+              style={[
+                styles.editorTabIcon,
+                cropMode && { tintColor: '#007AFF' },
+              ]}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+
+          {/* Tab 2: Rotate */}
+          <TouchableOpacity
+            style={styles.editorTab}
+            onPress={handleRotate}
+            disabled={busy}
+          >
+            <Image
+              source={require('../components/Vector (1).png')}
+              style={styles.editorTabIcon}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+
+          {/* Tab 3: Flip Left/Right */}
+          <TouchableOpacity
+            style={styles.editorTab}
+            onPress={() => manipulateImage([{ flip: ImageManipulator.FlipType.Horizontal }])}
+            disabled={busy}
+          >
+            <Image
+              source={require('../components/Vector (2).png')}
+              style={styles.editorTabIconFlip}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+
+          {/* Tab 4: Flip Up/Down */}
+          <TouchableOpacity
+            style={styles.editorTab}
+            onPress={() => manipulateImage([{ flip: ImageManipulator.FlipType.Vertical }])}
+            disabled={busy}
+          >
+            <Image
+              source={require('../components/Vector (3).png')}
+              style={styles.editorTabIconFlipV}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Crop Apply/Cancel Overlay when crop mode active */}
         {cropMode && (
           <View style={styles.cropActionContainer}>
             <TouchableOpacity style={styles.cropActionBtnCancel} onPress={() => setCropMode(false)}>
@@ -393,28 +506,6 @@ export default function HomeScreen({ onSearch, navigation }) {
           </View>
         )}
 
-        {/* Toolbar */}
-        <View style={styles.editorToolbar}>
-          <TouchableOpacity style={[styles.toolBtn, cropMode && styles.toolBtnActive]} onPress={() => setCropMode(!cropMode)} disabled={busy}>
-            <Crop size={24} color={cropMode ? '#007AFF' : '#FFF'} />
-            <Text style={[styles.toolText, cropMode && styles.toolTextActive]}>Crop</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.toolBtn} onPress={handleRotate} disabled={busy}>
-            <RotateCw size={24} color="#FFF" />
-            <Text style={styles.toolText}>Rotate</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.toolBtn} onPress={() => manipulateImage([{ flip: ImageManipulator.FlipType.Horizontal }])} disabled={busy}>
-            <FlipHorizontal size={24} color="#FFF" />
-            <Text style={styles.toolText}>Invert L/R</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.toolBtn} onPress={() => manipulateImage([{ flip: ImageManipulator.FlipType.Vertical }])} disabled={busy}>
-            <FlipVertical size={24} color="#FFF" />
-            <Text style={styles.toolText}>Invert U/D</Text>
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
     );
   }
@@ -424,78 +515,145 @@ export default function HomeScreen({ onSearch, navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       {/* Top Header Bar */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
-          <Menu size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Image Search</Text>
-        <TouchableOpacity style={styles.savedDownloadsBtn} onPress={handleOpenSavedDownloads}>
-          <Download size={24} color="#FFF" />
-        </TouchableOpacity>
+      <View style={styles.header} />
+
+      <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
+        <View style={styles.customMenuLine} />
+        <View style={styles.customMenuLine} />
+        <View style={[styles.customMenuLine, styles.customMenuLineShort]} />
+      </TouchableOpacity>
+
+      <Text style={styles.headerTitle}>Image Search</Text>
+
+      <TouchableOpacity style={styles.premiumHeaderBtn} onPress={() => navigation?.navigate('PremiumVIP')}>
+        <Image
+          source={require('../components/image 30.png')}
+          style={styles.premiumHeaderIcon}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+
+      <Image
+        source={require('../components/Group 1000007002.png')}
+        style={styles.homeGraphic}
+        resizeMode="contain"
+      />
+
+      {/* Custom Search Bar Container with Background Image */}
+      <View style={styles.searchContainer}>
+        <Image
+          source={require('../components/Group 1000007000.png')}
+          style={styles.searchBackground}
+          resizeMode="stretch"
+        />
+
+        {/* Search Icon Overlay Button */}
+        <TouchableOpacity
+          style={styles.searchIconOverlay}
+          onPress={() => {
+            if (searchText.trim()) {
+              addHistoryEntry('text', searchText.trim());
+              if (navigation) {
+                navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+              } else {
+                onSearch?.(searchText, null);
+              }
+            } else {
+              setIsInputInvalid(true);
+            }
+          }}
+        />
+
+        {/* TextInput overlay with solid background color to mask "Uplaod and Search" */}
+        <TextInput
+          style={[styles.inputOverlay, isInputInvalid && styles.inputInvalidOverlay]}
+          placeholder={isListening ? "Listening..." : "Upload and Search"}
+          placeholderTextColor="#9AA0A6"
+          value={searchText}
+          onChangeText={(text) => {
+            setSearchText(text);
+            if (text.trim()) {
+              setIsInputInvalid(false);
+            }
+          }}
+          onSubmitEditing={() => {
+            if (searchText.trim()) {
+              addHistoryEntry('text', searchText.trim());
+              if (navigation) {
+                navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+              } else {
+                onSearch?.(searchText, null);
+              }
+            }
+          }}
+        />
+
+        {/* Mic Button Overlay */}
+        <TouchableOpacity
+          style={styles.micButtonOverlay}
+          onPress={handleMicPress}
+        />
+
+        {/* Camera / Capture Button Overlay */}
+        <TouchableOpacity
+          style={styles.cameraButtonOverlay}
+          onPress={() => acquireImage('camera')}
+        />
       </View>
 
       {/* Main Content Area */}
-      <View style={styles.content}>
-
-        {/* Search Row */}
-        <View style={styles.searchRow}>
-          <TextInput
-            style={[styles.input, isInputInvalid && styles.inputInvalid]}
-            placeholder={isListening ? "Listening..." : "Enter your text..."}
-            placeholderTextColor="#999"
-            value={searchText}
-            onChangeText={(text) => {
-              setSearchText(text);
-              if (text.trim()) {
-                setIsInputInvalid(false);
-              }
-            }}
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Visual Search (Gallery) Button */}
+        <TouchableOpacity
+          style={styles.visualSearchBtn}
+          onPress={() => acquireImage('gallery')}
+        >
+          <Image
+            source={require('../components/Group 1000006996.png')}
+            style={styles.actionBtnImage}
+            resizeMode="stretch"
           />
+        </TouchableOpacity>
+
+        {/* Row for Camera and AI Art Buttons */}
+        <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={[styles.iconButton, isListening && styles.iconButtonActive]}
-            onPress={handleMicPress}
+            style={styles.squareBtn}
+            onPress={() => acquireImage('camera')}
           >
-            <Mic size={20} color={isListening ? '#EF4444' : '#FFF'} />
+            <Image
+              source={require('../components/Group 1000006997.png')}
+              style={styles.actionBtnImage}
+              resizeMode="stretch"
+            />
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={styles.searchButton}
-            onPress={() => {
-              if (searchText.trim()) {
-                if (navigation) {
-                  navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
-                } else {
-                  onSearch?.(searchText, null);
-                }
-              } else {
-                setIsInputInvalid(true);
-              }
-            }}
+            style={styles.squareBtn}
+            onPress={() => navigation?.navigate('AIArtDashboard')}
           >
-            <Search size={20} color="#FFF" />
+            <Image
+              source={require('../components/Group 1000006998.png')}
+              style={styles.actionBtnImage}
+              resizeMode="stretch"
+            />
           </TouchableOpacity>
         </View>
 
-
-
-        {/* Action Buttons */}
-        <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('gallery')}>
-          <ImageIcon size={24} color="#FFF" style={styles.btnIcon} />
-          <Text style={styles.actionButtonText}>Upload Image from Gallery</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => acquireImage('camera')}>
-          <Camera size={24} color="#FFF" style={styles.btnIcon} />
-          <Text style={styles.actionButtonText}>Open Camera & Capture</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => navigation?.navigate('AIArtDashboard')}>
-          <Sparkles size={24} color="#FFF" style={styles.btnIcon} />
-          <Text style={styles.actionButtonText}>AI Art</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => navigation?.navigate('QRScanner')}>
-          <QrCode size={24} color="#FFF" style={styles.btnIcon} />
-          <Text style={styles.actionButtonText}>Scan QR Code</Text>
+        {/* Scan QR Code Button */}
+        <TouchableOpacity
+          style={styles.qrCodeBtn}
+          onPress={() => navigation?.navigate('QRScanner')}
+        >
+          <Image
+            source={require('../components/Group 1000007001.png')}
+            style={styles.actionBtnImage}
+            resizeMode="stretch"
+          />
         </TouchableOpacity>
 
         {/* Dynamic Ad Injection Template (Commented out for now) */}
@@ -506,42 +664,77 @@ export default function HomeScreen({ onSearch, navigation }) {
           </View>
         )}
         */}
+      </ScrollView>
 
-        {/* Voice Search Overlay Modal */}
-        <Modal
-          visible={isListeningModalVisible}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={handleMicPress}
-        >
-          <View style={styles.modalOverlay}>
+      {/* Voice Search Overlay Modal */}
+      <Modal
+        visible={isListeningModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleMicPress}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalCloseArea}
+            activeOpacity={1}
+            onPress={handleMicPress}
+          />
+          <View style={styles.modalContent}>
+            {/* Logo space placeholder / Microphone circles */}
             <TouchableOpacity
-              style={styles.modalCloseArea}
-              activeOpacity={1}
+              style={styles.micRippleOuter}
+              activeOpacity={0.8}
               onPress={handleMicPress}
-            />
-            <View style={styles.modalContent}>
-              {/* Logo space placeholder / Microphone circles */}
-              <TouchableOpacity
-                style={styles.micRippleOuter}
-                activeOpacity={0.8}
-                onPress={handleMicPress}
-              >
-                <View style={styles.micRippleInner}>
-                  <Mic size={40} color="#2A303D" />
-                </View>
-              </TouchableOpacity>
+            >
+              <View style={styles.micRippleInner}>
+                <Mic size={40} color="#2A303D" />
+              </View>
+            </TouchableOpacity>
 
-              {/* Speaking / Listening Text */}
-              <Text style={styles.listeningTitle}>
-                {searchText ? searchText : "Search By Text"}
-              </Text>
+            {/* Speaking / Listening Text */}
+            <Text style={styles.listeningTitle}>
+              {searchText ? searchText : "Search By Text"}
+            </Text>
 
-              {/* Language Text at bottom */}
-              <Text style={styles.languageText}>English (Pakistan)</Text>
-            </View>
+            {/* Language Text at bottom */}
+            <Text style={styles.languageText}>English (Pakistan)</Text>
           </View>
-        </Modal>
+        </View>
+      </Modal>
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
+          <Image
+            source={require('../components/si_ai-search-fill.png')}
+            style={styles.exploreIcon}
+          />
+          <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>Explore</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('AIArtDashboard')}>
+          <Image
+            source={require('../components/mingcute_ai-fill.png')}
+            style={styles.generateAiIcon}
+          />
+          <Text style={styles.bottomTabText}>Generate AI</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('History')}>
+          <Image
+            source={require('../components/material-symbols_history-rounded.png')}
+            style={styles.historyIcon}
+          />
+          <Text style={styles.bottomTabText}>History</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomTab} onPress={handleOpenSavedDownloads}>
+          <Image
+            source={require('../components/material-symbols_download-rounded.png')}
+            style={styles.downloadIcon}
+          />
+          <Text style={styles.bottomTabText}>Downloads</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Drawer Overlay */}
@@ -837,10 +1030,137 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16
   },
-  menuButton: { marginRight: 16, padding: 4 },
-  headerTitle: { flex: 1, color: '#FFF', fontSize: 20, fontWeight: 'bold', letterSpacing: 0.5 },
+  menuButton: {
+    position: 'absolute',
+    left: 61 * scale,
+    top: 212 * scale,
+    width: 42 * scale,
+    height: 32 * scale,
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  customMenuLine: {
+    width: 42 * scale,
+    height: 9 * scale,
+    backgroundColor: '#FFF',
+    borderRadius: 4.5 * scale,
+  },
+  customMenuLineShort: {
+    width: 21 * scale,
+  },
+  headerTitle: {
+    position: 'absolute',
+    left: 171 * scale,
+    top: 195 * scale,
+    width: 318 * scale,
+    height: 58 * scale,
+    color: '#FFF',
+    fontFamily: 'Inter',
+    fontSize: 48.68 * scale,
+    fontWeight: 'bold',
+    zIndex: 10,
+  },
   savedDownloadsBtn: { padding: 4 },
-  content: { flex: 1, backgroundColor: '#0E0E10', padding: 20, justifyContent: 'center' },
+  content: {
+    position: 'absolute',
+    left: 46 * scale,
+    top: 1150 * scale,
+    right: 46 * scale,
+    bottom: 181 * scale,
+    backgroundColor: '#0E0E10',
+  },
+  contentContainer: {
+    paddingBottom: 40 * scale,
+  },
+  homeGraphic: {
+    position: 'absolute',
+    left: 46 * scale,
+    top: 312 * scale,
+    width: 988 * scale,
+    height: 612 * scale,
+    borderRadius: 21 * scale,
+  },
+  searchContainer: {
+    position: 'absolute',
+    left: 78 * scale,
+    top: 972 * scale,
+    width: 923 * scale,
+    height: 147.57 * scale,
+    zIndex: 10,
+  },
+  searchBackground: {
+    width: '100%',
+    height: '100%',
+  },
+  searchIconOverlay: {
+    position: 'absolute',
+    left: 40 * scale,
+    top: 0,
+    width: 80 * scale,
+    height: 147.57 * scale,
+    zIndex: 20,
+  },
+  inputOverlay: {
+    position: 'absolute',
+    left: 130 * scale,
+    top: 8 * scale,
+    width: 570 * scale,
+    height: (147.57 - 16) * scale,
+    color: '#FFF',
+    fontSize: 40 * scale,
+    backgroundColor: '#282a2e',
+    paddingHorizontal: 10 * scale,
+    fontFamily: 'Inter',
+    zIndex: 20,
+  },
+  inputInvalidOverlay: {
+    borderColor: '#EF4444',
+    borderWidth: 1.5 * scale,
+    borderRadius: 10 * scale,
+  },
+  micButtonOverlay: {
+    position: 'absolute',
+    left: 710 * scale,
+    top: 0,
+    width: 80 * scale,
+    height: 147.57 * scale,
+    zIndex: 20,
+  },
+  cameraButtonOverlay: {
+    position: 'absolute',
+    left: 800 * scale,
+    top: 0,
+    width: 100 * scale,
+    height: 147.57 * scale,
+    zIndex: 20,
+  },
+  visualSearchBtn: {
+    width: 923 * scale,
+    height: 352 * scale,
+    marginTop: 10 * scale,
+    alignSelf: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 32 * scale,
+    marginTop: 37 * scale,
+  },
+  squareBtn: {
+    width: 440 * scale,
+    height: 440 * scale,
+  },
+  qrCodeBtn: {
+    width: 923 * scale,
+    height: 200 * scale,
+    marginTop: 37 * scale,
+    alignSelf: 'center',
+  },
+  actionBtnImage: {
+    width: '100%',
+    height: '100%',
+  },
   title: { fontSize: 24, fontWeight: 'bold', color: '#FFF', textAlign: 'center', marginBottom: 30 },
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#333', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#FFF', backgroundColor: '#1C1C1E' },
@@ -857,24 +1177,119 @@ const styles = StyleSheet.create({
   imageSearchBtn: { backgroundColor: '#007AFF', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, marginRight: 10 },
   imageSearchBtnText: { color: '#FFF', fontWeight: '600' },
   trashBtn: { padding: 8, borderWidth: 1, borderColor: '#3A1010', borderRadius: 6, backgroundColor: '#200808' },
+  exploreIcon: {
+    width: 50 * scale,
+    height: 50 * scale,
+    tintColor: '#007AFF',
+  },
+  generateAiIcon: {
+    width: 50 * scale,
+    height: 50 * scale,
+    tintColor: '#A0A3BD',
+  },
+  historyIcon: {
+    width: 50 * scale,
+    height: 50 * scale,
+    tintColor: '#A0A3BD',
+  },
+  downloadIcon: {
+    width: 50 * scale,
+    height: 50 * scale,
+    tintColor: '#A0A3BD',
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    height: 181 * scale,
+    backgroundColor: '#1C1C1E',
+    borderTopWidth: 1,
+    borderTopColor: '#2C2C2E',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingBottom: Platform.OS === 'ios' ? 30 * scale : 10 * scale,
+    zIndex: 30,
+  },
+  bottomTab: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    height: '100%',
+  },
+  bottomTabText: {
+    fontFamily: 'Geist',
+    fontSize: 35 * scale,
+    color: '#A0A3BD',
+    marginTop: 10 * scale,
+  },
+  bottomTabActiveText: {
+    color: '#007AFF',
+  },
+  premiumHeaderBtn: {
+    position: 'absolute',
+    left: 938 * scale,
+    top: 177 * scale,
+    width: 94 * scale,
+    height: 94 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  premiumHeaderIcon: {
+    width: '100%',
+    height: '100%',
+  },
 
   // Editor Styles
   editorContainer: { flex: 1, backgroundColor: '#000' },
   editorHeader: {
-    flexDirection: 'row',
-    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderColor: '#222'
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 312 * scale,
+    backgroundColor: '#000',
+    zIndex: 30,
+    justifyContent: 'flex-end',
+    paddingBottom: 20 * scale,
   },
-  headerBtn: { padding: 8 },
-  editorHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
-  editorWorkspace: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  headerBtn: { position: 'absolute', right: 16, bottom: 20 * scale, padding: 8 },
+  editorHeaderTitle: {
+    position: 'absolute',
+    left: 46 * scale,
+    bottom: 20 * scale,
+    width: 318 * scale,
+    height: 58 * scale,
+    color: '#FFFFFF',
+    fontFamily: 'Inter',
+    fontWeight: '500',
+    fontSize: 48.68 * scale,
+    lineHeight: 48.68 * scale * 1.2,
+    letterSpacing: 0,
+  },
+  editorHeaderTick: {
+    color: '#FFFFFF',
+    fontFamily: 'Inter',
+    fontWeight: '500',
+    fontSize: 48.68 * scale,
+    lineHeight: 48.68 * scale * 1.2,
+  },
+  editorWorkspace: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
   loaderOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 10, justifyContent: 'center', alignItems: 'center' },
-  imageContainer: { position: 'relative', overflow: 'hidden', backgroundColor: '#111' },
+  imageContainer: {
+    position: 'absolute',
+    left: 55 * scale,
+    top: 625 * scale,
+    width: 969 * scale,
+    height: 1246 * scale,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+  },
   editorImage: { width: '100%', height: '100%' },
   cropOverlayContainer: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.4)' },
   cropBox: { position: 'absolute', borderWidth: 2, borderColor: '#FFF', backgroundColor: 'transparent' },
@@ -886,11 +1301,76 @@ const styles = StyleSheet.create({
   cropActionTextCancel: { color: '#FFF', fontSize: 14 },
   cropActionBtnApply: { paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20, backgroundColor: '#007AFF' },
   cropActionTextApply: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
-  editorToolbar: { flexDirection: 'row', height: 80, backgroundColor: '#111', alignItems: 'center', justifyContent: 'space-around', borderTopWidth: 1, borderColor: '#222' },
-  toolBtn: { alignItems: 'center', justifyContent: 'center', padding: 10, minWidth: 70 },
-  toolBtnActive: { backgroundColor: '#222', borderRadius: 8 },
-  toolText: { fontSize: 11, color: '#AAA', marginTop: 4 },
-  toolTextActive: { color: '#007AFF', fontWeight: 'bold' },
+  editorTabBar: {
+    position: 'absolute',
+    left: 0,
+    top: 2130 * scale,
+    width: 1080 * scale,
+    height: 166 * scale,
+    backgroundColor: '#ADC7FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  editorTab: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editorTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: 106 * scale,
+    height: 7 * scale,
+    backgroundColor: '#131313',
+    borderRadius: 3.5 * scale,
+  },
+  editorTabIcon: {
+    width: 83.33 * scale,
+    height: 83.33 * scale,
+    tintColor: '#131313',
+  },
+  editorTabIconFlip: {
+    width: 73.5 * scale,
+    height: 81.66 * scale,
+    tintColor: '#131313',
+  },
+  editorTabIconFlipV: {
+    width: 80 * scale,
+    height: 70.01 * scale,
+    tintColor: '#131313',
+  },
+  adBannerContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 324 * scale,
+    width: 1080 * scale,
+    height: 258 * scale,
+    backgroundColor: '#EDEEEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  adBannerBg: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#EDEEEF',
+  },
+  adBannerLabel: {
+    position: 'absolute',
+    left: 350 * scale,
+    top: 85 * scale,
+    width: 379 * scale,
+    height: 88 * scale,
+    color: '#9AA0A6',
+    fontFamily: 'Inter',
+    fontWeight: 'bold',
+    fontSize: 72.8 * scale,
+    letterSpacing: 0,
+  },
 
   // Voice Search Modal Styles
   modalOverlay: {

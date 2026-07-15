@@ -10,6 +10,7 @@ import AIImageScreen from '../screens/AIImageScreen';
 import AIImageResultScreen from '../screens/AIImageResultScreen';
 import QRScannerScreen from '../screens/QRScannerScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
+import HistoryScreen from '../screens/HistoryScreen';
 import AIRemixScreen from '../screens/AIRemixScreen';
 import OnboardingPager from '../screens/OnboardingPager';
 import PremiumVIPScreen from '../screens/PremiumVIPScreen';
@@ -45,6 +46,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AIImageResult" component={AIImageResultScreen} />
         <Stack.Screen name="QRScanner" component={QRScannerScreen} />
         <Stack.Screen name="Downloads" component={DownloadsScreen} />
+        <Stack.Screen name="History" component={HistoryScreen} />
         <Stack.Screen name="AIRemix" component={AIRemixScreen} />
       </Stack.Navigator>
     </NavigationContainer>

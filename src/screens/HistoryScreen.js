@@ -1,0 +1,563 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  Dimensions,
+  SafeAreaView,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  BackHandler,
+} from 'react-native';
+import { ArrowLeft, Trash2, X, Check, Search, QrCode, FileImage } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
+import { getSearchHistory, deleteHistoryEntry, clearAllHistory } from '../utils/historyManager';
+
+const backIconXml = `
+  <svg width="51" height="41" viewBox="0 0 51 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.5 4.5H46.5M4.5 20.5H46.5M4.5 36.5H22.875" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+`;
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
+
+export default function HistoryScreen({ navigation }) {
+  const [historyItems, setHistoryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Selection states
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  const fetchHistory = async () => {
+    try {
+      const list = await getSearchHistory();
+      setHistoryItems(list);
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  // Back handler for Android: exit selection mode first, then go to Home
+  useEffect(() => {
+    const backAction = () => {
+      if (isSelectionMode) {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+        return true;
+      }
+      if (navigation) {
+        navigation.navigate('Home');
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [isSelectionMode, navigation]);
+
+  const handlePress = (item) => {
+    if (isSelectionMode) {
+      toggleSelect(item.id);
+    } else {
+      // Re-trigger search based on history type
+      if (item.type === 'image') {
+        navigation.navigate('Result', { searchQuery: '', imageUri: item.query });
+      } else if (item.type === 'qr') {
+        navigation.navigate('Result', { searchQuery: item.query, imageUri: null, fromQR: true });
+      } else {
+        navigation.navigate('Result', { searchQuery: item.query, imageUri: null });
+      }
+    }
+  };
+
+  const handleLongPress = (item) => {
+    if (!isSelectionMode) {
+      setIsSelectionMode(true);
+      setSelectedIds([item.id]);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) {
+        const next = prev.filter((x) => x !== id);
+        if (next.length === 0) {
+          setIsSelectionMode(false);
+        }
+        return next;
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleDeleteItem = (id) => {
+    Alert.alert(
+      'Delete History',
+      'Are you sure you want to delete this search history entry?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const updated = await deleteHistoryEntry(id);
+            setHistoryItems(updated);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    Alert.alert(
+      'Delete Selected',
+      `Are you sure you want to delete the ${selectedIds.length} selected history entries?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            let currentHistory = historyItems;
+            for (const id of selectedIds) {
+              currentHistory = await deleteHistoryEntry(id);
+            }
+            setHistoryItems(currentHistory);
+            setSelectedIds([]);
+            setIsSelectionMode(false);
+            setLoading(false);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearAll = () => {
+    if (historyItems.length === 0) return;
+    Alert.alert(
+      'Clear All History',
+      'Are you sure you want to permanently delete all search history?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            const updated = await clearAllHistory();
+            setHistoryItems(updated);
+            setLoading(false);
+          },
+        },
+      ]
+    );
+  };
+
+  const formatTimestamp = (time) => {
+    const date = new Date(time);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) {
+      return `Today, ${timeStr}`;
+    } else if (isYesterday) {
+      return `Yesterday, ${timeStr}`;
+    } else {
+      return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const isSelected = selectedIds.includes(item.id);
+
+    // Dynamic icon/thumbnail rendering
+    let leftComponent;
+    if (item.type === 'image') {
+      leftComponent = (
+        <Image source={{ uri: item.query }} style={styles.itemImageThumbnail} />
+      );
+    } else if (item.type === 'qr') {
+      leftComponent = (
+        <View style={styles.iconContainer}>
+          <QrCode size={22 * scale} color="#007AFF" />
+        </View>
+      );
+    } else {
+      leftComponent = (
+        <View style={styles.iconContainer}>
+          <Search size={22 * scale} color="#34C759" />
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        style={[styles.historyRow, isSelected && styles.historyRowSelected]}
+        activeOpacity={0.7}
+        onPress={() => handlePress(item)}
+        onLongPress={() => handleLongPress(item)}
+      >
+        {leftComponent}
+
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle} numberOfLines={1}>
+            {item.type === 'image'
+              ? 'Visual Search'
+              : item.type === 'qr'
+              ? `QR: ${item.query}`
+              : item.query}
+          </Text>
+          <Text style={styles.itemTime}>{formatTimestamp(item.timestamp)}</Text>
+        </View>
+
+        {isSelectionMode ? (
+          <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+            {isSelected && <Check size={12} color="#FFF" strokeWidth={3} />}
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteItem(item.id)}
+          >
+            <Trash2 size={18 * scale} color="#FF3B30" />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0E0E10" translucent={true} />
+
+      {/* Header */}
+      {isSelectionMode ? (
+        <View style={[styles.header, styles.headerSelection]}>
+          <TouchableOpacity
+            style={styles.selectionCloseBtn}
+            onPress={() => {
+              setSelectedIds([]);
+              setIsSelectionMode(false);
+            }}
+          >
+            <X size={24} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{selectedIds.length} Selected</Text>
+          <TouchableOpacity style={styles.selectionDeleteBtn} onPress={handleBulkDelete}>
+            <Trash2 size={24} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.header}>
+          <View style={styles.menuIconContainer}>
+            <SvgXml xml={backIconXml} width={42 * scale} height={32 * scale} />
+          </View>
+          <Text style={styles.headerTitle}>History</Text>
+          {historyItems.length > 0 && (
+            <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
+              <Text style={styles.clearAllText}>Clear All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      <View style={styles.contentArea}>
+        {loading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.infoText}>Loading search history...</Text>
+          </View>
+        ) : historyItems.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <View style={styles.emptyIconContainer}>
+              <Search size={48} color="#A0A3BD" />
+            </View>
+            <Text style={styles.emptyTitle}>No Search History</Text>
+            <Text style={styles.emptySubtitle}>
+              Searches made via text, image capture, or QR scanner will appear here.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={historyItems}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </View>
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('Home')}>
+          <Image
+            source={require('../components/si_ai-search-fill.png')}
+            style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
+          />
+          <Text style={styles.bottomTabText}>Explore</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('AIArtDashboard')}>
+          <Image
+            source={require('../components/mingcute_ai-fill.png')}
+            style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
+          />
+          <Text style={styles.bottomTabText}>Generate AI</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
+          <Image
+            source={require('../components/material-symbols_history-rounded.png')}
+            style={[styles.bottomTabIcon, { tintColor: '#007AFF' }]}
+          />
+          <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>History</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('Downloads')}>
+          <Image
+            source={require('../components/material-symbols_download-rounded.png')}
+            style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
+          />
+          <Text style={styles.bottomTabText}>Downloads</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0E0E10',
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 312 * scale,
+    backgroundColor: '#0E0E10',
+    zIndex: 10,
+  },
+  headerSelection: {
+    backgroundColor: '#1C1C1E',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2E',
+  },
+  menuIconContainer: {
+    position: 'absolute',
+    left: 61 * scale,
+    top: 208 * scale,
+    width: 42 * scale,
+    height: 32 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  headerTitle: {
+    position: 'absolute',
+    left: 171 * scale,
+    top: 195 * scale,
+    color: '#FFF',
+    fontFamily: 'Inter',
+    fontSize: 48.68 * scale,
+    fontWeight: 'bold',
+    zIndex: 20,
+  },
+  clearAllBtn: {
+    position: 'absolute',
+    right: 61 * scale,
+    top: 195 * scale,
+    height: 58 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  clearAllText: {
+    color: '#FF3B30',
+    fontSize: 38 * scale,
+    fontWeight: '600',
+    fontFamily: 'Inter',
+  },
+  selectionCloseBtn: {
+    position: 'absolute',
+    left: 61 * scale,
+    top: 195 * scale,
+    height: 58 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  selectionDeleteBtn: {
+    position: 'absolute',
+    right: 61 * scale,
+    top: 195 * scale,
+    height: 58 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  contentArea: {
+    flex: 1,
+    marginTop: 312 * scale,
+    backgroundColor: '#0E0E10',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 181 * scale,
+  },
+  infoText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: '#A0A3BD',
+  },
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#1C1C1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#A0A3BD',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  listContainer: {
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 220 * scale,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+  },
+  historyRowSelected: {
+    backgroundColor: '#2C2C2E',
+    borderColor: '#007AFF',
+    borderWidth: 1,
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    backgroundColor: '#2C2C2E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemImageThumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    backgroundColor: '#2C2C2E',
+  },
+  itemContent: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  itemTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  itemTime: {
+    color: '#A0A3BD',
+    fontSize: 13,
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#A0A3BD',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    height: 181 * scale,
+    backgroundColor: '#1C1C1E',
+    borderTopWidth: 1,
+    borderTopColor: '#2C2C2E',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingBottom: Platform.OS === 'ios' ? 30 * scale : 10 * scale,
+    zIndex: 30,
+  },
+  bottomTab: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    height: '100%',
+  },
+  bottomTabIcon: {
+    width: 50 * scale,
+    height: 50 * scale,
+  },
+  bottomTabText: {
+    fontFamily: 'Geist',
+    fontSize: 35 * scale,
+    color: '#A0A3BD',
+    marginTop: 10 * scale,
+  },
+  bottomTabActiveText: {
+    color: '#007AFF',
+  },
+});
