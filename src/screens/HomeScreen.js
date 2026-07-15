@@ -828,11 +828,11 @@ export default function HomeScreen({ onSearch, navigation }) {
 
 const styles = StyleSheet.create({
   // Home Styles
-  container: { flex: 1, backgroundColor: '#007AFF' },
+  container: { flex: 1, backgroundColor: '#0E0E10' },
   header: {
     height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0E0E10',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16
@@ -840,23 +840,23 @@ const styles = StyleSheet.create({
   menuButton: { marginRight: 16, padding: 4 },
   headerTitle: { flex: 1, color: '#FFF', fontSize: 20, fontWeight: 'bold', letterSpacing: 0.5 },
   savedDownloadsBtn: { padding: 4 },
-  content: { flex: 1, backgroundColor: '#FFF', padding: 20, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 30 },
+  content: { flex: 1, backgroundColor: '#0E0E10', padding: 20, justifyContent: 'center' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#FFF', textAlign: 'center', marginBottom: 30 },
   searchRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#CCC', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#000' },
-  inputInvalid: { borderColor: '#EF4444', borderWidth: 1.5, backgroundColor: '#FFF5F5' },
+  input: { flex: 1, height: 48, borderWidth: 1, borderColor: '#333', borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: '#FFF', backgroundColor: '#1C1C1E' },
+  inputInvalid: { borderColor: '#EF4444', borderWidth: 1.5, backgroundColor: '#2C1414' },
   iconButton: { width: 48, height: 48, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginLeft: 8, backgroundColor: '#007AFF' },
-  iconButtonActive: { backgroundColor: '#FFE5E5', borderWidth: 1, borderColor: '#EF4444' },
+  iconButtonActive: { backgroundColor: '#3A1010', borderWidth: 1, borderColor: '#EF4444' },
   searchButton: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
   actionButton: { flexDirection: 'row', height: 52, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 15, backgroundColor: '#007AFF' },
   btnIcon: { marginRight: 10 },
   actionButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
-  previewContainer: { alignItems: 'center', marginBottom: 20, padding: 10, borderWidth: 1, borderColor: '#EEE', borderRadius: 8 },
+  previewContainer: { alignItems: 'center', marginBottom: 20, padding: 10, borderWidth: 1, borderColor: '#333', borderRadius: 8 },
   previewImage: { width: 150, height: 150, borderRadius: 8, resizeMode: 'cover', marginBottom: 10 },
   previewActions: { flexDirection: 'row', alignItems: 'center' },
   imageSearchBtn: { backgroundColor: '#007AFF', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, marginRight: 10 },
   imageSearchBtnText: { color: '#FFF', fontWeight: '600' },
-  trashBtn: { padding: 8, borderWidth: 1, borderColor: '#FEE2E2', borderRadius: 6, backgroundColor: '#FEF2F2' },
+  trashBtn: { padding: 8, borderWidth: 1, borderColor: '#3A1010', borderRadius: 6, backgroundColor: '#200808' },
 
   // Editor Styles
   editorContainer: { flex: 1, backgroundColor: '#000' },
