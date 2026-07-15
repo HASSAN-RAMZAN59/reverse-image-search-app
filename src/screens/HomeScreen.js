@@ -47,10 +47,21 @@ import {
 } from 'lucide-react-native';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import Logo from '../components/Logo';
+import { usePremium } from '../context/PremiumContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function HomeScreen({ onSearch, navigation }) {
+  const { isPremiumUser } = usePremium();
+
+  const handleFeaturePress = (feature) => {
+    if (feature.isPremiumRequired && !isPremiumUser) {
+      navigation.navigate('PremiumVIP');
+    } else {
+      navigation.navigate(feature.targetScreen);
+    }
+  };
+
   const [searchText, setSearchText] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [isListening, setIsListening] = useState(false);
@@ -482,6 +493,13 @@ export default function HomeScreen({ onSearch, navigation }) {
           <QrCode size={24} color="#FFF" style={styles.btnIcon} />
           <Text style={styles.actionButtonText}>Scan QR Code</Text>
         </TouchableOpacity>
+
+        {/* Dynamic Ad Injection Template */}
+        { !isPremiumUser && (
+          <View style={{ marginTop: 20, padding: 15, backgroundColor: '#222', borderRadius: 8, alignItems: 'center' }}>
+            <Text style={{ color: '#aaa' }}>[Ad Placeholder Node]</Text>
+          </View>
+        )}
 
         {/* Voice Search Overlay Modal */}
         <Modal

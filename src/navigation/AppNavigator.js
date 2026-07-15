@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ActivityIndicator, View } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import ResultScreen from '../screens/ResultScreen';
@@ -10,18 +11,60 @@ import AIImageResultScreen from '../screens/AIImageResultScreen';
 import QRScannerScreen from '../screens/QRScannerScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
 import AIRemixScreen from '../screens/AIRemixScreen';
+import OnboardingScreen1 from '../screens/OnboardingScreen1';
+import OnboardingScreen2 from '../screens/OnboardingScreen2';
+import OnboardingScreen3 from '../screens/OnboardingScreen3';
+import PremiumVIPScreen from '../screens/PremiumVIPScreen';
+import { usePremium } from '../context/PremiumContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  const { isOnboardingComplete, isLoading } = usePremium();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#131313' }}>
+        <ActivityIndicator size="large" color="#ADC7FF" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Home"
+        initialRouteName={isOnboardingComplete ? "Home" : "Onboarding1"}
         screenOptions={{
           headerShown: false,
         }}
       >
+        <Stack.Screen name="Onboarding1">
+          {(props) => (
+            <OnboardingScreen1
+              {...props}
+              onNext={() => props.navigation.navigate('Onboarding2')}
+              onSkip={() => props.navigation.navigate('PremiumVIP')}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Onboarding2">
+          {(props) => (
+            <OnboardingScreen2
+              {...props}
+              onNext={() => props.navigation.navigate('Onboarding3')}
+              onSkip={() => props.navigation.navigate('PremiumVIP')}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Onboarding3">
+          {(props) => (
+            <OnboardingScreen3
+              {...props}
+              onNext={() => props.navigation.navigate('PremiumVIP')}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="PremiumVIP" component={PremiumVIPScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Result" component={ResultScreen} />
         <Stack.Screen name="AIArtDashboard" component={AIArtDashboardScreen} />
