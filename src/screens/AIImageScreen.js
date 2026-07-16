@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,9 @@ import {
   Modal,
   FlatList,
   Image,
+  BackHandler,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus, X } from 'lucide-react-native';
 
 const STYLES_LIST = [
@@ -109,6 +111,18 @@ export default function AIImageScreen({ navigation }) {
   const [negativePrompt, setNegativePrompt] = useState('');
 
   const [isStyleModalVisible, setIsStyleModalVisible] = useState(false);
+
+  // ── Hardware back → always return to Generate AI dashboard ──
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate('AIArtDashboard');
+        return true; // prevent default (Home) navigation
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   const handleCreate = () => {
     if (!prompt.trim()) {

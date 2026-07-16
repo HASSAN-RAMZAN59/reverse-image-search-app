@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { Trash2, Share2, X, Download, Check } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as MediaLibrary from 'expo-media-library';
 import { getSavedDownloads, deleteSavedDownload, deleteMultipleSavedDownloads } from '../utils/downloadManager';
+import { useFocusEffect } from '@react-navigation/native';
 import AppDrawer from '../components/AppDrawer';
 
 const vectorXml = `<svg width="51" height="41" viewBox="0 0 51 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 4.5H46.5M4.5 20.5H46.5M4.5 36.5H22.875" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -65,29 +66,34 @@ export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer
     fetchDownloads();
   }, []);
 
-  // Back handler for Android to exit preview or selection mode first
-  useEffect(() => {
-    const backAction = () => {
-      if (previewImage) {
-        setPreviewImage(null);
-        setSelectedAsset(null);
-        return true;
-      }
-      if (isSelectionMode) {
-        setSelectedIds([]);
-        setIsSelectionMode(false);
-        return true;
-      }
-      return false;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
-
-    return () => backHandler.remove();
-  }, [isSelectionMode, previewImage]);
+  // ── Hardware back: only active while this screen is focused ──
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        // Priority 1: close image preview
+        if (previewImage) {
+          setPreviewImage(null);
+          setSelectedAsset(null);
+          return true;
+        }
+        // Priority 2: exit multi-select mode
+        if (isSelectionMode) {
+          setSelectedIds([]);
+          setIsSelectionMode(false);
+          return true;
+        }
+        // Priority 3: if opened from Generate AI tab, go back there
+        if (isAIOnly) {
+          navigation.navigate('AIArtDashboard');
+          return true;
+        }
+        // Default: let the stack handle it
+        return false;
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', backAction);
+      return () => subscription.remove();
+    }, [previewImage, isSelectionMode, isAIOnly, navigation])
+  );
 
   const handleShare = async (asset) => {
     try {

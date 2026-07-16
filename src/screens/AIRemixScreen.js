@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
   TextInput,
   BackHandler,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximize2 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
@@ -68,21 +69,27 @@ export default function AIRemixScreen({ route, navigation }) {
     }
   }, [route?.params]);
 
-  useEffect(() => {
-    const onBackPress = () => {
-      if (isFullScreen) {
-        setIsFullScreen(false);
+  // ── Hardware back: only active while this screen is focused ──
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (isFullScreen) {
+          setIsFullScreen(false);
+          return true;
+        }
+        if (currentPhase > 1) {
+          // Navigate back a phase within the remix flow
+          handleHeaderBack();
+          return true;
+        }
+        // Phase 1: go back to Generate AI dashboard
+        navigation.navigate('AIArtDashboard');
         return true;
-      }
-      if (navigation) {
-        navigation.navigate('Home');
-        return true;
-      }
-      return false;
-    };
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => sub.remove();
-  }, [isFullScreen, navigation]);
+      };
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [isFullScreen, currentPhase, navigation, handleHeaderBack])
+  );
 
   const showToast = (message) => {
     setToastMessage(message);
