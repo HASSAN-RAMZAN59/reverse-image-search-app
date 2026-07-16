@@ -20,6 +20,7 @@ import { Trash2, Share2, X, Download, Check } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as MediaLibrary from 'expo-media-library';
 import { getSavedDownloads, deleteSavedDownload, deleteMultipleSavedDownloads } from '../utils/downloadManager';
+import AppDrawer from '../components/AppDrawer';
 
 const vectorXml = `<svg width="51" height="41" viewBox="0 0 51 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 4.5H46.5M4.5 20.5H46.5M4.5 36.5H22.875" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
@@ -39,6 +40,7 @@ export default function DownloadsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Multiple selection states
   const [selectedIds, setSelectedIds] = useState([]);
@@ -185,9 +187,9 @@ export default function DownloadsScreen({ route, navigation }) {
       {/* Vector Icon & Title — always visible, absolute over screen */}
       {!isSelectionMode && (
         <>
-          <View style={styles.vectorIconContainer} pointerEvents="none">
+          <TouchableOpacity style={styles.vectorIconContainer} onPress={() => setIsDrawerOpen(true)} activeOpacity={0.7}>
             <SvgXml xml={vectorXml} width={42 * scale} height={32 * scale} />
-          </View>
+          </TouchableOpacity>
           <Text style={styles.screenTitle} numberOfLines={1} ellipsizeMode="tail">
             {previewImage && selectedAsset
               ? (selectedAsset.originalName || getFilenameFromUri(selectedAsset.uri))
@@ -311,6 +313,7 @@ export default function DownloadsScreen({ route, navigation }) {
           <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>Downloads</Text>
         </TouchableOpacity>
       </View>
+      <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />
     </View>
   );
 }

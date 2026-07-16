@@ -12,7 +12,7 @@ import QRScannerScreen from '../screens/QRScannerScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import AIRemixScreen from '../screens/AIRemixScreen';
-import OnboardingPager from '../screens/OnboardingPager';
+import OnboardingScreen from '../screens/OnboardingScreen';
 import PremiumVIPScreen from '../screens/PremiumVIPScreen';
 import { usePremium } from '../context/PremiumContext';
 
@@ -37,7 +37,7 @@ export default function AppNavigator() {
           headerShown: false,
         }}
       >
-        <Stack.Screen name="Onboarding" component={OnboardingPager} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="PremiumVIP" component={PremiumVIPScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Result" component={ResultScreen} />

@@ -485,15 +485,7 @@ export default function ResultScreen({ searchQuery: propSearchQuery, imageUri: p
         <Text style={styles.headerTitle} numberOfLines={1}>Image Search</Text>
       </View>
 
-      {/* Ad Banner */}
-      <View style={styles.adBannerContainer}>
-        <Image
-          source={require('../components/Rectangle 107 (1).png')}
-          style={styles.adBannerImage}
-          resizeMode="cover"
-        />
-        <Text style={styles.adBannerLabel}>Banner AD</Text>
-      </View>
+
 
       {!imageUri && (
         <View style={styles.subTabsContainer}>
@@ -626,32 +618,7 @@ const styles = StyleSheet.create({
     lineHeight: 48.68 * scale * 1.2,
     letterSpacing: 0,
   },
-  adBannerContainer: {
-    width: 1080 * scale,
-    height: 258 * scale,
-    marginTop: 12 * scale,
-    backgroundColor: '#EDEEEF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  adBannerImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  adBannerLabel: {
-    position: 'absolute',
-    left: 350 * scale,
-    top: 85 * scale,
-    width: 379 * scale,
-    height: 88 * scale,
-    color: '#9AA0A6',
-    fontFamily: 'Inter',
-    fontWeight: 'bold',
-    fontSize: 72.8 * scale,
-    letterSpacing: 0,
-  },
+
 
   // Scrollable tabs
   subTabsContainer: {

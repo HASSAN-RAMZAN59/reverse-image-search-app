@@ -17,6 +17,7 @@ import {
 import { ArrowLeft, Trash2, X, Check, Search, QrCode, FileImage } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { getSearchHistory, deleteHistoryEntry, clearAllHistory } from '../utils/historyManager';
+import AppDrawer from '../components/AppDrawer';
 
 const backIconXml = `
   <svg width="51" height="41" viewBox="0 0 51 41" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,6 +31,7 @@ const scale = SCREEN_WIDTH / 1080;
 export default function HistoryScreen({ navigation }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Selection states
   const [selectedIds, setSelectedIds] = useState([]);
@@ -206,13 +208,13 @@ export default function HistoryScreen({ navigation }) {
     } else if (item.type === 'qr') {
       leftComponent = (
         <View style={styles.iconContainer}>
-          <QrCode size={22 * scale} color="#007AFF" />
+          <QrCode size={24} color="#007AFF" />
         </View>
       );
     } else {
       leftComponent = (
         <View style={styles.iconContainer}>
-          <Search size={22 * scale} color="#34C759" />
+          <Search size={24} color="#34C759" />
         </View>
       );
     }
@@ -245,8 +247,9 @@ export default function HistoryScreen({ navigation }) {
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={() => handleDeleteItem(item.id)}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           >
-            <Trash2 size={18 * scale} color="#FF3B30" />
+            <Trash2 size={24} color="#FF3B30" />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
@@ -276,9 +279,9 @@ export default function HistoryScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.header}>
-          <View style={styles.menuIconContainer}>
+          <TouchableOpacity style={styles.menuIconContainer} onPress={() => setIsDrawerOpen(true)} activeOpacity={0.7}>
             <SvgXml xml={backIconXml} width={42 * scale} height={32 * scale} />
-          </View>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>History</Text>
           {historyItems.length > 0 && (
             <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
@@ -349,6 +352,7 @@ export default function HistoryScreen({ navigation }) {
           <Text style={styles.bottomTabText}>Downloads</Text>
         </TouchableOpacity>
       </View>
+      <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />
     </SafeAreaView>
   );
 }
