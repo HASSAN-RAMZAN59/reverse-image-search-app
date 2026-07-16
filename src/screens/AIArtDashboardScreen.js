@@ -55,16 +55,18 @@ export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }
 
       {/* Header */}
       <View style={styles.header}>
-        {isTab ? (
-          <TouchableOpacity style={styles.menuBtn} onPress={onOpenDrawer}>
-            <SvgXml xml={menuXml} width={42 * scale} height={32 * scale} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
-            <ArrowLeft size={24} color="#FFF" />
-          </TouchableOpacity>
-        )}
-        <Text style={styles.headerTitle}>Image Search</Text>
+        <View style={styles.headerLeftContainer}>
+          {isTab ? (
+            <TouchableOpacity style={styles.menuBtn} onPress={onOpenDrawer}>
+              <SvgXml xml={menuXml} width={42 * scale} height={32 * scale} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
+              <ArrowLeft size={24} color="#FFF" />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.headerTitle}>Image Search</Text>
+        </View>
         <TouchableOpacity onPress={() => navigation?.navigate('PremiumVIP')} activeOpacity={0.8}>
           <Image
             source={require('../components/image 30.png')}
@@ -185,6 +187,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
+  headerLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   backBtn: {
     padding: 4,
   },
@@ -199,11 +205,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'medium',
-    letterSpacing: 0,
+    fontSize: 48.68 * scale,
+    fontWeight: 'bold',
     paddingHorizontal: 16,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter',
   },
   scrollContent: {
     flexGrow: 1,
