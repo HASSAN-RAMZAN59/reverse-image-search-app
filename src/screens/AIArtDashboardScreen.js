@@ -91,7 +91,11 @@ export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }
             activeOpacity={0.75}
           >
             {/* Icon placeholder — import your icon here */}
-            <View style={[styles.iconBox, { backgroundColor: '#3B5BDB' }]} />
+            <Image
+              source={require('../components/Background.png')}
+              style={styles.iconBox}
+              resizeMode="contain"
+            />
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>AI Prompt Studio</Text>
               <View style={styles.creditRow}>
@@ -99,7 +103,11 @@ export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }
                 <Text style={styles.cardSubtitle}>5/5 Credits Left</Text>
               </View>
             </View>
-            <ChevronRight size={18} color="#555" />
+            <Image
+              source={require('../components/arrow.png')}
+              style={{ width: 18, height: 18 }}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
 
           {/* Card 2: Custom AI Models */}
@@ -109,12 +117,20 @@ export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }
             activeOpacity={0.75}
           >
             {/* Icon placeholder — import your icon here */}
-            <View style={[styles.iconBox, { backgroundColor: '#7950F2' }]} />
+            <Image
+              source={require('../components/Background2.png')}
+              style={styles.iconBox}
+              resizeMode="contain"
+            />
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>Custom AI Models</Text>
               <Text style={styles.cardSubtitle}>Train unique styles</Text>
             </View>
-            <ChevronRight size={18} color="#555" />
+            <Image
+              source={require('../components/arrow.png')}
+              style={{ width: 18, height: 18 }}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
 
           {/* Card 3: Saved Gallery */}
@@ -124,12 +140,20 @@ export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }
             activeOpacity={0.75}
           >
             {/* Icon placeholder — import your icon here */}
-            <View style={[styles.iconBox, { backgroundColor: '#2C2C38' }]} />
+            <Image
+              source={require('../components/Background1.png')}
+              style={styles.iconBox}
+              resizeMode="contain"
+            />
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>Saved Gallery</Text>
               <Text style={styles.cardSubtitle}>Access your creations</Text>
             </View>
-            <ChevronRight size={18} color="#555" />
+            <Image
+              source={require('../components/arrow.png')}
+              style={{ width: 18, height: 18 }}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
 
         </View>
@@ -177,14 +201,16 @@ const styles = StyleSheet.create({
   },
   /* ── Hero Image ── */
   heroContainer: {
-    width: HERO_WIDTH,
-    height: HERO_HEIGHT,
-    position: 'relative',
+    width: 960 * scale,
+    height: 640 * scale,
+    alignSelf: 'center', // This perfectly aligns the left and right padding with the buttons
+    borderRadius: 40 * scale, // Matches the 40 * scale radius of the cards
     overflow: 'hidden',
+    position: 'relative',
   },
   heroImage: {
-    width: HERO_WIDTH,
-    height: HERO_HEIGHT,
+    width: '100%',
+    height: '100%',
   },
   heroOverlay: {
     position: 'absolute',
@@ -223,19 +249,20 @@ const styles = StyleSheet.create({
   },
   /* ── Cards ── */
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 40,
-    gap: 10,
+    paddingTop: 30 * scale,
+    paddingBottom: 40 * scale,
+    gap: 43.89 * scale,
+    alignItems: 'center',
   },
   card: {
+    width: 960 * scale,
+    height: 290.74 * scale,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    gap: 14,
+    paddingHorizontal: 40 * scale,
+    gap: 40 * scale,
     backgroundColor: '#1C1C26',
-    borderRadius: 14,
+    borderRadius: 40 * scale,
   },
   iconBox: {
     width: 46,
