@@ -452,7 +452,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
           <View style={styles.rateDialog}>
             {/* Close Button */}
             <TouchableOpacity style={styles.rateCloseBtn} onPress={() => { setIsRateModalVisible(false); handleClose(); }}>
-              <X size={24} color="#333" />
+              <X size={24} color="#FFF" />
             </TouchableOpacity>
 
             {/* Title */}
@@ -481,10 +481,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
               ))}
             </View>
 
-            {/* Dynamic Rating Label / "The best we can get" */}
-            <Text style={styles.rateLabel}>
-              {selectedRating === 5 ? "The best we can get" : " "}
-            </Text>
+
 
             {/* Rate Button */}
             <TouchableOpacity
@@ -732,7 +729,7 @@ const styles = StyleSheet.create({
   },
   rateDialog: {
     width: '85%',
-    backgroundColor: '#FFF',
+    backgroundColor: '#000',
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
@@ -747,7 +744,7 @@ const styles = StyleSheet.create({
   rateTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFF',
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 12,
@@ -755,8 +752,8 @@ const styles = StyleSheet.create({
   },
   rateSubtitle: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: '#FFF',
+    textAlign: 'justify',
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -786,10 +783,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5EA',
   },
   rateSubmitBtnEnabled: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#ADC7FF',
   },
   rateSubmitText: {
-    color: '#FFF',
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
   },
