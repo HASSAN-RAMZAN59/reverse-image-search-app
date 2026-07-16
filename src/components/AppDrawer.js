@@ -15,24 +15,49 @@ import {
   Platform,
   Share,
   Dimensions,
+  BackHandler,
+  Image,
 } from 'react-native';
 import {
-  Headphones,
-  Star,
+  Camera,
+  Image as ImageIcon,
+  QrCode,
+  Download,
   Share2,
+  Star,
   Shield,
-  FileText,
   ArrowLeft,
   Send,
   X,
 } from 'lucide-react-native';
-import Logo from './Logo';
+import { SvgXml } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
 
+const logoXml = `<svg width="215" height="196" viewBox="0 0 215 196" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.00390625" y="4.24536" width="4.24536" height="42.7568" transform="rotate(-90 0.00390625 4.24536)" fill="white"/>
+<rect x="0.00390625" y="0.00012207" width="4.24536" height="42.7568" fill="white"/>
+<rect x="4.24902" y="195.895" width="4.24536" height="42.7568" transform="rotate(-180 4.24902 195.895)" fill="white"/>
+<rect x="0.00390625" y="195.895" width="4.24536" height="42.7568" transform="rotate(-90 0.00390625 195.895)" fill="white"/>
+<rect x="208.025" y="191.65" width="4.24536" height="42.7568" transform="rotate(90 208.025 191.65)" fill="white"/>
+<rect x="208.025" y="195.895" width="4.24536" height="42.7568" transform="rotate(-180 208.025 195.895)" fill="white"/>
+<rect x="203.781" y="0.00012207" width="4.24536" height="42.7568" fill="white"/>
+<rect x="208.026" y="0.00012207" width="4.24536" height="42.7568" transform="rotate(90 208.026 0.00012207)" fill="white"/>
+<path d="M101.206 88.3106C115.239 67.7957 122.255 57.5382 132.124 57.413C132.285 57.4109 132.446 57.4109 132.606 57.413C142.475 57.5382 149.492 67.7957 163.525 88.3106C181.148 114.074 189.959 126.956 184.84 137.002C184.759 137.162 184.675 137.321 184.589 137.479C179.187 147.376 163.579 147.376 132.365 147.376C101.151 147.376 85.5441 147.376 80.1421 137.479C80.056 137.321 79.9722 137.162 79.8906 137.002C74.7715 126.956 83.583 114.074 101.206 88.3106Z" fill="url(#paint0_linear_1_88)"/>
+<path d="M38.0007 105.202C47.4978 91.7921 52.2463 85.0874 58.7677 84.563C59.5146 84.5029 60.2652 84.5029 61.0121 84.563C67.5335 85.0874 72.282 91.7921 81.7792 105.202C94.2856 122.86 100.539 131.689 97.6584 138.79C97.3357 139.586 96.9405 140.35 96.4777 141.073C92.3478 147.528 81.5285 147.528 59.8899 147.528C38.2513 147.528 27.432 147.528 23.3021 141.073C22.8393 140.35 22.4441 139.586 22.1214 138.79C19.2411 131.689 25.4943 122.86 38.0007 105.202Z" fill="#1DA723"/>
+<path d="M76.4169 58.527C85.1256 58.527 92.1854 51.4673 92.1854 42.7586C92.1854 34.0499 85.1256 26.9901 76.4169 26.9901C67.7082 26.9901 60.6484 34.0499 60.6484 42.7586C60.6484 51.4673 67.7082 58.527 76.4169 58.527Z" fill="#FBC313"/>
+<path d="M67.1012 65.197L72.7719 59.3643C70.7466 58.9593 68.8834 58.1492 67.1822 57.015L67.1012 65.197ZM85.7334 20.3175L80.0627 26.1502C82.088 26.5553 83.9512 27.3654 85.6524 28.4995L85.7334 20.3175ZM53.9775 52.0734L62.1595 51.9924C61.0254 50.2912 60.2153 48.428 59.8103 46.4027L53.9775 52.0734ZM98.8571 33.4411L90.6751 33.5221C91.7282 35.2233 92.5383 37.0866 93.0243 39.1118L98.8571 33.4411ZM53.9775 33.4411L59.8103 39.1118C60.2153 37.0866 61.0254 35.2233 62.1595 33.5221L53.9775 33.4411ZM98.8571 52.0734L93.0243 46.4027C92.6193 48.428 91.8092 50.2912 90.6751 51.9924L98.8571 52.0734ZM67.1012 20.3175L67.1822 28.4995C68.8834 27.4464 70.7466 26.6363 72.7719 26.1502L67.1012 20.3175ZM85.7334 65.197L85.6524 57.015C83.9512 58.1492 82.088 58.9593 80.0627 59.3643L85.7334 65.197Z" fill="#FFE62E"/>
+<defs>
+<linearGradient id="paint0_linear_1_88" x1="159.354" y1="86.1217" x2="94.4603" y2="127.211" gradientUnits="userSpaceOnUse">
+<stop offset="0.455277" stop-color="#47BD4C"/>
+<stop offset="0.839763" stop-color="#1DA723"/>
+</linearGradient>
+</defs>
+</svg>`;
+
 export default function AppDrawer({ isOpen, onClose, navigation }) {
-  const [visible, setVisible] = useState(isOpen);
+  const [panelVisible, setPanelVisible] = useState(isOpen);
   const [isTermsVisible, setIsTermsVisible] = useState(false);
   const [isPrivacyVisible, setIsPrivacyVisible] = useState(false);
   const [isSupportVisible, setIsSupportVisible] = useState(false);
@@ -43,12 +68,14 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
 
   useEffect(() => {
     if (isOpen) {
-      setVisible(true);
+      setPanelVisible(true);
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
+    } else {
+      setPanelVisible(false);
     }
   }, [isOpen]);
 
@@ -58,10 +85,43 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
       duration: 250,
       useNativeDriver: true,
     }).start(() => {
-      setVisible(false);
+      setPanelVisible(false);
       onClose();
     });
   };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (panelVisible) {
+        handleClose();
+        return true;
+      }
+      if (isTermsVisible) {
+        setIsTermsVisible(false);
+        handleClose();
+        return true;
+      }
+      if (isPrivacyVisible) {
+        setIsPrivacyVisible(false);
+        handleClose();
+        return true;
+      }
+      if (isSupportVisible) {
+        setIsSupportVisible(false);
+        handleClose();
+        return true;
+      }
+      if (isRateModalVisible) {
+        setIsRateModalVisible(false);
+        handleClose();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => backHandler.remove();
+  }, [panelVisible, isTermsVisible, isPrivacyVisible, isSupportVisible, isRateModalVisible]);
 
   const handleShare = async () => {
     handleClose();
@@ -83,6 +143,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
     Linking.openURL(url)
       .then(() => {
         setIsSupportVisible(false);
+        handleClose();
       })
       .catch((err) => {
         Alert.alert(
@@ -94,6 +155,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
 
   const handleRateApp = () => {
     setIsRateModalVisible(false);
+    handleClose();
     const storeUrl = Platform.OS === 'ios'
       ? 'https://apps.apple.com/app/id64a14811'
       : 'https://play.google.com/store/apps/details?id=com.reverseimagesearch.app';
@@ -109,58 +171,83 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
     return date.toLocaleDateString('en-US', options);
   };
 
-  if (!visible) return null;
-
   return (
-    <View style={styles.drawerOverlay}>
-      <TouchableOpacity
-        style={styles.drawerBackdrop}
-        activeOpacity={1}
-        onPress={handleClose}
-      />
-      <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
-        {/* Drawer Header with Logo */}
-        <View style={styles.drawerHeader}>
-          <Logo width={90} height={82} />
+    <>
+      {panelVisible && (
+        <View style={styles.drawerOverlay}>
+          <TouchableOpacity
+            style={styles.drawerBackdrop}
+            activeOpacity={1}
+            onPress={handleClose}
+          />
+          <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
+            {/* Drawer Header with Logo */}
+            <View style={styles.drawerHeader}>
+              <SvgXml xml={logoXml} width={215 * scale} height={195.9 * scale} />
+            </View>
+
+            {/* Drawer Menu Items */}
+            <ScrollView style={styles.drawerMenuScroll}>
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Home', { triggerAction: 'camera', timestamp: Date.now() }); }}>
+                <Camera size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Camera</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Home', { triggerAction: 'gallery', timestamp: Date.now() }); }}>
+                <ImageIcon size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Gallery</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('QRScanner'); }}>
+                <QrCode size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>QR Code Scan</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Downloads'); }}>
+                <Download size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Download Image</Text>
+              </TouchableOpacity>
+
+              {/* Horizontal Divider Line */}
+              <View style={styles.drawerMenuDivider} />
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={handleShare}>
+                <Share2 size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Share App</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { setSelectedRating(0); setIsRateModalVisible(true); }}>
+                <Star size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Rateus</Text>
+              </TouchableOpacity>
+
+              {/* Horizontal Divider Line */}
+              <View style={styles.drawerMenuDivider} />
+
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { setIsPrivacyVisible(true); }}>
+                <Shield size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <Text style={styles.drawerMenuText}>Privacy Policy</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+
+            {/* Absolute Positioned Close Button */}
+            <TouchableOpacity
+              style={styles.absoluteCloseBtn}
+              onPress={handleClose}
+            >
+              <Image
+                source={require('./Ellipse 6483.png')}
+                style={styles.ellipseImage}
+              />
+              <Image
+                source={require('./Icon.png')}
+                style={styles.absoluteIconImage}
+              />
+            </TouchableOpacity>
+          </Animated.View>
         </View>
-
-        {/* Drawer Menu Items */}
-        <ScrollView style={styles.drawerMenuScroll}>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); setSupportText(''); setIsSupportVisible(true); }}>
-            <Headphones size={22} color="#555" style={styles.drawerMenuIcon} />
-            <Text style={styles.drawerMenuText}>Customer Support</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); setSelectedRating(0); setIsRateModalVisible(true); }}>
-            <Star size={22} color="#555" style={styles.drawerMenuIcon} />
-            <Text style={styles.drawerMenuText}>Rate Us</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={handleShare}>
-            <Share2 size={22} color="#555" style={styles.drawerMenuIcon} />
-            <Text style={styles.drawerMenuText}>Share</Text>
-          </TouchableOpacity>
-
-          {/* Horizontal Divider Line */}
-          <View style={styles.drawerMenuDivider} />
-
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); setIsPrivacyVisible(true); }}>
-            <Shield size={22} color="#555" style={styles.drawerMenuIcon} />
-            <Text style={styles.drawerMenuText}>Privacy Policy</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); setIsTermsVisible(true); }}>
-            <FileText size={22} color="#555" style={styles.drawerMenuIcon} />
-            <Text style={styles.drawerMenuText}>Terms of Service</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* Drawer Footer */}
-        <View style={styles.drawerMenuFooter}>
-          <Text style={styles.drawerMenuFooterText}>Reverse Image Search App</Text>
-          <Text style={styles.drawerMenuVersion}>v1.0.0</Text>
-        </View>
-      </Animated.View>
+      )}
 
       {/* Terms of Service Modal */}
       <Modal
@@ -171,11 +258,14 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
         <SafeAreaView style={styles.termsContainer}>
           {/* Header */}
           <View style={styles.termsHeader}>
-            <TouchableOpacity style={styles.termsBackBtn} onPress={() => setIsTermsVisible(false)}>
-              <ArrowLeft size={24} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.termsHeaderTitle}>Terms of Service</Text>
-            <View style={{ width: 24 }} />
+            <View style={styles.headerSafeAreaSpacer} />
+            <View style={styles.headerContentRow}>
+              <TouchableOpacity style={styles.termsBackBtn} onPress={() => { setIsTermsVisible(false); handleClose(); }}>
+                <ArrowLeft size={24} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.termsHeaderTitle}>Terms of Service</Text>
+              <View style={{ width: 24 }} />
+            </View>
           </View>
 
           {/* Scrollable Terms Content */}
@@ -230,11 +320,14 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
         <SafeAreaView style={styles.termsContainer}>
           {/* Header */}
           <View style={styles.termsHeader}>
-            <TouchableOpacity style={styles.termsBackBtn} onPress={() => setIsPrivacyVisible(false)}>
-              <ArrowLeft size={24} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.termsHeaderTitle}>Privacy Policy</Text>
-            <View style={{ width: 24 }} />
+            <View style={styles.headerSafeAreaSpacer} />
+            <View style={styles.headerContentRow}>
+              <TouchableOpacity style={styles.termsBackBtn} onPress={() => { setIsPrivacyVisible(false); handleClose(); }}>
+                <ArrowLeft size={24} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.termsHeaderTitle}>Privacy Policy</Text>
+              <View style={{ width: 24 }} />
+            </View>
           </View>
 
           {/* Scrollable Privacy Content */}
@@ -291,19 +384,22 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
         <SafeAreaView style={styles.supportContainer}>
           {/* Header */}
           <View style={styles.supportHeader}>
-            <View style={styles.supportHeaderLeft}>
-              <TouchableOpacity style={styles.supportBackBtn} onPress={() => setIsSupportVisible(false)}>
-                <ArrowLeft size={24} color="#333" />
+            <View style={styles.headerSafeAreaSpacer} />
+            <View style={styles.supportHeaderContentRow}>
+              <View style={styles.supportHeaderLeft}>
+                <TouchableOpacity style={styles.supportBackBtn} onPress={() => { setIsSupportVisible(false); handleClose(); }}>
+                  <ArrowLeft size={24} color="#333" />
+                </TouchableOpacity>
+                <Text style={styles.supportHeaderTitle}>Customer Support</Text>
+              </View>
+              <TouchableOpacity
+                disabled={supportText.trim().length < 20}
+                onPress={handleSendEmail}
+                style={[styles.supportSendBtn, supportText.trim().length < 20 && styles.supportSendBtnDisabled]}
+              >
+                <Send size={24} color={supportText.trim().length < 20 ? "#CCC" : "#007AFF"} />
               </TouchableOpacity>
-              <Text style={styles.supportHeaderTitle}>Customer Support</Text>
             </View>
-            <TouchableOpacity
-              disabled={supportText.trim().length < 20}
-              onPress={handleSendEmail}
-              style={[styles.supportSendBtn, supportText.trim().length < 20 && styles.supportSendBtnDisabled]}
-            >
-              <Send size={24} color={supportText.trim().length < 20 ? "#CCC" : "#007AFF"} />
-            </TouchableOpacity>
           </View>
 
           {/* Text Input area */}
@@ -337,7 +433,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
         <View style={styles.rateModalOverlay}>
           <View style={styles.rateDialog}>
             {/* Close Button */}
-            <TouchableOpacity style={styles.rateCloseBtn} onPress={() => setIsRateModalVisible(false)}>
+            <TouchableOpacity style={styles.rateCloseBtn} onPress={() => { setIsRateModalVisible(false); handleClose(); }}>
               <X size={24} color="#333" />
             </TouchableOpacity>
 
@@ -386,7 +482,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
@@ -403,7 +499,7 @@ const styles = StyleSheet.create({
   drawerContainer: {
     width: SCREEN_WIDTH * 0.75,
     height: '100%',
-    backgroundColor: '#FFF',
+    backgroundColor: '#000000ff',
     shadowColor: '#000',
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.25,
@@ -436,43 +532,50 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   drawerMenuText: {
-    fontSize: 15,
-    color: '#333',
+    fontSize: 38.98 * scale,
+    color: '#FFF',
     fontWeight: '500',
   },
   drawerMenuDivider: {
     height: 1,
-    backgroundColor: '#EEE',
+    backgroundColor: '#222',
     marginVertical: 16,
     marginHorizontal: 20,
   },
-  drawerMenuFooter: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+  absoluteCloseBtn: {
+    position: 'absolute',
+    left: 399 * scale,
+    top: 2044 * scale,
+    width: 112 * scale,
+    height: 112 * scale,
   },
-  drawerMenuFooterText: {
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '500',
+  ellipseImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
   },
-  drawerMenuVersion: {
-    fontSize: 10,
-    color: '#CCC',
-    marginTop: 4,
+  absoluteIconImage: {
+    position: 'absolute',
+    left: 33 * scale,
+    top: 34 * scale,
+    width: 45 * scale,
+    height: 45 * scale,
   },
 
-  // Terms of Service Styles
+
   termsContainer: {
     flex: 1,
     backgroundColor: '#FFF',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: 0,
   },
   termsHeader: {
-    height: 56,
     backgroundColor: '#007AFF',
+  },
+  headerSafeAreaSpacer: {
+    height: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
+  },
+  headerContentRow: {
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -518,15 +621,16 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Customer Support Styles
   supportContainer: {
     flex: 1,
     backgroundColor: '#FFF',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: 0,
   },
   supportHeader: {
-    height: 56,
     backgroundColor: '#FFF',
+  },
+  supportHeaderContentRow: {
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
