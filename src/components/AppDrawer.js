@@ -278,7 +278,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
           <View style={styles.termsHeader}>
             <View style={styles.headerSafeAreaSpacer} />
             <View style={styles.headerContentRow}>
-              <TouchableOpacity style={styles.termsBackBtn} onPress={() => { setIsTermsVisible(false); handleClose(); }}>
+              <TouchableOpacity style={styles.termsBackBtn} onPress={() => setIsTermsVisible(false)}>
                 <ArrowLeft size={24} color="#FFF" />
               </TouchableOpacity>
               <Text style={styles.termsHeaderTitle}>Terms of Service</Text>
@@ -340,7 +340,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
           <View style={styles.termsHeader}>
             <View style={styles.headerSafeAreaSpacer} />
             <View style={styles.headerContentRow}>
-              <TouchableOpacity style={styles.termsBackBtn} onPress={() => { setIsPrivacyVisible(false); handleClose(); }}>
+              <TouchableOpacity style={styles.termsBackBtn} onPress={() => setIsPrivacyVisible(false)}>
                 <ArrowLeft size={24} color="#FFF" />
               </TouchableOpacity>
               <Text style={styles.termsHeaderTitle}>Privacy Policy</Text>
@@ -405,7 +405,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
             <View style={styles.headerSafeAreaSpacer} />
             <View style={styles.supportHeaderContentRow}>
               <View style={styles.supportHeaderLeft}>
-                <TouchableOpacity style={styles.supportBackBtn} onPress={() => { setIsSupportVisible(false); handleClose(); }}>
+                <TouchableOpacity style={styles.supportBackBtn} onPress={() => setIsSupportVisible(false)}>
                   <ArrowLeft size={24} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.supportHeaderTitle}>Customer Support</Text>
