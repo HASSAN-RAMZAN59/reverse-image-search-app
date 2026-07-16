@@ -533,12 +533,6 @@ export default function HomeScreen({ onSearch, navigation }) {
         />
       </TouchableOpacity>
 
-      <Image
-        source={require('../components/Group 1000007002.png')}
-        style={styles.homeGraphic}
-        resizeMode="contain"
-      />
-
       {/* Custom Search Bar Container with Background Image */}
       <View style={styles.searchContainer}>
         <Image
@@ -1064,7 +1058,7 @@ const styles = StyleSheet.create({
   content: {
     position: 'absolute',
     left: 46 * scale,
-    top: 1150 * scale,
+    top: 480 * scale,
     right: 46 * scale,
     bottom: 181 * scale,
     backgroundColor: '#0E0E10',
@@ -1072,18 +1066,10 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: 40 * scale,
   },
-  homeGraphic: {
-    position: 'absolute',
-    left: 46 * scale,
-    top: 312 * scale,
-    width: 988 * scale,
-    height: 612 * scale,
-    borderRadius: 21 * scale,
-  },
   searchContainer: {
     position: 'absolute',
     left: 78 * scale,
-    top: 972 * scale,
+    top: 312 * scale,
     width: 923 * scale,
     height: 147.57 * scale,
     zIndex: 10,
