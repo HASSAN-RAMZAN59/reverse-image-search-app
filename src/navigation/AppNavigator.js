@@ -9,6 +9,7 @@ import AIArtDashboardScreen from '../screens/AIArtDashboardScreen';
 import AIImageScreen from '../screens/AIImageScreen';
 import AIImageResultScreen from '../screens/AIImageResultScreen';
 import QRScannerScreen from '../screens/QRScannerScreen';
+import LensCameraScreen from '../screens/LensCameraScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import AIRemixScreen from '../screens/AIRemixScreen';
@@ -45,6 +46,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AIImageScreen" component={AIImageScreen} />
         <Stack.Screen name="AIImageResult" component={AIImageResultScreen} />
         <Stack.Screen name="QRScanner" component={QRScannerScreen} />
+        <Stack.Screen name="LensCamera" component={LensCameraScreen} />
         <Stack.Screen name="Downloads" component={DownloadsScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
         <Stack.Screen name="AIRemix" component={AIRemixScreen} />

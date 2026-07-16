@@ -364,12 +364,6 @@ export default function HomeScreen({ route, onSearch, navigation }) {
           </View>
         </View>
 
-        {/* Ad Banner */}
-        <View style={styles.adBannerContainer}>
-          <View style={styles.adBannerBg}>
-            <Text style={styles.adBannerLabel}>Banner AD</Text>
-          </View>
-        </View>
 
         {/* Image Editor Tab Bar */}
         <View style={styles.editorTabBar}>
@@ -534,7 +528,7 @@ export default function HomeScreen({ route, onSearch, navigation }) {
         {/* Camera / Capture Button Overlay */}
         <TouchableOpacity
           style={styles.cameraButtonOverlay}
-          onPress={() => acquireImage('camera')}
+          onPress={() => navigation?.navigate('LensCamera')}
         />
       </View>
 
@@ -936,12 +930,14 @@ const styles = StyleSheet.create({
   loaderOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 10, justifyContent: 'center', alignItems: 'center' },
   imageContainer: {
     position: 'absolute',
-    left: 55 * scale,
-    top: 625 * scale,
-    width: 969 * scale,
-    height: 1246 * scale,
+    left: 0,
+    top: 312 * scale,
+    width: '100%',
+    height: (2130 - 312) * scale,
     overflow: 'hidden',
     backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   editorImage: { width: '100%', height: '100%' },
   cropOverlayContainer: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.4)' },

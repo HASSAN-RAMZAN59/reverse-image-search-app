@@ -233,8 +233,8 @@ export default function HistoryScreen({ navigation }) {
             {item.type === 'image'
               ? 'Visual Search'
               : item.type === 'qr'
-              ? `QR: ${item.query}`
-              : item.query}
+                ? `QR: ${item.query}`
+                : item.query}
           </Text>
           <Text style={styles.itemTime}>{formatTimestamp(item.timestamp)}</Text>
         </View>
@@ -249,7 +249,7 @@ export default function HistoryScreen({ navigation }) {
             onPress={() => handleDeleteItem(item.id)}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           >
-            <Trash2 size={24} color="#FF3B30" />
+            <Trash2 size={24} color="#f7f7f7ff" />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
@@ -274,7 +274,7 @@ export default function HistoryScreen({ navigation }) {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{selectedIds.length} Selected</Text>
           <TouchableOpacity style={styles.selectionDeleteBtn} onPress={handleBulkDelete}>
-            <Trash2 size={24} color="#FF3B30" />
+            <Trash2 size={24} color="#ffffffff" />
           </TouchableOpacity>
         </View>
       ) : (
@@ -336,7 +336,7 @@ export default function HistoryScreen({ navigation }) {
           <Text style={styles.bottomTabText}>Generate AI</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
+        <TouchableOpacity style={styles.bottomTab} onPress={() => { }}>
           <Image
             source={require('../components/material-symbols_history-rounded.png')}
             style={[styles.bottomTabIcon, { tintColor: '#007AFF' }]}
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   clearAllText: {
-    color: '#FF3B30',
+    color: '#fafafaff',
     fontSize: 38 * scale,
     fontWeight: '600',
     fontFamily: 'Inter',

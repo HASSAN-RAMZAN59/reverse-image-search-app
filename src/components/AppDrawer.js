@@ -611,11 +611,13 @@ const styles = StyleSheet.create({
 
   termsContainer: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#191919',
     paddingTop: 0,
   },
   termsHeader: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#131313',
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
   },
   headerSafeAreaSpacer: {
     height: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
@@ -643,28 +645,29 @@ const styles = StyleSheet.create({
   termsTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFF',
     marginBottom: 6,
   },
   termsLastUpdated: {
     fontSize: 13,
-    color: '#888',
+    color: '#A0A3BD',
     marginBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    borderBottomColor: '#333',
     paddingBottom: 12,
   },
   termsSectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#FFF',
     marginTop: 18,
     marginBottom: 8,
   },
   termsText: {
     fontSize: 14,
-    color: '#555',
+    color: '#E2E2E8',
     lineHeight: 22,
+    textAlign: 'justify',
   },
 
   supportContainer: {
