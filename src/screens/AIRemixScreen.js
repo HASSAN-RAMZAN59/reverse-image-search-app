@@ -83,7 +83,11 @@ export default function AIRemixScreen({ route, navigation }) {
           return true;
         }
         // Phase 1: go back to Generate AI dashboard
-        navigation.navigate('AIArtDashboard');
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('AIArtDashboard');
+        }
         return true;
       };
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);

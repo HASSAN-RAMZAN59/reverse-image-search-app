@@ -116,7 +116,11 @@ export default function AIImageScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate('AIArtDashboard');
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('AIArtDashboard');
+        }
         return true; // prevent default (Home) navigation
       };
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);

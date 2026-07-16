@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 import { ArrowLeft, ChevronRight } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import { Dimensions } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
@@ -25,20 +26,28 @@ const HERO_HEIGHT = (640 / 960) * SCREEN_WIDTH;
 const menuXml = `<svg width="51" height="41" viewBox="0 0 51 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 4.5H46.5M4.5 20.5H46.5M4.5 36.5H22.875" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }) {
-  useEffect(() => {
-    const onBackPress = () => {
+  useFocusEffect(
+    useCallback(() => {
       if (isTab) {
-        // In tab mode — navigate to Home tab
-        navigation?.navigate('Home');
-        return true;
+        // When rendered as a tab inside HomeScreen, let HomeScreen's BackHandler 
+        // handle the back press to switch the activeTab back to 'explore'.
+        return;
       }
-      // In stack mode — go back to previous screen (e.g. AIArtDashboard → wherever)
-      navigation?.goBack();
-      return true;
-    };
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => sub.remove();
-  }, [navigation, isTab]);
+
+      const onDashboardBackPress = () => {
+        // In stack mode — go back to previous screen
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('Home');
+        }
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onDashboardBackPress);
+      return () => subscription.remove();
+    }, [navigation, isTab])
+  );
 
   return (
     <SafeAreaView style={styles.container}>

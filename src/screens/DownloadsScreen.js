@@ -84,7 +84,11 @@ export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer
         }
         // Priority 3: if opened from Generate AI tab, go back there
         if (isAIOnly) {
-          navigation.navigate('AIArtDashboard');
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('AIArtDashboard');
+          }
           return true;
         }
         // Default: let the stack handle it
