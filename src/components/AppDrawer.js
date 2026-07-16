@@ -34,26 +34,14 @@ import { SvgXml } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
+const DRAWER_WIDTH = 908 * scale;
 
-const logoXml = `<svg width="215" height="196" viewBox="0 0 215 196" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="0.00390625" y="4.24536" width="4.24536" height="42.7568" transform="rotate(-90 0.00390625 4.24536)" fill="white"/>
-<rect x="0.00390625" y="0.00012207" width="4.24536" height="42.7568" fill="white"/>
-<rect x="4.24902" y="195.895" width="4.24536" height="42.7568" transform="rotate(-180 4.24902 195.895)" fill="white"/>
-<rect x="0.00390625" y="195.895" width="4.24536" height="42.7568" transform="rotate(-90 0.00390625 195.895)" fill="white"/>
-<rect x="208.025" y="191.65" width="4.24536" height="42.7568" transform="rotate(90 208.025 191.65)" fill="white"/>
-<rect x="208.025" y="195.895" width="4.24536" height="42.7568" transform="rotate(-180 208.025 195.895)" fill="white"/>
-<rect x="203.781" y="0.00012207" width="4.24536" height="42.7568" fill="white"/>
-<rect x="208.026" y="0.00012207" width="4.24536" height="42.7568" transform="rotate(90 208.026 0.00012207)" fill="white"/>
-<path d="M101.206 88.3106C115.239 67.7957 122.255 57.5382 132.124 57.413C132.285 57.4109 132.446 57.4109 132.606 57.413C142.475 57.5382 149.492 67.7957 163.525 88.3106C181.148 114.074 189.959 126.956 184.84 137.002C184.759 137.162 184.675 137.321 184.589 137.479C179.187 147.376 163.579 147.376 132.365 147.376C101.151 147.376 85.5441 147.376 80.1421 137.479C80.056 137.321 79.9722 137.162 79.8906 137.002C74.7715 126.956 83.583 114.074 101.206 88.3106Z" fill="url(#paint0_linear_1_88)"/>
-<path d="M38.0007 105.202C47.4978 91.7921 52.2463 85.0874 58.7677 84.563C59.5146 84.5029 60.2652 84.5029 61.0121 84.563C67.5335 85.0874 72.282 91.7921 81.7792 105.202C94.2856 122.86 100.539 131.689 97.6584 138.79C97.3357 139.586 96.9405 140.35 96.4777 141.073C92.3478 147.528 81.5285 147.528 59.8899 147.528C38.2513 147.528 27.432 147.528 23.3021 141.073C22.8393 140.35 22.4441 139.586 22.1214 138.79C19.2411 131.689 25.4943 122.86 38.0007 105.202Z" fill="#1DA723"/>
-<path d="M76.4169 58.527C85.1256 58.527 92.1854 51.4673 92.1854 42.7586C92.1854 34.0499 85.1256 26.9901 76.4169 26.9901C67.7082 26.9901 60.6484 34.0499 60.6484 42.7586C60.6484 51.4673 67.7082 58.527 76.4169 58.527Z" fill="#FBC313"/>
-<path d="M67.1012 65.197L72.7719 59.3643C70.7466 58.9593 68.8834 58.1492 67.1822 57.015L67.1012 65.197ZM85.7334 20.3175L80.0627 26.1502C82.088 26.5553 83.9512 27.3654 85.6524 28.4995L85.7334 20.3175ZM53.9775 52.0734L62.1595 51.9924C61.0254 50.2912 60.2153 48.428 59.8103 46.4027L53.9775 52.0734ZM98.8571 33.4411L90.6751 33.5221C91.7282 35.2233 92.5383 37.0866 93.0243 39.1118L98.8571 33.4411ZM53.9775 33.4411L59.8103 39.1118C60.2153 37.0866 61.0254 35.2233 62.1595 33.5221L53.9775 33.4411ZM98.8571 52.0734L93.0243 46.4027C92.6193 48.428 91.8092 50.2912 90.6751 51.9924L98.8571 52.0734ZM67.1012 20.3175L67.1822 28.4995C68.8834 27.4464 70.7466 26.6363 72.7719 26.1502L67.1012 20.3175ZM85.7334 65.197L85.6524 57.015C83.9512 58.1492 82.088 58.9593 80.0627 59.3643L85.7334 65.197Z" fill="#FFE62E"/>
-<defs>
-<linearGradient id="paint0_linear_1_88" x1="159.354" y1="86.1217" x2="94.4603" y2="127.211" gradientUnits="userSpaceOnUse">
-<stop offset="0.455277" stop-color="#47BD4C"/>
-<stop offset="0.839763" stop-color="#1DA723"/>
-</linearGradient>
-</defs>
+const galleryXml = `<svg width="47" height="47" viewBox="0 0 47 47" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M5.22222 47H41.7778C43.1628 47 44.4911 46.4498 45.4704 45.4704C46.4498 44.4911 47 43.1628 47 41.7778V5.22222C47 3.8372 46.4498 2.50891 45.4704 1.52955C44.4911 0.550197 43.1628 0 41.7778 0H5.22222C3.8372 0 2.50891 0.550197 1.52955 1.52955C0.550197 2.50891 0 3.8372 0 5.22222V41.7778C0 43.1628 0.550197 44.4911 1.52955 45.4704C2.50891 46.4498 3.8372 47 5.22222 47ZM13.0556 28.7222L19.2256 34.8923L28.7222 20.8889L41.7778 39.1667H5.22222L13.0556 28.7222Z" fill="white"/>
+</svg>`;
+
+const shareXml = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M33.3333 28.2974C31.6453 28.2974 30.1227 28.8902 28.968 29.8446L13.1333 21.499C13.256 21.0459 13.3333 20.5736 13.3333 20.0916C13.3333 19.6096 13.256 19.1397 13.1333 18.6866L28.8 10.4229C30.0266 11.4674 31.6481 12.0492 33.3333 12.0496C37.0107 12.0496 40 9.34811 40 6.02482C40 2.70153 37.0107 0 33.3333 0C29.656 0 26.6667 2.70153 26.6667 6.02482C26.6667 6.50681 26.744 6.97915 26.8667 7.42981L11.2 15.6935C9.9727 14.6501 8.35167 14.0684 6.66667 14.0668C2.98933 14.0668 0 16.7683 0 20.0916C0 23.4149 2.98933 26.1164 6.66667 26.1164C8.35193 26.116 9.97343 25.5341 11.2 24.4897L27.0347 32.8353C26.918 33.266 26.8581 33.7077 26.856 34.1511C26.8565 35.3082 27.2366 36.4391 27.9483 37.401C28.6599 38.3629 29.6712 39.1125 30.8542 39.5551C32.0371 39.9976 33.3388 40.1133 34.5945 39.8875C35.8502 39.6616 37.0036 39.1044 37.9089 38.2862C38.8143 37.468 39.4309 36.4256 39.6808 35.2908C39.9307 34.156 39.8027 32.9797 39.313 31.9106C38.8233 30.8415 37.9938 29.9276 36.9295 29.2845C35.8651 28.6414 34.6137 28.2979 33.3333 28.2974Z" fill="white"/>
 </svg>`;
 
 export default function AppDrawer({ isOpen, onClose, navigation }) {
@@ -64,7 +52,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
   const [supportText, setSupportText] = useState('');
   const [isRateModalVisible, setIsRateModalVisible] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
-  const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.75)).current;
+  const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
   useEffect(() => {
     if (isOpen) {
@@ -81,7 +69,7 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
 
   const handleClose = () => {
     Animated.timing(slideAnim, {
-      toValue: -SCREEN_WIDTH * 0.75,
+      toValue: -DRAWER_WIDTH,
       duration: 250,
       useNativeDriver: true,
     }).start(() => {
@@ -183,28 +171,46 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
           <Animated.View style={[styles.drawerContainer, { transform: [{ translateX: slideAnim }] }]}>
             {/* Drawer Header with Logo */}
             <View style={styles.drawerHeader}>
-              <SvgXml xml={logoXml} width={215 * scale} height={195.9 * scale} />
+              <Image
+                source={require('./Group 110.png')}
+                style={styles.drawerHeaderLogo}
+              />
+              <Text style={styles.drawerHeaderSubtitle}>Search By Image With Multi Engine</Text>
             </View>
 
             {/* Drawer Menu Items */}
             <ScrollView style={styles.drawerMenuScroll}>
               <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Home', { triggerAction: 'camera', timestamp: Date.now() }); }}>
-                <Camera size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <View style={styles.menuIconSlot}>
+                  <Camera size={22} color="#FFF" />
+                </View>
                 <Text style={styles.drawerMenuText}>Camera</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Home', { triggerAction: 'gallery', timestamp: Date.now() }); }}>
-                <ImageIcon size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <View style={styles.menuIconSlot}>
+                  <SvgXml xml={galleryXml} width={47 * scale} height={47 * scale} />
+                </View>
                 <Text style={styles.drawerMenuText}>Gallery</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('QRScanner'); }}>
-                <QrCode size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <View style={styles.menuIconSlot}>
+                  <Image
+                    source={require('./Group 215.png')}
+                    style={styles.menuPngIcon}
+                  />
+                </View>
                 <Text style={styles.drawerMenuText}>QR Code Scan</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Downloads'); }}>
-                <Download size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <View style={styles.menuIconSlot}>
+                  <Image
+                    source={require('./Vector (5).png')}
+                    style={styles.menuPngIcon}
+                  />
+                </View>
                 <Text style={styles.drawerMenuText}>Download Image</Text>
               </TouchableOpacity>
 
@@ -212,20 +218,32 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
               <View style={styles.drawerMenuDivider} />
 
               <TouchableOpacity style={styles.drawerMenuItem} onPress={handleShare}>
-                <Share2 size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <View style={styles.menuIconSlot}>
+                  <SvgXml xml={shareXml} width={40 * scale} height={40 * scale} />
+                </View>
                 <Text style={styles.drawerMenuText}>Share App</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { setSelectedRating(0); setIsRateModalVisible(true); }}>
-                <Star size={22} color="#FFF" style={styles.drawerMenuIcon} />
-                <Text style={styles.drawerMenuText}>Rateus</Text>
+                <View style={styles.menuIconSlot}>
+                  <Image
+                    source={require('./Vector (6).png')}
+                    style={styles.menuPngIconRateUs}
+                  />
+                </View>
+                <Text style={styles.drawerMenuText}>Rate Us</Text>
               </TouchableOpacity>
 
               {/* Horizontal Divider Line */}
               <View style={styles.drawerMenuDivider} />
 
               <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { setIsPrivacyVisible(true); }}>
-                <Shield size={22} color="#FFF" style={styles.drawerMenuIcon} />
+                <View style={styles.menuIconSlot}>
+                  <Image
+                    source={require('./Vector (7).png')}
+                    style={styles.menuPngIcon}
+                  />
+                </View>
                 <Text style={styles.drawerMenuText}>Privacy Policy</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -497,9 +515,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   drawerContainer: {
-    width: SCREEN_WIDTH * 0.75,
+    width: DRAWER_WIDTH,
     height: '100%',
-    backgroundColor: '#000000ff',
+    backgroundColor: '#191919',
     shadowColor: '#000',
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.25,
@@ -507,13 +525,28 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   drawerHeader: {
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    width: DRAWER_WIDTH,
+    height: 428 * scale + (Platform.OS === 'android' ? StatusBar.currentHeight : 44),
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 44,
     backgroundColor: '#131313',
     justifyContent: 'center',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#222',
+  },
+  drawerHeaderLogo: {
+    width: 215 * scale,
+    height: 195.9 * scale,
+    resizeMode: 'contain',
+  },
+  drawerHeaderSubtitle: {
+    fontFamily: 'Inter',
+    fontSize: 34.8 * scale,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginTop: 50.36 * scale,
+    textAlign: 'center',
+    width: 588 * scale,
   },
   drawerMenuScroll: {
     flex: 1,
@@ -523,13 +556,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginHorizontal: 8,
+    paddingLeft: 78 * scale,
     borderRadius: 8,
     marginBottom: 4,
   },
-  drawerMenuIcon: {
-    marginRight: 16,
+  menuIconSlot: {
+    width: 47 * scale,
+    height: 47 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 48 * scale,
+  },
+  menuPngIcon: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  menuPngIconRateUs: {
+    width: 54 * scale,
+    height: 51 * scale,
+    resizeMode: 'contain',
   },
   drawerMenuText: {
     fontSize: 38.98 * scale,

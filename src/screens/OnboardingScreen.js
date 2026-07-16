@@ -10,7 +10,7 @@ import {
   Image,
   ScrollView
 } from 'react-native';
-import { usePremium } from '../context/PremiumContext';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
@@ -37,7 +37,7 @@ const onboardingSlides = [
 export default function OnboardingScreen({ navigation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef(null);
-  const { bypassPremium } = usePremium();
+
 
   const handleScroll = (event) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
@@ -55,8 +55,7 @@ export default function OnboardingScreen({ navigation }) {
       });
       setCurrentIndex(currentIndex + 1);
     } else {
-      await bypassPremium();
-      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      navigation.reset({ index: 0, routes: [{ name: 'PremiumVIP' }] });
     }
   };
 
