@@ -10,8 +10,15 @@ import {
   BackHandler,
 } from 'react-native';
 import { ArrowLeft, Sparkles, Download, RefreshCw } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
+import { Dimensions } from 'react-native';
 
-export default function AIArtDashboardScreen({ navigation }) {
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
+
+const menuXml = `<svg width="51" height="41" viewBox="0 0 51 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 4.5H46.5M4.5 20.5H46.5M4.5 36.5H22.875" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+export default function AIArtDashboardScreen({ navigation, isTab, onOpenDrawer }) {
   useEffect(() => {
     const onBackPress = () => {
       if (navigation) {
@@ -29,10 +36,16 @@ export default function AIArtDashboardScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
-          <ArrowLeft size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Art Dashboard</Text>
+        {isTab ? (
+          <TouchableOpacity style={styles.menuBtn} onPress={onOpenDrawer}>
+            <SvgXml xml={menuXml} width={42 * scale} height={32 * scale} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
+            <ArrowLeft size={24} color="#FFF" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>AI Art Generator</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -72,19 +85,26 @@ export default function AIArtDashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#0E0E10',
   },
   header: {
     height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0E0E10',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2E',
   },
   backBtn: {
     padding: 4,
+  },
+  menuBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     color: '#FFF',
@@ -100,7 +120,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#666',
+    color: '#A0A3BD',
     marginBottom: 30,
     fontWeight: '500',
     textAlign: 'center',

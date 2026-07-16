@@ -28,7 +28,7 @@ const backIconXml = `
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
 
-export default function HistoryScreen({ navigation }) {
+export default function HistoryScreen({ route, navigation, isTab, onOpenDrawer }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -279,7 +279,7 @@ export default function HistoryScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.menuIconContainer} onPress={() => setIsDrawerOpen(true)} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuIconContainer} onPress={() => isTab ? onOpenDrawer() : setIsDrawerOpen(true)} activeOpacity={0.7}>
             <SvgXml xml={backIconXml} width={42 * scale} height={32 * scale} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>History</Text>
@@ -319,40 +319,42 @@ export default function HistoryScreen({ navigation }) {
       </View>
 
       {/* Bottom Navigation Bar */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('Home')}>
-          <Image
-            source={require('../components/si_ai-search-fill.png')}
-            style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
-          />
-          <Text style={styles.bottomTabText}>Explore</Text>
-        </TouchableOpacity>
+      {!isTab && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('Home')}>
+            <Image
+              source={require('../components/si_ai-search-fill.png')}
+              style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
+            />
+            <Text style={styles.bottomTabText}>Explore</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('AIArtDashboard')}>
-          <Image
-            source={require('../components/mingcute_ai-fill.png')}
-            style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
-          />
-          <Text style={styles.bottomTabText}>Generate AI</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('AIArtDashboard')}>
+            <Image
+              source={require('../components/mingcute_ai-fill.png')}
+              style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
+            />
+            <Text style={styles.bottomTabText}>Generate AI</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => { }}>
-          <Image
-            source={require('../components/material-symbols_history-rounded.png')}
-            style={[styles.bottomTabIcon, { tintColor: '#007AFF' }]}
-          />
-          <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>History</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => { }}>
+            <Image
+              source={require('../components/material-symbols_history-rounded.png')}
+              style={[styles.bottomTabIcon, { tintColor: '#007AFF' }]}
+            />
+            <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>History</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('Downloads')}>
-          <Image
-            source={require('../components/material-symbols_download-rounded.png')}
-            style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
-          />
-          <Text style={styles.bottomTabText}>Downloads</Text>
-        </TouchableOpacity>
-      </View>
-      <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />
+          <TouchableOpacity style={styles.bottomTab} onPress={() => navigation.navigate('Downloads')}>
+            <Image
+              source={require('../components/material-symbols_download-rounded.png')}
+              style={[styles.bottomTabIcon, { tintColor: '#A0A3BD' }]}
+            />
+            <Text style={styles.bottomTabText}>Downloads</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!isTab && <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />}
     </SafeAreaView>
   );
 }

@@ -53,12 +53,27 @@ import Logo from '../components/Logo';
 import { usePremium } from '../context/PremiumContext';
 import { addHistoryEntry } from '../utils/historyManager';
 import AppDrawer from '../components/AppDrawer';
+import AIArtDashboardScreen from './AIArtDashboardScreen';
+import HistoryScreen from './HistoryScreen';
+import DownloadsScreen from './DownloadsScreen';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
 
 export default function HomeScreen({ route, onSearch, navigation }) {
   const { isPremiumUser } = usePremium();
+  const [activeTab, setActiveTab] = useState('explore');
+  const [downloadsIsAIOnly, setDownloadsIsAIOnly] = useState(false);
+
+  useEffect(() => {
+    if (route?.params?.tab) {
+      setActiveTab(route.params.tab);
+      if (route.params.tab === 'downloads') {
+        setDownloadsIsAIOnly(route.params.isAIOnly ?? false);
+      }
+      navigation.setParams({ tab: undefined, isAIOnly: undefined });
+    }
+  }, [route?.params?.tab, route?.params?.isAIOnly]);
 
   const handleFeaturePress = (feature) => {
     // Commented out premium gating logic for now
@@ -114,6 +129,11 @@ export default function HomeScreen({ route, onSearch, navigation }) {
         setImageUri(null);
         return true;
       }
+
+      if (activeTab !== 'explore') {
+        setActiveTab('explore');
+        return true;
+      }
       return true; // stay on Home
     };
 
@@ -123,12 +143,11 @@ export default function HomeScreen({ route, onSearch, navigation }) {
       blurSub?.();
       sub.remove();
     };
-  }, [editorUri, cropMode, navigation]);
+  }, [editorUri, cropMode, activeTab, navigation]);
 
   const handleOpenSavedDownloads = () => {
-    if (navigation) {
-      navigation.navigate('Downloads');
-    }
+    setDownloadsIsAIOnly(false);
+    setActiveTab('downloads');
   };
 
 
@@ -447,155 +466,188 @@ export default function HomeScreen({ route, onSearch, navigation }) {
     );
   }
 
+  // Helper to render the active tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'generate_ai':
+        return (
+          <AIArtDashboardScreen
+            navigation={navigation}
+            isTab={true}
+            onOpenDrawer={() => setIsDrawerOpen(true)}
+          />
+        );
+      case 'history':
+        return (
+          <HistoryScreen
+            navigation={navigation}
+            isTab={true}
+            onOpenDrawer={() => setIsDrawerOpen(true)}
+          />
+        );
+      case 'downloads':
+        return (
+          <DownloadsScreen
+            route={{ params: { isAIOnly: downloadsIsAIOnly } }}
+            navigation={navigation}
+            isTab={true}
+            onOpenDrawer={() => setIsDrawerOpen(true)}
+          />
+        );
+      case 'explore':
+      default:
+        return (
+          <SafeAreaView style={{ flex: 1 }}>
+            {/* Top Header Bar */}
+            <View style={styles.header} />
+
+            <TouchableOpacity style={styles.menuButton} onPress={() => setIsDrawerOpen(true)}>
+              <View style={styles.customMenuLine} />
+              <View style={styles.customMenuLine} />
+              <View style={[styles.customMenuLine, styles.customMenuLineShort]} />
+            </TouchableOpacity>
+
+            <Text style={styles.headerTitle}>Image Search</Text>
+
+            <TouchableOpacity style={styles.premiumHeaderBtn} onPress={() => navigation?.navigate('PremiumVIP')}>
+              <Image
+                source={require('../components/image 30.png')}
+                style={styles.premiumHeaderIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+
+            {/* Custom Search Bar Container with Background Image */}
+            <View style={styles.searchContainer}>
+              <Image
+                source={require('../components/Group 1000007000.png')}
+                style={styles.searchBackground}
+                resizeMode="stretch"
+              />
+
+              {/* Search Icon Overlay Button */}
+              <TouchableOpacity
+                style={styles.searchIconOverlay}
+                onPress={() => {
+                  if (searchText.trim()) {
+                    addHistoryEntry('text', searchText.trim());
+                    if (navigation) {
+                      navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+                    } else {
+                      onSearch?.(searchText, null);
+                    }
+                  } else {
+                    setIsInputInvalid(true);
+                  }
+                }}
+              />
+
+              {/* TextInput overlay with solid background color to mask "Uplaod and Search" */}
+              <TextInput
+                style={[styles.inputOverlay, isInputInvalid && styles.inputInvalidOverlay]}
+                placeholder={isListening ? "Listening..." : "Upload and Search"}
+                placeholderTextColor="#9AA0A6"
+                value={searchText}
+                onChangeText={(text) => {
+                  setSearchText(text);
+                  if (text.trim()) {
+                    setIsInputInvalid(false);
+                  }
+                }}
+                onSubmitEditing={() => {
+                  if (searchText.trim()) {
+                    addHistoryEntry('text', searchText.trim());
+                    if (navigation) {
+                      navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+                    } else {
+                      onSearch?.(searchText, null);
+                    }
+                  }
+                }}
+              />
+
+              {/* Mic Button Overlay */}
+              <TouchableOpacity
+                style={styles.micButtonOverlay}
+                onPress={handleMicPress}
+              />
+
+              {/* Camera / Capture Button Overlay */}
+              <TouchableOpacity
+                style={styles.cameraButtonOverlay}
+                onPress={() => navigation?.navigate('LensCamera')}
+              />
+            </View>
+
+            {/* Main Content Area */}
+            <ScrollView
+              style={styles.content}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Visual Search (Gallery) Button */}
+              <TouchableOpacity
+                style={styles.visualSearchBtn}
+                onPress={() => acquireImage('gallery')}
+              >
+                <Image
+                  source={require('../components/Group 1000006996.png')}
+                  style={styles.actionBtnImage}
+                  resizeMode="stretch"
+                />
+              </TouchableOpacity>
+
+              {/* Row for Camera and AI Art Buttons */}
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.squareBtn}
+                  onPress={() => acquireImage('camera')}
+                >
+                  <Image
+                    source={require('../components/Group 1000006997.png')}
+                    style={styles.actionBtnImage}
+                    resizeMode="stretch"
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.squareBtn}
+                  onPress={() => setActiveTab('generate_ai')}
+                >
+                  <Image
+                    source={require('../components/Group 1000006998.png')}
+                    style={styles.actionBtnImage}
+                    resizeMode="stretch"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Scan QR Code Button */}
+              <TouchableOpacity
+                style={styles.qrCodeBtn}
+                onPress={() => navigation?.navigate('QRScanner')}
+              >
+                <Image
+                  source={require('../components/Group 1000007001.png')}
+                  style={styles.actionBtnImage}
+                  resizeMode="stretch"
+                />
+              </TouchableOpacity>
+            </ScrollView>
+          </SafeAreaView>
+        );
+    }
+  };
+
   // RENDER HOME VIEW
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
-      {/* Top Header Bar */}
-      <View style={styles.header} />
 
-      <TouchableOpacity style={styles.menuButton} onPress={() => setIsDrawerOpen(true)}>
-        <View style={styles.customMenuLine} />
-        <View style={styles.customMenuLine} />
-        <View style={[styles.customMenuLine, styles.customMenuLineShort]} />
-      </TouchableOpacity>
-
-      <Text style={styles.headerTitle}>Image Search</Text>
-
-      <TouchableOpacity style={styles.premiumHeaderBtn} onPress={() => navigation?.navigate('PremiumVIP')}>
-        <Image
-          source={require('../components/image 30.png')}
-          style={styles.premiumHeaderIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
-
-      {/* Custom Search Bar Container with Background Image */}
-      <View style={styles.searchContainer}>
-        <Image
-          source={require('../components/Group 1000007000.png')}
-          style={styles.searchBackground}
-          resizeMode="stretch"
-        />
-
-        {/* Search Icon Overlay Button */}
-        <TouchableOpacity
-          style={styles.searchIconOverlay}
-          onPress={() => {
-            if (searchText.trim()) {
-              addHistoryEntry('text', searchText.trim());
-              if (navigation) {
-                navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
-              } else {
-                onSearch?.(searchText, null);
-              }
-            } else {
-              setIsInputInvalid(true);
-            }
-          }}
-        />
-
-        {/* TextInput overlay with solid background color to mask "Uplaod and Search" */}
-        <TextInput
-          style={[styles.inputOverlay, isInputInvalid && styles.inputInvalidOverlay]}
-          placeholder={isListening ? "Listening..." : "Upload and Search"}
-          placeholderTextColor="#9AA0A6"
-          value={searchText}
-          onChangeText={(text) => {
-            setSearchText(text);
-            if (text.trim()) {
-              setIsInputInvalid(false);
-            }
-          }}
-          onSubmitEditing={() => {
-            if (searchText.trim()) {
-              addHistoryEntry('text', searchText.trim());
-              if (navigation) {
-                navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
-              } else {
-                onSearch?.(searchText, null);
-              }
-            }
-          }}
-        />
-
-        {/* Mic Button Overlay */}
-        <TouchableOpacity
-          style={styles.micButtonOverlay}
-          onPress={handleMicPress}
-        />
-
-        {/* Camera / Capture Button Overlay */}
-        <TouchableOpacity
-          style={styles.cameraButtonOverlay}
-          onPress={() => navigation?.navigate('LensCamera')}
-        />
+      {/* Render the active tab content */}
+      <View style={{ flex: 1 }}>
+        {renderTabContent()}
       </View>
-
-      {/* Main Content Area */}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Visual Search (Gallery) Button */}
-        <TouchableOpacity
-          style={styles.visualSearchBtn}
-          onPress={() => acquireImage('gallery')}
-        >
-          <Image
-            source={require('../components/Group 1000006996.png')}
-            style={styles.actionBtnImage}
-            resizeMode="stretch"
-          />
-        </TouchableOpacity>
-
-        {/* Row for Camera and AI Art Buttons */}
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={styles.squareBtn}
-            onPress={() => acquireImage('camera')}
-          >
-            <Image
-              source={require('../components/Group 1000006997.png')}
-              style={styles.actionBtnImage}
-              resizeMode="stretch"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.squareBtn}
-            onPress={() => navigation?.navigate('AIArtDashboard')}
-          >
-            <Image
-              source={require('../components/Group 1000006998.png')}
-              style={styles.actionBtnImage}
-              resizeMode="stretch"
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Scan QR Code Button */}
-        <TouchableOpacity
-          style={styles.qrCodeBtn}
-          onPress={() => navigation?.navigate('QRScanner')}
-        >
-          <Image
-            source={require('../components/Group 1000007001.png')}
-            style={styles.actionBtnImage}
-            resizeMode="stretch"
-          />
-        </TouchableOpacity>
-
-        {/* Dynamic Ad Injection Template (Commented out for now) */}
-        {/*
-        { !isPremiumUser && (
-          <View style={{ marginTop: 20, padding: 15, backgroundColor: '#222', borderRadius: 8, alignItems: 'center' }}>
-            <Text style={{ color: '#aaa' }}>[Ad Placeholder Node]</Text>
-          </View>
-        )}
-        */}
-      </ScrollView>
 
       {/* Voice Search Overlay Modal */}
       <Modal
@@ -635,42 +687,42 @@ export default function HomeScreen({ route, onSearch, navigation }) {
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
+        <TouchableOpacity style={styles.bottomTab} onPress={() => setActiveTab('explore')}>
           <Image
             source={require('../components/si_ai-search-fill.png')}
-            style={styles.exploreIcon}
+            style={[styles.exploreIcon, { tintColor: activeTab === 'explore' ? '#007AFF' : '#A0A3BD' }]}
           />
-          <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>Explore</Text>
+          <Text style={[styles.bottomTabText, activeTab === 'explore' && styles.bottomTabActiveText]}>Explore</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('AIArtDashboard')}>
+        <TouchableOpacity style={styles.bottomTab} onPress={() => setActiveTab('generate_ai')}>
           <Image
             source={require('../components/mingcute_ai-fill.png')}
-            style={styles.generateAiIcon}
+            style={[styles.generateAiIcon, { tintColor: activeTab === 'generate_ai' ? '#007AFF' : '#A0A3BD' }]}
           />
-          <Text style={styles.bottomTabText}>Generate AI</Text>
+          <Text style={[styles.bottomTabText, activeTab === 'generate_ai' && styles.bottomTabActiveText]}>Generate AI</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('History')}>
+        <TouchableOpacity style={styles.bottomTab} onPress={() => setActiveTab('history')}>
           <Image
             source={require('../components/material-symbols_history-rounded.png')}
-            style={styles.historyIcon}
+            style={[styles.historyIcon, { tintColor: activeTab === 'history' ? '#007AFF' : '#A0A3BD' }]}
           />
-          <Text style={styles.bottomTabText}>History</Text>
+          <Text style={[styles.bottomTabText, activeTab === 'history' && styles.bottomTabActiveText]}>History</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.bottomTab} onPress={handleOpenSavedDownloads}>
           <Image
             source={require('../components/material-symbols_download-rounded.png')}
-            style={styles.downloadIcon}
+            style={[styles.downloadIcon, { tintColor: activeTab === 'downloads' ? '#007AFF' : '#A0A3BD' }]}
           />
-          <Text style={styles.bottomTabText}>Downloads</Text>
+          <Text style={[styles.bottomTabText, activeTab === 'downloads' && styles.bottomTabActiveText]}>Downloads</Text>
         </TouchableOpacity>
       </View>
 
       {/* AppDrawer Overlay */}
       <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />
-    </SafeAreaView>
+    </View>
   );
 }
 

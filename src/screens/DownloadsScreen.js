@@ -34,7 +34,7 @@ const getFilenameFromUri = (uri) => {
   return parts[parts.length - 1];
 };
 
-export default function DownloadsScreen({ route, navigation }) {
+export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer }) {
   const isAIOnly = route?.params?.isAIOnly ?? false;
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -187,7 +187,7 @@ export default function DownloadsScreen({ route, navigation }) {
       {/* Vector Icon & Title — always visible, absolute over screen */}
       {!isSelectionMode && (
         <>
-          <TouchableOpacity style={styles.vectorIconContainer} onPress={() => setIsDrawerOpen(true)} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.vectorIconContainer} onPress={() => isTab ? onOpenDrawer() : setIsDrawerOpen(true)} activeOpacity={0.7}>
             <SvgXml xml={vectorXml} width={42 * scale} height={32 * scale} />
           </TouchableOpacity>
           <Text style={styles.screenTitle} numberOfLines={1} ellipsizeMode="tail">
@@ -280,40 +280,42 @@ export default function DownloadsScreen({ route, navigation }) {
       )}
 
       {/* Bottom Navigation Bar */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('Home')}>
-          <Image
-            source={require('../components/si_ai-search-fill.png')}
-            style={styles.exploreIcon}
-          />
-          <Text style={styles.bottomTabText}>Explore</Text>
-        </TouchableOpacity>
+      {!isTab && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('Home')}>
+            <Image
+              source={require('../components/si_ai-search-fill.png')}
+              style={styles.exploreIcon}
+            />
+            <Text style={styles.bottomTabText}>Explore</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('AIArtDashboard')}>
-          <Image
-            source={require('../components/mingcute_ai-fill.png')}
-            style={styles.generateAiIcon}
-          />
-          <Text style={styles.bottomTabText}>Generate AI</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('AIArtDashboard')}>
+            <Image
+              source={require('../components/mingcute_ai-fill.png')}
+              style={styles.generateAiIcon}
+            />
+            <Text style={styles.bottomTabText}>Generate AI</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('History')}>
-          <Image
-            source={require('../components/material-symbols_history-rounded.png')}
-            style={styles.historyIcon}
-          />
-          <Text style={styles.bottomTabText}>History</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => navigation?.navigate('History')}>
+            <Image
+              source={require('../components/material-symbols_history-rounded.png')}
+              style={styles.historyIcon}
+            />
+            <Text style={styles.bottomTabText}>History</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
-          <Image
-            source={require('../components/material-symbols_download-rounded.png')}
-            style={styles.downloadIcon}
-          />
-          <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>Downloads</Text>
-        </TouchableOpacity>
-      </View>
-      <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />
+          <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
+            <Image
+              source={require('../components/material-symbols_download-rounded.png')}
+              style={styles.downloadIcon}
+            />
+            <Text style={[styles.bottomTabText, styles.bottomTabActiveText]}>Downloads</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!isTab && <AppDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} navigation={navigation} />}
     </View>
   );
 }
