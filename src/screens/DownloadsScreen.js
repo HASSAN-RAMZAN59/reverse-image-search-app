@@ -197,9 +197,6 @@ export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer
       {/* Vector Icon & Title — always visible, absolute over screen */}
       {!isSelectionMode && (
         <>
-          <TouchableOpacity style={styles.vectorIconContainer} onPress={() => isTab ? onOpenDrawer() : setIsDrawerOpen(true)} activeOpacity={0.7}>
-            <SvgXml xml={vectorXml} width={42 * scale} height={32 * scale} />
-          </TouchableOpacity>
           <Text style={styles.screenTitle} numberOfLines={1} ellipsizeMode="tail">
             {previewImage && selectedAsset
               ? (selectedAsset.originalName || getFilenameFromUri(selectedAsset.uri))
@@ -366,14 +363,14 @@ const styles = StyleSheet.create({
   },
   screenTitle: {
     position: 'absolute',
-    left: 171 * scale,
+    left: 61 * scale,
     top: 195 * scale,
     width: 326 * scale,
     height: 58 * scale,
     fontFamily: 'Inter',
     fontSize: 48.68 * scale,
     color: '#FFFFFF',
-    fontWeight: '500',
+    fontWeight: 'bold',
     lineHeight: 58 * scale,
     textAlignVertical: 'center',
     zIndex: 35,

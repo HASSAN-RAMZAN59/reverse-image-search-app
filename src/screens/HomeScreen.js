@@ -60,6 +60,13 @@ import DownloadsScreen from './DownloadsScreen';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
 const HERO_IMAGE_HEIGHT = 250;
+const BOTTOM_BAR_HEIGHT = 181 * scale;
+// Responsive caps — content scales with screen width but is capped for very large phones
+const SECTION_GAP = Math.min(43 * scale, 20); // matches Camera ↔ AI Art gap, max 20px
+const HERO_H = Math.min(640 * scale, SCREEN_HEIGHT * 0.30); // max 30% of screen height
+const VISUAL_H = Math.min(352 * scale, SCREEN_HEIGHT * 0.22);
+const SQUARE_H = Math.min(440 * scale, SCREEN_HEIGHT * 0.23);
+const QR_H    = Math.min(200 * scale, SCREEN_HEIGHT * 0.13);
 
 export default function HomeScreen({ route, onSearch, navigation }) {
   const { isPremiumUser } = usePremium();
@@ -135,7 +142,9 @@ export default function HomeScreen({ route, onSearch, navigation }) {
         setActiveTab('explore');
         return true;
       }
-      return true; // stay on Home
+      // On explore tab with nothing open → close the app
+      BackHandler.exitApp();
+      return true;
     };
 
     const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -519,19 +528,18 @@ export default function HomeScreen({ route, onSearch, navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* ── Hero Image — directly below header ── */}
-            <Image
-              source={require('../components/lucid-origin_Abstract_cinematic_scene_of_a_glowing_human_hand_palm-up_with_countless_intercon-0.jpg')}
-              style={styles.heroImage}
-              resizeMode="cover"
-            />
-
-            {/* ── Scrollable Content — search bar + action buttons ── */}
+            {/* ── Scrollable Content — hero image + search bar + action buttons ── */}
             <ScrollView
               style={{ flex: 1, backgroundColor: '#0E0E10' }}
               contentContainerStyle={styles.exploreScrollContent}
               showsVerticalScrollIndicator={false}
             >
+              {/* Hero Image — scrolls with content */}
+              <Image
+                source={require('../components/lucid-origin_Abstract_cinematic_scene_of_a_glowing_human_hand_palm-up_with_countless_intercon-0.jpg')}
+                style={styles.heroImage}
+                resizeMode="cover"
+              />
               {/* Search Bar */}
               <View style={styles.searchContainer}>
                 <Image
@@ -721,7 +729,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0E0E10' },
   heroImage: {
     width: 960 * scale,
-    height: 640 * scale,
+    height: HERO_H,
     alignSelf: 'center',
     borderRadius: 48 * scale,
     overflow: 'hidden',
@@ -762,8 +770,8 @@ const styles = StyleSheet.create({
     height: 94 * scale,
   },
   exploreScrollContent: {
-    paddingTop: 6 * scale,
-    paddingBottom: 20 * scale,
+    paddingTop: 0,
+    paddingBottom: BOTTOM_BAR_HEIGHT + 24,
     alignItems: 'center',
   },
 
@@ -828,7 +836,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 923 * scale,
     height: 147.57 * scale,
-    marginBottom: 10 * scale,
+    // marginBottom handled by next item's marginTop
   },
   searchBackground: {
     width: '100%',
@@ -878,8 +886,8 @@ const styles = StyleSheet.create({
   },
   visualSearchBtn: {
     width: 923 * scale,
-    height: 352 * scale,
-    marginTop: 4 * scale,
+    height: VISUAL_H,
+    marginTop: SECTION_GAP,
     alignSelf: 'center',
   },
   buttonRow: {
@@ -887,16 +895,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: 923 * scale,
     alignSelf: 'center',
-    marginTop: 18 * scale,
+    marginTop: SECTION_GAP,
   },
   squareBtn: {
     width: 440 * scale,
-    height: 440 * scale,
+    height: SQUARE_H,
   },
   qrCodeBtn: {
     width: 923 * scale,
-    height: 200 * scale,
-    marginTop: 18 * scale,
+    height: QR_H,
+    marginTop: SECTION_GAP,
     alignSelf: 'center',
   },
   actionBtnImage: {

@@ -279,9 +279,6 @@ export default function HistoryScreen({ route, navigation, isTab, onOpenDrawer }
         </View>
       ) : (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.menuIconContainer} onPress={() => isTab ? onOpenDrawer() : setIsDrawerOpen(true)} activeOpacity={0.7}>
-            <SvgXml xml={backIconXml} width={42 * scale} height={32 * scale} />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>History</Text>
           {historyItems.length > 0 && (
             <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
@@ -390,7 +387,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     position: 'absolute',
-    left: 171 * scale,
+    left: 61 * scale,
     top: 195 * scale,
     color: '#FFF',
     fontFamily: 'Inter',
