@@ -214,6 +214,16 @@ export default function AppDrawer({ isOpen, onClose, navigation }) {
                 <Text style={styles.drawerMenuText}>Download Image</Text>
               </TouchableOpacity>
 
+              <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { handleClose(); navigation.navigate('Home', { tab: 'generate_ai', timestamp: Date.now() }); }}>
+                <View style={styles.menuIconSlot}>
+                  <Image
+                    source={require('./mingcute_ai-fill.png')}
+                    style={styles.menuPngIcon}
+                  />
+                </View>
+                <Text style={styles.drawerMenuText}>AI Art</Text>
+              </TouchableOpacity>
+
               {/* Horizontal Divider Line */}
               <View style={styles.drawerMenuDivider} />
 

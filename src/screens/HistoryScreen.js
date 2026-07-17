@@ -263,28 +263,40 @@ export default function HistoryScreen({ route, navigation, isTab, onOpenDrawer }
       {/* Header */}
       {isSelectionMode ? (
         <View style={[styles.header, styles.headerSelection]}>
-          <TouchableOpacity
-            style={styles.selectionCloseBtn}
-            onPress={() => {
-              setSelectedIds([]);
-              setIsSelectionMode(false);
-            }}
-          >
-            <X size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{selectedIds.length} Selected</Text>
+          <View style={styles.headerLeftContainer}>
+            <TouchableOpacity
+              style={styles.selectionCloseBtn}
+              onPress={() => {
+                setSelectedIds([]);
+                setIsSelectionMode(false);
+              }}
+            >
+              <X size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{selectedIds.length} Selected</Text>
+          </View>
           <TouchableOpacity style={styles.selectionDeleteBtn} onPress={handleBulkDelete}>
-            <Trash2 size={24} color="#ffffffff" />
+            <Trash2 size={24} color="#FFF" />
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>History</Text>
-          {historyItems.length > 0 && (
-            <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
-              <Text style={styles.clearAllText}>Clear All</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerLeftContainer}>
+            {!isTab && (
+              <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
+                <ArrowLeft size={24} color="#FFF" />
+              </TouchableOpacity>
+            )}
+            <Text style={styles.headerTitle}>History</Text>
+          </View>
+          
+          <View style={styles.headerRightContainer}>
+            {historyItems.length > 0 && (
+              <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
+                <Text style={styles.clearAllText}>Clear All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       )}
 
@@ -362,47 +374,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#0E0E10',
   },
   header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 312 * scale,
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     backgroundColor: '#0E0E10',
-    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
   headerSelection: {
     backgroundColor: '#1C1C1E',
     borderBottomWidth: 1,
     borderBottomColor: '#2C2C2E',
   },
-  menuIconContainer: {
-    position: 'absolute',
-    left: 61 * scale,
-    top: 208 * scale,
-    width: 42 * scale,
-    height: 32 * scale,
+  headerLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    padding: 4,
+  },
+  menuBtn: {
+    padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 20,
+  },
+  headerCrown: {
+    width: 94 * scale,
+    height: 94 * scale,
   },
   headerTitle: {
-    position: 'absolute',
-    left: 61 * scale,
-    top: 195 * scale,
     color: '#FFF',
     fontFamily: 'Inter',
     fontSize: 48.68 * scale,
     fontWeight: 'bold',
-    zIndex: 20,
+    marginLeft: 16 * scale,
   },
   clearAllBtn: {
-    position: 'absolute',
-    right: 61 * scale,
-    top: 195 * scale,
-    height: 58 * scale,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 20,
   },
   clearAllText: {
     color: '#fafafaff',
@@ -411,26 +427,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter',
   },
   selectionCloseBtn: {
-    position: 'absolute',
-    left: 61 * scale,
-    top: 195 * scale,
-    height: 58 * scale,
+    padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 20,
   },
   selectionDeleteBtn: {
-    position: 'absolute',
-    right: 61 * scale,
-    top: 195 * scale,
-    height: 58 * scale,
+    padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 20,
   },
   contentArea: {
     flex: 1,
-    marginTop: 312 * scale,
     backgroundColor: '#0E0E10',
   },
   centerContainer: {

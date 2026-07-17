@@ -16,7 +16,7 @@ import {
   Platform,
   BackHandler,
 } from 'react-native';
-import { Trash2, Share2, X, Download, Check } from 'lucide-react-native';
+import { Trash2, Share2, X, Download, Check, ArrowLeft } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as MediaLibrary from 'expo-media-library';
 import { getSavedDownloads, deleteSavedDownload, deleteMultipleSavedDownloads } from '../utils/downloadManager';
@@ -194,27 +194,48 @@ export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
 
-      {/* Vector Icon & Title — always visible, absolute over screen */}
-      {!isSelectionMode && (
-        <>
-          <Text style={styles.screenTitle} numberOfLines={1} ellipsizeMode="tail">
-            {previewImage && selectedAsset
-              ? (selectedAsset.originalName || getFilenameFromUri(selectedAsset.uri))
-              : 'Downloads'}
-          </Text>
-        </>
-      )}
-
-      {/* Selection mode floating bar */}
-      {isSelectionMode && (
-        <View style={styles.selectionBar}>
-          <TouchableOpacity style={styles.selectionBtn} onPress={() => { setSelectedIds([]); setIsSelectionMode(false); }}>
-            <X size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.selectionCount}>{selectedIds.length} Selected</Text>
-          <TouchableOpacity style={styles.selectionBtn} onPress={handleBulkDelete}>
+      {/* Header */}
+      {isSelectionMode ? (
+        <View style={[styles.header, styles.headerSelection]}>
+          <View style={styles.headerLeftContainer}>
+            <TouchableOpacity style={styles.selectionCloseBtn} onPress={() => { setSelectedIds([]); setIsSelectionMode(false); }}>
+              <X size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{selectedIds.length} Selected</Text>
+          </View>
+          <TouchableOpacity style={styles.selectionDeleteBtn} onPress={handleBulkDelete}>
             <Trash2 size={24} color="#FFF" />
           </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.header}>
+          <View style={styles.headerLeftContainer}>
+            {previewImage ? (
+              <TouchableOpacity style={styles.backBtn} onPress={() => { setPreviewImage(null); setSelectedAsset(null); }}>
+                <ArrowLeft size={24} color="#FFF" />
+              </TouchableOpacity>
+            ) : !isTab ? (
+              <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
+                <ArrowLeft size={24} color="#FFF" />
+              </TouchableOpacity>
+            ) : null}
+            <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+              {previewImage && selectedAsset
+                ? (selectedAsset.originalName || getFilenameFromUri(selectedAsset.uri))
+                : 'Downloads'}
+            </Text>
+          </View>
+
+          {previewImage && selectedAsset ? (
+            <View style={styles.headerRightActions}>
+              <TouchableOpacity style={styles.headerActionBtn} onPress={() => handleShare(selectedAsset)}>
+                <Image source={require('../components/mdi_share.png')} style={styles.headerActionIcon} resizeMode="contain" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.headerActionBtn} onPress={() => handleDelete(selectedAsset)}>
+                <Image source={require('../components/material-symbols-light_delete.png')} style={styles.headerActionIcon} resizeMode="contain" />
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -256,36 +277,6 @@ export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer
         </View>
       )}
 
-      {/* Share button — floats above preview overlay */}
-      {!!previewImage && !!selectedAsset && (
-        <TouchableOpacity
-          style={styles.shareBtn}
-          onPress={() => handleShare(selectedAsset)}
-          activeOpacity={0.8}
-        >
-          <Image
-            source={require('../components/mdi_share.png')}
-            style={styles.shareBtnIcon}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      )}
-
-      {/* Delete button — floats above preview overlay */}
-      {!!previewImage && !!selectedAsset && (
-        <TouchableOpacity
-          style={styles.deletePreviewBtn}
-          onPress={() => handleDelete(selectedAsset)}
-          activeOpacity={0.8}
-        >
-          <Image
-            source={require('../components/material-symbols-light_delete.png')}
-            style={styles.deleteBtnIcon}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      )}
-
       {/* Bottom Navigation Bar */}
       {!isTab && (
         <View style={styles.bottomBar}>
@@ -313,7 +304,7 @@ export default function DownloadsScreen({ route, navigation, isTab, onOpenDrawer
             <Text style={styles.bottomTabText}>History</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.bottomTab} onPress={() => {}}>
+          <TouchableOpacity style={styles.bottomTab} onPress={() => { }}>
             <Image
               source={require('../components/material-symbols_download-rounded.png')}
               style={styles.downloadIcon}
@@ -333,69 +324,75 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   header: {
-    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    backgroundColor: '#000',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
-  },
-  backBtn: {
-    padding: 4,
-  },
-  vectorIconContainer: {
-    position: 'absolute',
-    left: 61 * scale,
-    top: 208 * scale,
-    width: 42 * scale,
-    height: 32 * scale,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 35,
-  },
-  screenTitle: {
-    position: 'absolute',
-    left: 61 * scale,
-    top: 195 * scale,
-    width: 326 * scale,
-    height: 58 * scale,
-    fontFamily: 'Inter',
-    fontSize: 48.68 * scale,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    lineHeight: 58 * scale,
-    textAlignVertical: 'center',
-    zIndex: 35,
-  },
-  selectionBar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    backgroundColor: '#111',
+    backgroundColor: '#000000',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    zIndex: 20,
+    zIndex: 35,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1C1C1E',
   },
-  selectionBtn: {
-    padding: 8,
+  headerSelection: {
+    backgroundColor: '#1C1C1E',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2E',
   },
-  selectionCount: {
+  headerLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerTitle: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: 48.68 * scale,
     fontWeight: 'bold',
+    paddingHorizontal: 6,
+    fontFamily: 'Inter',
+    flex: 1,
+  },
+  backBtn: {
+    padding: 4,
+  },
+  menuBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCrown: {
+    width: 94 * scale,
+    height: 94 * scale,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerActionBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerActionIcon: {
+    width: 70 * scale,
+    height: 70 * scale,
+    tintColor: '#FFFFFF',
+  },
+  selectionCloseBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectionDeleteBtn: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -438,7 +435,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 61 * scale,
-    paddingTop: 280 * scale,
+    paddingTop: Platform.OS === 'android' ? 56 + StatusBar.currentHeight + 20 * scale : 56 + 20 * scale,
     paddingBottom: 220 * scale,
   },
   columnWrapper: {

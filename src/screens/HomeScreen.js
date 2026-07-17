@@ -66,7 +66,7 @@ const SECTION_GAP = Math.min(43 * scale, 20); // matches Camera ↔ AI Art gap, 
 const HERO_H = Math.min(640 * scale, SCREEN_HEIGHT * 0.30); // max 30% of screen height
 const VISUAL_H = Math.min(352 * scale, SCREEN_HEIGHT * 0.22);
 const SQUARE_H = Math.min(440 * scale, SCREEN_HEIGHT * 0.23);
-const QR_H    = Math.min(200 * scale, SCREEN_HEIGHT * 0.13);
+const QR_H = Math.min(200 * scale, SCREEN_HEIGHT * 0.13);
 
 export default function HomeScreen({ route, onSearch, navigation }) {
   const { isPremiumUser } = usePremium();
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 923 * scale,
     height: 147.57 * scale,
-    // marginBottom handled by next item's marginTop
+    marginTop: SECTION_GAP,
   },
   searchBackground: {
     width: '100%',
