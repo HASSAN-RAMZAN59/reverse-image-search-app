@@ -59,6 +59,7 @@ import DownloadsScreen from './DownloadsScreen';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const scale = SCREEN_WIDTH / 1080;
+const HERO_IMAGE_HEIGHT = 250;
 
 export default function HomeScreen({ route, onSearch, navigation }) {
   const { isPremiumUser } = usePremium();
@@ -497,94 +498,89 @@ export default function HomeScreen({ route, onSearch, navigation }) {
       case 'explore':
       default:
         return (
-          <SafeAreaView style={{ flex: 1 }}>
-            {/* Top Header Bar */}
-            <View style={styles.header} />
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#0E0E10' }}>
 
-            <TouchableOpacity style={styles.menuButton} onPress={() => setIsDrawerOpen(true)}>
-              <View style={styles.customMenuLine} />
-              <View style={styles.customMenuLine} />
-              <View style={[styles.customMenuLine, styles.customMenuLineShort]} />
-            </TouchableOpacity>
-
-            <Text style={styles.headerTitle}>Image Search</Text>
-
-            <TouchableOpacity style={styles.premiumHeaderBtn} onPress={() => navigation?.navigate('PremiumVIP')}>
-              <Image
-                source={require('../components/image 30.png')}
-                style={styles.premiumHeaderIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-
-            {/* Custom Search Bar Container with Background Image */}
-            <View style={styles.searchContainer}>
-              <Image
-                source={require('../components/Group 1000007000.png')}
-                style={styles.searchBackground}
-                resizeMode="stretch"
-              />
-
-              {/* Search Icon Overlay Button */}
-              <TouchableOpacity
-                style={styles.searchIconOverlay}
-                onPress={() => {
-                  if (searchText.trim()) {
-                    addHistoryEntry('text', searchText.trim());
-                    if (navigation) {
-                      navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
-                    } else {
-                      onSearch?.(searchText, null);
-                    }
-                  } else {
-                    setIsInputInvalid(true);
-                  }
-                }}
-              />
-
-              {/* TextInput overlay with solid background color to mask "Uplaod and Search" */}
-              <TextInput
-                style={[styles.inputOverlay, isInputInvalid && styles.inputInvalidOverlay]}
-                placeholder={isListening ? "Listening..." : "Upload and Search"}
-                placeholderTextColor="#9AA0A6"
-                value={searchText}
-                onChangeText={(text) => {
-                  setSearchText(text);
-                  if (text.trim()) {
-                    setIsInputInvalid(false);
-                  }
-                }}
-                onSubmitEditing={() => {
-                  if (searchText.trim()) {
-                    addHistoryEntry('text', searchText.trim());
-                    if (navigation) {
-                      navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
-                    } else {
-                      onSearch?.(searchText, null);
-                    }
-                  }
-                }}
-              />
-
-              {/* Mic Button Overlay */}
-              <TouchableOpacity
-                style={styles.micButtonOverlay}
-                onPress={handleMicPress}
-              />
-
-              {/* Camera / Capture Button Overlay */}
-              <TouchableOpacity
-                style={styles.cameraButtonOverlay}
-                onPress={() => navigation?.navigate('LensCamera')}
-              />
+            {/* ── Dark Header Bar (normal flow, like AI Art Dashboard) ── */}
+            <View style={styles.exploreHeader}>
+              <View style={styles.exploreHeaderLeft}>
+                <TouchableOpacity style={styles.exploreMenuBtn} onPress={() => setIsDrawerOpen(true)}>
+                  <View style={styles.customMenuLine} />
+                  <View style={styles.customMenuLine} />
+                  <View style={[styles.customMenuLine, styles.customMenuLineShort]} />
+                </TouchableOpacity>
+                <Text style={styles.exploreHeaderTitle}>Image Search</Text>
+              </View>
+              <TouchableOpacity style={styles.explorePremiumBtn} onPress={() => navigation?.navigate('PremiumVIP')}>
+                <Image
+                  source={require('../components/image 30.png')}
+                  style={styles.explorePremiumIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
 
-            {/* Main Content Area */}
+            {/* ── Hero Image — directly below header ── */}
+            <Image
+              source={require('../components/lucid-origin_Abstract_cinematic_scene_of_a_glowing_human_hand_palm-up_with_countless_intercon-0.jpg')}
+              style={styles.heroImage}
+              resizeMode="cover"
+            />
+
+            {/* ── Scrollable Content — search bar + action buttons ── */}
             <ScrollView
-              style={styles.content}
-              contentContainerStyle={styles.contentContainer}
+              style={{ flex: 1, backgroundColor: '#0E0E10' }}
+              contentContainerStyle={styles.exploreScrollContent}
               showsVerticalScrollIndicator={false}
             >
+              {/* Search Bar */}
+              <View style={styles.searchContainer}>
+                <Image
+                  source={require('../components/Group 1000007000.png')}
+                  style={styles.searchBackground}
+                  resizeMode="stretch"
+                />
+                <TouchableOpacity
+                  style={styles.searchIconOverlay}
+                  onPress={() => {
+                    if (searchText.trim()) {
+                      addHistoryEntry('text', searchText.trim());
+                      if (navigation) {
+                        navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+                      } else {
+                        onSearch?.(searchText, null);
+                      }
+                    } else {
+                      setIsInputInvalid(true);
+                    }
+                  }}
+                />
+                <TextInput
+                  style={[styles.inputOverlay, isInputInvalid && styles.inputInvalidOverlay]}
+                  placeholder={isListening ? "Listening..." : "Upload and Search"}
+                  placeholderTextColor="#9AA0A6"
+                  value={searchText}
+                  onChangeText={(text) => {
+                    setSearchText(text);
+                    if (text.trim()) setIsInputInvalid(false);
+                  }}
+                  onSubmitEditing={() => {
+                    if (searchText.trim()) {
+                      addHistoryEntry('text', searchText.trim());
+                      if (navigation) {
+                        navigation.navigate('Result', { searchQuery: searchText, imageUri: null });
+                      } else {
+                        onSearch?.(searchText, null);
+                      }
+                    }
+                  }}
+                />
+                <TouchableOpacity style={styles.micButtonOverlay} onPress={handleMicPress} />
+                <TouchableOpacity
+                  style={styles.cameraButtonOverlay}
+                  onPress={() => navigation?.navigate('LensCamera')}
+                />
+              </View>
+
               {/* Visual Search (Gallery) Button */}
               <TouchableOpacity
                 style={styles.visualSearchBtn}
@@ -599,21 +595,14 @@ export default function HomeScreen({ route, onSearch, navigation }) {
 
               {/* Row for Camera and AI Art Buttons */}
               <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={styles.squareBtn}
-                  onPress={() => acquireImage('camera')}
-                >
+                <TouchableOpacity style={styles.squareBtn} onPress={() => acquireImage('camera')}>
                   <Image
                     source={require('../components/Group 1000006997.png')}
                     style={styles.actionBtnImage}
                     resizeMode="stretch"
                   />
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.squareBtn}
-                  onPress={() => setActiveTab('generate_ai')}
-                >
+                <TouchableOpacity style={styles.squareBtn} onPress={() => setActiveTab('generate_ai')}>
                   <Image
                     source={require('../components/Group 1000006998.png')}
                     style={styles.actionBtnImage}
@@ -634,6 +623,7 @@ export default function HomeScreen({ route, onSearch, navigation }) {
                 />
               </TouchableOpacity>
             </ScrollView>
+
           </SafeAreaView>
         );
     }
@@ -729,6 +719,61 @@ export default function HomeScreen({ route, onSearch, navigation }) {
 const styles = StyleSheet.create({
   // Home Styles
   container: { flex: 1, backgroundColor: '#0E0E10' },
+  heroImage: {
+    width: 960 * scale,
+    height: 640 * scale,
+    alignSelf: 'center',
+    borderRadius: 48 * scale,
+    overflow: 'hidden',
+  },
+
+  // ── Explore Tab Header (AI Art Dashboard style) ──
+  exploreHeader: {
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#0E0E10',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  exploreHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  exploreMenuBtn: {
+    justifyContent: 'space-between',
+    height: 32 * scale,
+    width: 42 * scale,
+  },
+  exploreHeaderTitle: {
+    color: '#FFF',
+    fontFamily: 'Inter',
+    fontSize: 48.68 * scale,
+    fontWeight: 'bold',
+  },
+  explorePremiumBtn: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  explorePremiumIcon: {
+    width: 94 * scale,
+    height: 94 * scale,
+  },
+  exploreScrollContent: {
+    paddingTop: 6 * scale,
+    paddingBottom: 20 * scale,
+    alignItems: 'center',
+  },
+
+  functionalContentWrapper: {
+    position: 'absolute',
+    top: HERO_IMAGE_HEIGHT,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   header: {
     height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
@@ -771,7 +816,7 @@ const styles = StyleSheet.create({
   content: {
     position: 'absolute',
     left: 46 * scale,
-    top: 480 * scale,
+    top: 177 * scale,
     right: 46 * scale,
     bottom: 181 * scale,
     backgroundColor: '#0E0E10',
@@ -780,12 +825,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40 * scale,
   },
   searchContainer: {
-    position: 'absolute',
-    left: 78 * scale,
-    top: 312 * scale,
+    alignSelf: 'center',
     width: 923 * scale,
     height: 147.57 * scale,
-    zIndex: 10,
+    marginBottom: 10 * scale,
   },
   searchBackground: {
     width: '100%',
@@ -836,15 +879,15 @@ const styles = StyleSheet.create({
   visualSearchBtn: {
     width: 923 * scale,
     height: 352 * scale,
-    marginTop: 10 * scale,
+    marginTop: 4 * scale,
     alignSelf: 'center',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 32 * scale,
-    marginTop: 37 * scale,
+    width: 923 * scale,
+    alignSelf: 'center',
+    marginTop: 18 * scale,
   },
   squareBtn: {
     width: 440 * scale,
@@ -853,7 +896,7 @@ const styles = StyleSheet.create({
   qrCodeBtn: {
     width: 923 * scale,
     height: 200 * scale,
-    marginTop: 37 * scale,
+    marginTop: 18 * scale,
     alignSelf: 'center',
   },
   actionBtnImage: {
