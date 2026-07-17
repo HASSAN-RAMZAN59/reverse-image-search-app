@@ -14,6 +14,7 @@ import {
   FlatList,
   Image,
   BackHandler,
+  Dimensions,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Plus, X } from 'lucide-react-native';
@@ -29,77 +30,11 @@ const STYLES_LIST = [
     name: 'anime',
     image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&auto=format&fit=crop&q=60'
   },
-  {
-    id: 'comic-book',
-    name: 'comic-book',
-    image: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400&auto=format&fit=crop&q=60'
-  },
-  {
-    id: '3d-model',
-    name: '3d-model',
-    image: 'https://images.unsplash.com/photo-1581822261290-991b38693d1b?w=400&auto=format&fit=crop&q=60'
-  },
-  {
-    id: 'analog-film',
-    name: 'analog-film',
-    image: 'https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=400&auto=format&fit=crop&q=60'
-  },
-  {
-    id: 'line-art',
-    name: 'line-art',
-    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400&auto=format&fit=crop&q=60'
-  },
-  {
-    id: 'digital-art',
-    name: 'digital-art',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'isometric',
-    name: 'isometric',
-    image: 'https://images.unsplash.com/photo-1616440347437-b1c73416efc2?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'fantasy-art',
-    name: 'fantasy-art',
-    image: 'https://images.unsplash.com/photo-1519074002996-a69e7ac46a42?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'enhance',
-    name: 'enhance',
-    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'neon-punk',
-    name: 'neon-punk',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'modeling-compound',
-    name: 'modeling-compound',
-    image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'origami',
-    name: 'origami',
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80'
-  },
-  {
-    id: 'low-poly',
-    name: 'low-poly',
-    image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&auto=format&fit=crop&q=60'
-  },
-  {
-    id: 'photographic',
-    name: 'photographic',
-    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&auto=format&fit=crop&q=60'
-  },
-  {
-    id: 'pixel-art',
-    name: 'pixel-art',
-    image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&auto=format&fit=crop&q=60'
-  }
+
 ];
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
 
 export default function AIImageScreen({ navigation }) {
   const [prompt, setPrompt] = useState('');
@@ -145,14 +80,14 @@ export default function AIImageScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
+      <StatusBar barStyle="light-content" backgroundColor="#FFF" translucent={true} />
 
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
-          <ArrowLeft size={24} color="#005BFF" />
+          <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Al Art</Text>
+        <Text style={styles.headerTitle}>Chat With AI</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -164,37 +99,45 @@ export default function AIImageScreen({ navigation }) {
 
           {/* Enter Prompt Section */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Enter Prompt:</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Bear On the Mountains"
-              placeholderTextColor="#AAA"
-              multiline={true}
-              numberOfLines={4}
-              value={prompt}
-              onChangeText={setPrompt}
-              textAlignVertical="top"
-            />
+            <Text style={styles.sectionTitle} >Enter Prompt:</Text>
+            <View style={styles.promptInputWrapper}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Bear On the Mountains"
+                placeholderTextColor="#FFF"
+                multiline={true}
+                numberOfLines={4}
+                value={prompt}
+                onChangeText={setPrompt}
+                textAlignVertical="top"
+              />
+              <Image
+                source={require('../components/Container.png')}
+                style={styles.promptAiIcon}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
-          {/* Model and Styles Section */}
+          {/* Styles Section */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Model and Styles:</Text>
+            <Text style={styles.sectionTitle}>Select Style:</Text>
             <TouchableOpacity
               style={styles.styleSelectorBtn}
               onPress={() => setIsStyleModalVisible(true)}
             >
               <View style={styles.styleSelectorTextContainer}>
-                <Text style={styles.styleSelectorLabel}>Styles</Text>
+                <Text style={styles.styleSelectorLabel}>Style</Text>
                 <Text style={styles.styleSelectorValue}>
                   {selectedStyle}
                 </Text>
               </View>
               <View style={styles.plusIconContainer}>
-                <Plus size={20} color="#333" />
+                <Image source={require('../components/Icon.png')} style={{ width: 24, height: 24 }} resizeMode="contain" />
               </View>
             </TouchableOpacity>
           </View>
+
 
           {/* Aspect Ratio Section */}
           <View style={styles.sectionContainer}>
@@ -220,7 +163,7 @@ export default function AIImageScreen({ navigation }) {
 
           {/* Image Generate Section */}
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Image Generate:</Text>
+            <Text style={styles.sectionTitle}>Quantity</Text>
             <View style={styles.pillsRow}>
               {[1, 2, 3, 4].map((count) => {
                 const isSelected = imageCount === count;
@@ -248,9 +191,9 @@ export default function AIImageScreen({ navigation }) {
             >
               <Text style={styles.advancedToggleText}>Choose Settings</Text>
               {isAdvancedExpanded ? (
-                <ChevronUp size={20} color="#333" />
+                <ChevronUp size={20} color="#FFF" />
               ) : (
-                <ChevronDown size={20} color="#333" />
+                <ChevronDown size={20} color="#FFF" />
               )}
             </TouchableOpacity>
 
@@ -277,7 +220,7 @@ export default function AIImageScreen({ navigation }) {
           {/* Create Button */}
           <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
             <Text style={styles.createButtonText}>Create</Text>
-            <ArrowRight size={20} color="#FFF" style={styles.createBtnIcon} />
+            <ArrowRight size={20} color="#131313" style={styles.createBtnIcon} />
           </TouchableOpacity>
 
         </ScrollView>
@@ -286,7 +229,7 @@ export default function AIImageScreen({ navigation }) {
       {/* Styles Modal Selector */}
       <Modal visible={isStyleModalVisible} transparent={false} animationType="slide">
         <SafeAreaView style={styles.modalOverlay}>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={true} />
+          <StatusBar barStyle="light-content" backgroundColor="#131313" translucent={true} />
 
           <View style={styles.modalHeader}>
             <TouchableOpacity
@@ -333,26 +276,38 @@ export default function AIImageScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#131313',
   },
   header: {
-    height: 56,
+    height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderColor: '#EAEAEA',
+    borderColor: '#2A2A35',
+  },
+  promptInputWrapper: {
+    position: 'relative',
+    width: 948 * scale,
+    height: 520 * scale,
+  },
+  promptAiIcon: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 65.42 * scale,
+    height: 80.01 * scale,
   },
   backBtn: {
     padding: 4,
   },
   headerTitle: {
-    color: '#333',
+    color: '#FFF',
     fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+
+    letterSpacing: -0.5,
   },
   scrollContent: {
     padding: 20,
@@ -364,52 +319,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFF',
     marginBottom: 12,
   },
   textInput: {
-    backgroundColor: '#FFF',
-    borderWidth: 1.5,
-    borderColor: '#60A5FA',
+    backgroundColor: '#1C1C26',
+    borderWidth: 1,
+    borderColor: '#2A2A35',
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
-    color: '#333',
-    minHeight: 120,
-  },
-  styleSelectorBtn: {
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '55%',
-  },
-  styleSelectorTextContainer: {
-    flexDirection: 'column',
-  },
-  styleSelectorLabel: {
-    fontSize: 11,
-    color: '#888',
-  },
-  styleSelectorValue: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#111',
-    marginTop: 2,
-    textTransform: 'lowercase',
-  },
-  plusIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#DDD',
-    justifyContent: 'center',
-    alignItems: 'center',
+    color: '#FFF',
+    flex: 1,
   },
   pillsRow: {
     flexDirection: 'row',
@@ -418,35 +339,35 @@ const styles = StyleSheet.create({
   pillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#1C1C26',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 24,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2A2A35',
   },
   pillBtnSelected: {
-    backgroundColor: '#2D3748',
-    borderColor: '#2D3748',
+    backgroundColor: '#ADC7FF',
+    borderColor: '#ADC7FF',
   },
   pillBtnText: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#8B90A0',
   },
   pillBtnTextSelected: {
-    color: '#FFF',
+    color: '#131313',
   },
   ratioIconSquare: {
     width: 14,
     height: 14,
-    backgroundColor: '#AAA',
+    backgroundColor: '#8B90A0',
     borderRadius: 2,
     marginRight: 8,
   },
   ratioIconSquareSelected: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#131313',
   },
   countPillBtn: {
     minWidth: 56,
@@ -454,9 +375,9 @@ const styles = StyleSheet.create({
   },
   advancedToggleBtn: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#1C1C26',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2A2A35',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
@@ -464,31 +385,31 @@ const styles = StyleSheet.create({
   },
   advancedToggleText: {
     fontSize: 15,
-    color: '#555',
+    color: '#FFF',
     fontWeight: '500',
   },
   advancedExpandContainer: {
     marginTop: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#1C1C26',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2A2A35',
   },
   negPromptLabel: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#4B5563',
+    color: '#FFF',
     marginBottom: 8,
   },
   negTextInput: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#131313',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#2A2A35',
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: '#333',
+    color: '#FFF',
     minHeight: 80,
   },
   negPromptHint: {
@@ -501,13 +422,13 @@ const styles = StyleSheet.create({
   createButton: {
     width: '100%',
     height: 54,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#ADC7FF',
     borderRadius: 27,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 12,
-    shadowColor: '#3B82F6',
+    shadowColor: '#ADC7FF',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -515,16 +436,48 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   createButtonText: {
-    color: '#FFF',
+    color: '#131313',
     fontSize: 18,
     fontWeight: 'bold',
   },
   createBtnIcon: {
     marginLeft: 8,
   },
+  styleSelectorBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#1C1C26',
+    borderWidth: 1,
+    borderColor: '#2A2A35',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '55%',
+  },
+  styleSelectorTextContainer: {
+    flexDirection: 'column',
+  },
+  styleSelectorLabel: {
+    fontSize: 11,
+    color: '#8B90A0',
+  },
+  styleSelectorValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginTop: 2,
+    textTransform: 'lowercase',
+  },
+  plusIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#131313',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   modalHeader: {
@@ -533,7 +486,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderColor: '#EAEAEA',
+    borderColor: '#2A2A35',
     position: 'relative',
   },
   modalCloseBtn: {
@@ -542,14 +495,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#005BFF',
+    backgroundColor: '#3B82F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalHeaderTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111',
+    color: '#FFF',
   },
   stylesGrid: {
     padding: 12,
@@ -565,7 +518,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   styleCardSelected: {
-    borderColor: '#005BFF',
+    borderColor: '#3B82F6',
   },
   styleCardImage: {
     width: '100%',
