@@ -19,7 +19,7 @@ import {
   BackHandler,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximize2 } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, Sparkles, Download, Image as ImageIcon, RefreshCw, X, Maximize2 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
@@ -27,17 +27,18 @@ import { generateImageToImage, uploadImageToTempCloud } from '../services/aiServ
 import { addSavedDownload } from '../utils/downloadManager';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 1080;
 
 const CHARACTER_TEMPLATES = [
   {
     id: 'viking',
-    name: 'Viking Warrior',
+
     templateUrl: 'https://images.unsplash.com/photo-1603840830260-331b76a4a3d9?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Premium pre-set Viking body asset
     previewUrl: 'https://images.unsplash.com/photo-1603840830260-331b76a4a3d9?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
   },
   {
     id: 'samurai',
-    name: 'Samurai Master',
+
     templateUrl: 'https://images.unsplash.com/photo-1616005639387-9d59e4b1bdb9?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Premium pre-set Samurai armor asset
     previewUrl: 'https://images.unsplash.com/photo-1616005639387-9d59e4b1bdb9?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
   }
@@ -49,6 +50,7 @@ export default function AIRemixScreen({ route, navigation }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [sourceImageUri, setSourceImageUri] = useState(null);
   const [generationLimit, setGenerationLimit] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState('1:1');
   const [remixStrength, setRemixStrength] = useState(0.38);
   const [selectedModelPrompt, setSelectedModelPrompt] = useState('');
   const [remixedResult, setRemixedResult] = useState(null);
@@ -162,16 +164,16 @@ export default function AIRemixScreen({ route, navigation }) {
 
     try {
       console.log(`[Remix] Starting Magic Hour Face-Swap using template "${selectedModel.name}"`);
-      
+
       // Step 1: Upload the local face image to temp cloud storage
       const userUploadedImagePublicUrl = await uploadImageToTempCloud(sourceImageUri);
-      
+
       // Step 2: Call the Magic Hour Face Swap API
       const resultUrl = await generateImageToImage(
         userUploadedImagePublicUrl,
         selectedModel.templateUrl
       );
-      
+
       setRemixedResult(resultUrl);
       setCurrentPhase(4);
       showToast(`Successfully created ${selectedModel.name} remix!`);
@@ -277,10 +279,10 @@ export default function AIRemixScreen({ route, navigation }) {
   };
 
   const getHeaderTitle = () => {
-    if (currentPhase === 1) return 'AI Style Remix';
-    if (currentPhase === 2) return selectedModel?.name || 'Preview Model';
-    if (currentPhase === 3) return 'Tune Settings';
-    return 'Remix Result';
+    if (currentPhase === 1) return 'Custom AI Models';
+    if (currentPhase === 2) return selectedModel?.name || 'Create AI Images';
+    if (currentPhase === 3) return 'Chat With AI';
+    return '';
   };
 
   return (
@@ -297,7 +299,14 @@ export default function AIRemixScreen({ route, navigation }) {
           <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{getHeaderTitle()}</Text>
-        <View style={{ width: 24 }} />
+        {currentPhase === 4 ? (
+          <TouchableOpacity style={styles.headerSaveBtn} onPress={handleDownloadRemix}>
+            <Download size={14} color="#00285B" style={{ marginRight: 4 }} />
+            <Text style={styles.headerSaveText}>Save</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
       </View>
 
       {/* SCREEN 1: Pure Model Selection Grid */}
@@ -314,9 +323,6 @@ export default function AIRemixScreen({ route, navigation }) {
                 onPress={() => handleSelectModel(style)}
               >
                 <Image source={{ uri: style.templateUrl }} style={styles.cardImage} />
-                <View style={styles.textOverlayBar}>
-                  <Text style={styles.styleNameText}>{style.name}</Text>
-                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -328,9 +334,6 @@ export default function AIRemixScreen({ route, navigation }) {
         <View style={styles.phase2Container}>
           <View style={styles.phase2ImageContainer}>
             <Image source={{ uri: selectedModel.templateUrl }} style={styles.phase2Image} />
-            <View style={styles.phase2ModelBadge}>
-              <Text style={styles.phase2ModelBadgeText}>{selectedModel.name}</Text>
-            </View>
           </View>
 
           <View style={styles.phase2Footer}>
@@ -339,8 +342,11 @@ export default function AIRemixScreen({ route, navigation }) {
               onPress={loading ? null : selectImageFromLibrary}
               disabled={loading}
             >
-              <ImageIcon size={20} color="#FFF" style={styles.btnIconSpacing} />
-              <Text style={styles.gallerySelectLargeBtnText}>Select from Gallery</Text>
+              <View style={styles.gallerySelectContent}>
+                <Text style={styles.gallerySelectTitle}>Gallery</Text>
+                <Text style={styles.gallerySelectSub}>Select One Photo To Convert AI Images</Text>
+              </View>
+              <ArrowRight size={24} color="#00285B" style={styles.gallerySelectArrow} />
             </TouchableOpacity>
           </View>
         </View>
@@ -349,52 +355,81 @@ export default function AIRemixScreen({ route, navigation }) {
       {/* SCREEN 3: Multi-Parameter Tuning Configuration (Limit & Strength) */}
       {currentPhase === 3 && selectedModel && sourceImageUri && (
         <View style={styles.phase3Container}>
-          {/* Top View Section: Exactly 50% height */}
-          <View style={styles.phase3TopSection}>
-            <Image source={{ uri: sourceImageUri }} style={styles.phase3Image} />
-            <View style={styles.previewBadge}>
-              <Text style={styles.previewBadgeText}>📸 Selected Photo</Text>
-            </View>
-          </View>
-
-          {/* Bottom View Section */}
-          <View style={styles.phase3BottomSection}>
-
-            {/* ROW 1: Image Limit Selection */}
-            <View style={styles.controlRowSection}>
-              <View style={styles.controlRowHeader}>
-                <Text style={styles.controlRowTitle}>Image Limit Selection</Text>
-                <Text style={styles.controlRowValue}>Count: {generationLimit}</Text>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            {/* Top View Section: Image Preview with Grid */}
+            <View style={styles.phase3TopSection}>
+              <Image source={{ uri: sourceImageUri }} style={styles.phase3Image} />
+              {/* Grid Overlay */}
+              <View style={styles.gridOverlay}>
+                <View style={[styles.gridLineH, { top: '33.33%' }]} />
+                <View style={[styles.gridLineH, { top: '66.66%' }]} />
+                <View style={[styles.gridLineV, { left: '33.33%' }]} />
+                <View style={[styles.gridLineV, { left: '66.66%' }]} />
               </View>
+            </View>
+
+            {/* Bottom View Section */}
+            <View style={styles.phase3BottomSection}>
+
+              {/* ASPECT RATIO */}
+              <Text style={styles.sectionTitle}>ASPECT RATIO</Text>
+              <View style={styles.ratioContainer}>
+                <View style={styles.ratioRow}>
+                  {['1:1', '4:3', '3:2'].map(ratio => {
+                    const isActive = aspectRatio === ratio;
+                    return (
+                      <TouchableOpacity
+                        key={ratio}
+                        style={[styles.ratioBtn, isActive && styles.ratioBtnActive]}
+                        onPress={() => setAspectRatio(ratio)}
+                      >
+                        <View style={isActive ? styles.ratioPlaceholderActive : styles.ratioPlaceholder} />
+                        <Text style={[styles.ratioText, isActive && styles.ratioTextActive]}>{ratio}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <View style={styles.ratioRow}>
+                  {['2:3'].map(ratio => {
+                    const isActive = aspectRatio === ratio;
+                    return (
+                      <TouchableOpacity
+                        key={ratio}
+                        style={[styles.ratioBtn, isActive && styles.ratioBtnActive]}
+                        onPress={() => setAspectRatio(ratio)}
+                      >
+                        <View style={isActive ? styles.ratioPlaceholderActive : styles.ratioPlaceholder} />
+                        <Text style={[styles.ratioText, isActive && styles.ratioTextActive]}>{ratio}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* QUANTITY */}
+              <Text style={styles.sectionTitle}>QUANTITY</Text>
               <View style={styles.limitRow}>
-                {[1, 2, 3, 4].map((num) => {
+                {[1, 2, 3, 4].map(num => {
                   const isActive = generationLimit === num;
                   return (
                     <TouchableOpacity
                       key={num}
-                      style={[styles.limitNumBtn, isActive && styles.limitNumBtnActive, loading && { opacity: 0.6 }]}
-                      onPress={loading ? null : () => setGenerationLimit(num)}
-                      disabled={loading}
+                      style={[styles.quantityBtn, isActive && styles.quantityBtnActive]}
+                      onPress={() => setGenerationLimit(num)}
                     >
-                      <Text style={[styles.limitNumText, isActive && styles.limitNumTextActive]}>
-                        {num}
-                      </Text>
+                      <Text style={[styles.quantityText, isActive && styles.quantityTextActive]}>{num}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
             </View>
-
-          </View>
+          </ScrollView>
 
           {/* Absolute bottom-aligned execute button */}
           <SafeAreaView style={styles.executeFooter}>
-            <TouchableOpacity
-              style={[styles.executeBtn, loading && { opacity: 0.6 }]}
-              onPress={loading ? null : handleCreateRemix}
-              disabled={loading}
-            >
-              <Text style={styles.executeBtnText}>⚡ Create AI Remix</Text>
+            <TouchableOpacity style={styles.createBtn} onPress={loading ? null : handleCreateRemix} disabled={loading}>
+              <Text style={styles.createBtnText}>Create</Text>
+              <ArrowRight size={20} color="#00285B" style={styles.createBtnArrow} />
             </TouchableOpacity>
           </SafeAreaView>
         </View>
@@ -402,29 +437,40 @@ export default function AIRemixScreen({ route, navigation }) {
 
       {/* SCREEN 4: Result Presentation, Full View Modal, & Scoped Saving */}
       {currentPhase === 4 && remixedResult && (
-        <ScrollView contentContainerStyle={styles.resultScrollContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.resultCard}>
+        <View style={styles.phase4Container}>
+          <ScrollView contentContainerStyle={styles.phase4ScrollContainer} showsVerticalScrollIndicator={false}>
+            {/* Main Result Image */}
             <View style={styles.resultImageContainer}>
               <Image source={{ uri: remixedResult }} style={styles.resultImage} />
-              <View style={styles.imageActionsOverlay}>
-                <TouchableOpacity
-                  style={[styles.actionIconBtn, loading && { opacity: 0.5 }]}
-                  onPress={loading ? null : () => setIsFullScreen(true)}
-                  disabled={loading}
-                >
-                  <Maximize2 size={20} color="#FFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionIconBtn, loading && { opacity: 0.5 }]}
-                  onPress={loading ? null : handleDownloadRemix}
-                  disabled={loading}
-                >
-                  <Download size={20} color="#FFF" />
-                </TouchableOpacity>
-              </View>
             </View>
-          </View>
-        </ScrollView>
+
+            {/* Variations Section */}
+            {generationLimit > 1 && (
+              <>
+                <View style={styles.variationsHeaderRow}>
+                  <Text style={styles.variationsTitle}>MORE VARIATIONS</Text>
+                  <Text style={styles.variationsCount}>{generationLimit} Iterations</Text>
+                </View>
+
+                <View style={styles.variationsGrid}>
+                  {Array.from({ length: generationLimit - 1 }).map((_, idx) => (
+                    <View key={idx} style={styles.variationBox}>
+                      <Image source={{ uri: remixedResult }} style={styles.variationImage} />
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+          </ScrollView>
+
+          {/* Footer Button */}
+          <SafeAreaView style={styles.executeFooter}>
+            <TouchableOpacity style={styles.createBtn} onPress={handleHeaderBack}>
+              <Text style={styles.createBtnText}>Generate More</Text>
+              <ArrowRight size={20} color="#00285B" style={styles.createBtnArrow} />
+            </TouchableOpacity>
+          </SafeAreaView>
+        </View>
       )}
 
       {/* Full Screen View Modal */}
@@ -463,7 +509,7 @@ export default function AIRemixScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#131313',
   },
   flexOne: {
     flex: 1,
@@ -471,7 +517,7 @@ const styles = StyleSheet.create({
   header: {
     height: Platform.OS === 'android' ? 56 + StatusBar.currentHeight : 56,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#131313',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -490,6 +536,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 0.5,
+  },
+  headerSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ADC7FF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  headerSaveText: {
+    color: '#00285B',
+    fontSize: 12,
+    fontWeight: 'bold',
+    fontFamily: 'Geist',
   },
   scrollContainer: {
     padding: 16,
@@ -521,20 +581,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   styleCard: {
-    width: '48%',
-    height: 180,
+    width: 463 * scale,
+    height: 808 * scale,
     borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 2,
     borderColor: 'transparent',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    backgroundColor: '#ECEFF1',
+    backgroundColor: '#1C1C26',
   },
   cardImage: {
     width: '100%',
@@ -555,87 +610,69 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  textOverlayBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  styleNameText: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
   // Phase 2 Container
   phase2Container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#131313',
   },
   phase2ImageContainer: {
-    height: SCREEN_HEIGHT * 0.5,
-    width: '100%',
+    width: 991 * scale,
+    height: 1730 * scale,
+    borderRadius: 53 * scale,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    marginTop: 20,
     position: 'relative',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#131313',
   },
   phase2Image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  phase2ModelBadge: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  phase2ModelBadgeText: {
-    color: '#FF9500',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   phase2Footer: {
     flex: 1,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#131313',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
   },
   gallerySelectLargeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 30,
-    width: '100%',
+    backgroundColor: '#ADC7FF',
+    width: 956 * scale,
+    height: 188 * scale,
+    borderRadius: 94 * scale,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  gallerySelectLargeBtnText: {
-    color: '#FFF',
-    fontSize: 16,
+  gallerySelectContent: {
+    alignItems: 'center',
+  },
+  gallerySelectTitle: {
+    color: '#00285B',
+    fontSize: 20,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
-    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  gallerySelectSub: {
+    color: '#00285B',
+    fontSize: 10,
+    fontFamily: 'Geist',
+  },
+  gallerySelectArrow: {
+    position: 'absolute',
+    right: 20,
   },
   // Phase 3 styling
   configContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#131313',
     borderRadius: 16,
     padding: 16,
     elevation: 3,
@@ -652,8 +689,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
-    borderColor: '#ECEFF1',
-    backgroundColor: '#FAFAFA',
+    borderColor: 'transparent',
+    backgroundColor: '#131313',
     marginBottom: 20,
   },
   configPreviewImage: {
@@ -773,150 +810,257 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#757575',
   },
+  // Phase 3 styling
   phase3Container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#131313',
   },
   phase3TopSection: {
-    height: SCREEN_HEIGHT * 0.5,
-    width: '100%',
+    width: SCREEN_WIDTH - 32,
+    aspectRatio: 1,
     position: 'relative',
-    backgroundColor: '#ECEFF1',
+    backgroundColor: '#131313',
+    marginHorizontal: 16,
+    alignSelf: 'center',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#FFF',
   },
   phase3Image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
+  gridOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  gridLineH: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  gridLineV: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
   phase3BottomSection: {
-    padding: 16,
-    flex: 1,
+    paddingHorizontal: 16,
+    marginTop: 24,
+  },
+  sectionTitle: {
+    color: '#8B90A0',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 12,
+    fontFamily: 'Geist',
+  },
+  ratioContainer: {
+    marginBottom: 32,
+    gap: 31.06 * scale,
+  },
+  ratioRow: {
+    flexDirection: 'row',
     justifyContent: 'flex-start',
+    gap: 31.06 * scale,
   },
-  controlRowSection: {
-    marginBottom: 20,
+  ratioBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1C1C26',
+    borderRadius: 60 * scale,
+    height: 119.3 * scale,
+    paddingHorizontal: 51.77 * scale,
+    borderWidth: 1,
+    borderColor: '#2A2A35',
   },
-  controlRowHeader: {
+  ratioBtnActive: {
+    backgroundColor: '#ADC7FF',
+    borderColor: '#ADC7FF',
+  },
+  ratioPlaceholder: {
+    width: 12,
+    height: 12,
+    borderWidth: 1,
+    borderColor: '#FFF',
+    marginRight: 6,
+    borderRadius: 2,
+  },
+  ratioPlaceholderActive: {
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderColor: '#00285B',
+    backgroundColor: 'transparent',
+    marginRight: 8,
+    borderRadius: 2,
+  },
+  ratioText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontFamily: 'Geist',
+  },
+  ratioTextActive: {
+    color: '#00285B',
+    fontWeight: 'bold',
+  },
+  limitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  quantityBtn: {
+    width: (SCREEN_WIDTH - 32 - 36) / 4,
+    height: 50,
+    backgroundColor: '#1C1C26',
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
+    position: 'relative',
   },
-  controlRowTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#212121',
+  quantityBtnActive: {
+    backgroundColor: '#282A2E',
   },
-  controlRowValue: {
-    fontSize: 14,
+  quantityText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
+    fontFamily: 'Geist',
+  },
+  quantityTextActive: {
+    color: '#FFF',
+  },
+  quantityStarBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#00E5FF',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   executeFooter: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#ECEFF1',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    backgroundColor: '#131313',
+    paddingTop: 16,
+    paddingBottom: 30,
+    alignItems: 'center',
   },
-  executeBtn: {
+  createBtn: {
     flexDirection: 'row',
-    backgroundColor: '#FF9500',
-    paddingVertical: 14,
-    borderRadius: 28,
+    backgroundColor: '#ADC7FF',
+    width: 956 * scale,
+    height: 188 * scale,
+    borderRadius: 94 * scale,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    elevation: 3,
-  },
-  executeBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  btnIconSpacing: {
-    marginRight: 6,
-  },
-  // Phase 4 styling
-  resultCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    width: '100%',
-    maxWidth: 400,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 4,
-    alignItems: 'center',
+  },
+  createBtnText: {
+    color: '#00285B',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'Geist',
+  },
+  createBtnArrow: {
+    position: 'absolute',
+    right: 20,
+  },
+  // Phase 4 styling
+  phase4Container: {
+    flex: 1,
+    backgroundColor: '#131313',
+  },
+  phase4ScrollContainer: {
+    paddingTop: 16,
+    paddingBottom: 120,
   },
   resultImageContainer: {
-    width: '100%',
+    width: SCREEN_WIDTH - 32,
     aspectRatio: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
-    backgroundColor: '#F5F5F5',
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   resultImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  resultControls: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  controlBtn: {
+  variationsHeaderRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  variationsTitle: {
+    color: '#8B90A0',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    fontFamily: 'Geist',
+  },
+  variationsCount: {
+    color: '#ADC7FF',
+    fontSize: 10,
+    fontWeight: 'bold',
+    fontFamily: 'Geist',
+  },
+  variationsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    justifyContent: 'flex-start',
+    gap: 12,
+  },
+  variationBox: {
+    width: (SCREEN_WIDTH - 32 - 36) / 4,
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#2A2A35',
+  },
+  variationImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  similarBox: {
+    width: (SCREEN_WIDTH - 32 - 36) / 4,
+    aspectRatio: 1,
+    borderRadius: 12,
+    backgroundColor: '#2A2A35',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 24,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    backgroundColor: '#FFF',
   },
-  downloadBtn: {
-    backgroundColor: '#FF2D55',
-    borderColor: '#FF2D55',
-  },
-  controlBtnTextBlue: {
-    color: '#007AFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  controlBtnTextWhite: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  restartBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
+  similarText: {
+    color: '#A1A1A6',
+    fontSize: 10,
     marginTop: 4,
-  },
-  restartBtnText: {
-    color: '#5F6368',
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Geist',
   },
   // Modal styling
   modalContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#131313',
     justifyContent: 'center',
     alignItems: 'center',
   },

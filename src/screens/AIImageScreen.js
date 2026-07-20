@@ -104,7 +104,7 @@ export default function AIImageScreen({ navigation }) {
               <TextInput
                 style={styles.textInput}
                 placeholder="Bear On the Mountains"
-                placeholderTextColor="#FFF"
+                placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 multiline={true}
                 numberOfLines={4}
                 value={prompt}
@@ -210,9 +210,7 @@ export default function AIImageScreen({ navigation }) {
                   onChangeText={setNegativePrompt}
                   textAlignVertical="top"
                 />
-                <Text style={styles.negPromptHint}>
-                  Write the exact keywords you want to avoid.
-                </Text>
+
               </View>
             )}
           </View>
@@ -285,8 +283,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderColor: '#2A2A35',
   },
   promptInputWrapper: {
     position: 'relative',
@@ -318,6 +314,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
     color: '#FFF',
     marginBottom: 12,
@@ -329,12 +326,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
+    fontFamily: 'Geist',
     color: '#FFF',
     flex: 1,
   },
   pillsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   pillBtn: {
     flexDirection: 'row',
@@ -344,6 +343,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 24,
     marginRight: 10,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#2A2A35',
   },
@@ -353,6 +353,7 @@ const styles = StyleSheet.create({
   },
   pillBtnText: {
     fontSize: 15,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
     color: '#8B90A0',
   },
@@ -385,6 +386,7 @@ const styles = StyleSheet.create({
   },
   advancedToggleText: {
     fontSize: 15,
+    fontFamily: 'Geist',
     color: '#FFF',
     fontWeight: '500',
   },
@@ -398,6 +400,7 @@ const styles = StyleSheet.create({
   },
   negPromptLabel: {
     fontSize: 14,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
     color: '#FFF',
     marginBottom: 8,
@@ -409,11 +412,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
+    fontFamily: 'Geist',
     color: '#FFF',
     minHeight: 80,
   },
   negPromptHint: {
     fontSize: 12,
+    fontFamily: 'Geist',
     color: '#6B7280',
     marginTop: 8,
     lineHeight: 16,
@@ -438,6 +443,7 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: '#131313',
     fontSize: 18,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
   },
   createBtnIcon: {
@@ -460,10 +466,12 @@ const styles = StyleSheet.create({
   },
   styleSelectorLabel: {
     fontSize: 11,
+    fontFamily: 'Geist',
     color: '#8B90A0',
   },
   styleSelectorValue: {
     fontSize: 15,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
     color: '#FFF',
     marginTop: 2,
@@ -501,6 +509,7 @@ const styles = StyleSheet.create({
   },
   modalHeaderTitle: {
     fontSize: 20,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
     color: '#FFF',
   },
@@ -537,6 +546,7 @@ const styles = StyleSheet.create({
   styleCardText: {
     color: '#FFF',
     fontSize: 14,
+    fontFamily: 'Geist',
     fontWeight: 'bold',
     textTransform: 'lowercase',
   },

@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 158.67 * scale,
     height: 14 * scale,
-    marginBottom: 60 * scaleY,
+    marginBottom: 275 * scaleY,
   },
   dot: {
     height: 14 * scale,
